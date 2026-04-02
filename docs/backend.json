@@ -1,0 +1,426 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the application, linked to an external authentication system and assigned specific roles. Passwords and sensitive authentication data are managed by Firebase Auth and not stored here.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the User entity."
+        },
+        "firebaseUid": {
+          "type": "string",
+          "description": "Unique identifier provided by Firebase Authentication for this user account. This links the app's internal user profile to the external authentication system."
+        },
+        "name": {
+          "type": "string",
+          "description": "The display name of the user."
+        },
+        "role": {
+          "type": "string",
+          "description": "The role of the user within the application (e.g., 'ADMIN', 'CASHIER'). This determines their access privileges."
+        },
+        "storeId": {
+          "type": "string",
+          "description": "Reference to the Store entity if the user's role is 'CASHIER', indicating which store they operate in. (Relationship: Store 1:N User)"
+        }
+      },
+      "required": [
+        "id",
+        "firebaseUid",
+        "name",
+        "role"
+      ]
+    },
+    "Store": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Store",
+      "type": "object",
+      "description": "Represents a physical store location within the retail business.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Store entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the store (e.g., 'Toko A', 'Toko B')."
+        },
+        "location": {
+          "type": "string",
+          "description": "The physical address or general location description of the store."
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ]
+    },
+    "Product": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Product",
+      "type": "object",
+      "description": "Represents a single product that can be sold in the stores.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Product entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the product."
+        },
+        "category": {
+          "type": "string",
+          "description": "The category to which the product belongs (e.g., 'T-Shirt', 'Pants', 'Accessories')."
+        },
+        "price": {
+          "type": "number",
+          "description": "The standard selling price of the product."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "category",
+        "price"
+      ]
+    },
+    "Stock": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Stock",
+      "type": "object",
+      "description": "Represents the current quantity of a specific product available at a particular store. This is the live inventory count.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Stock entry."
+        },
+        "productId": {
+          "type": "string",
+          "description": "Reference to the Product entity whose stock is being tracked. (Relationship: Product 1:N Stock)"
+        },
+        "storeId": {
+          "type": "string",
+          "description": "Reference to the Store entity where this product's stock is located. (Relationship: Store 1:N Stock)"
+        },
+        "quantity": {
+          "type": "number",
+          "description": "The current numerical quantity of the product in stock at this specific store."
+        },
+        "lowStockThreshold": {
+          "type": "number",
+          "description": "The quantity level below which this product's stock at this store is considered low, triggering alerts."
+        },
+        "lastUpdated": {
+          "type": "string",
+          "description": "The date and time when this stock entry was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "productId",
+        "storeId",
+        "quantity",
+        "lastUpdated"
+      ]
+    },
+    "Transaction": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Transaction",
+      "type": "object",
+      "description": "Represents a single sales transaction, capturing details like date, total amount, and associated store/cashier.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Transaction entity."
+        },
+        "transactionDate": {
+          "type": "string",
+          "description": "The date and time when the transaction was completed.",
+          "format": "date-time"
+        },
+        "storeId": {
+          "type": "string",
+          "description": "Reference to the Store entity where this transaction took place. (Relationship: Store 1:N Transaction)"
+        },
+        "cashierId": {
+          "type": "string",
+          "description": "Reference to the User entity (cashier) who processed this transaction. (Relationship: User 1:N Transaction)"
+        },
+        "totalAmount": {
+          "type": "number",
+          "description": "The total monetary amount of the transaction, including all items."
+        },
+        "paymentAmount": {
+          "type": "number",
+          "description": "The total monetary amount provided by the customer for payment."
+        },
+        "changeAmount": {
+          "type": "number",
+          "description": "The monetary amount of change given back to the customer."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the transaction (e.g., 'completed', 'pending', 'refunded')."
+        }
+      },
+      "required": [
+        "id",
+        "transactionDate",
+        "storeId",
+        "cashierId",
+        "totalAmount",
+        "paymentAmount",
+        "changeAmount",
+        "status"
+      ]
+    },
+    "TransactionItem": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "TransactionItem",
+      "type": "object",
+      "description": "Represents a single product line item within a sales transaction, detailing the quantity and price at the time of sale.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the TransactionItem entity."
+        },
+        "transactionId": {
+          "type": "string",
+          "description": "Reference to the parent Transaction entity to which this item belongs. (Relationship: Transaction 1:N TransactionItem)"
+        },
+        "productId": {
+          "type": "string",
+          "description": "Reference to the Product entity that was sold in this line item. (Relationship: Product 1:N TransactionItem)"
+        },
+        "quantity": {
+          "type": "number",
+          "description": "The quantity of the product sold in this particular line item."
+        },
+        "priceAtSale": {
+          "type": "number",
+          "description": "The price of the product at the exact moment of sale for this item, preserving historical pricing."
+        },
+        "subtotal": {
+          "type": "number",
+          "description": "The calculated subtotal for this line item (quantity * priceAtSale)."
+        }
+      },
+      "required": [
+        "id",
+        "transactionId",
+        "productId",
+        "quantity",
+        "priceAtSale",
+        "subtotal"
+      ]
+    },
+    "StockLog": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "StockLog",
+      "type": "object",
+      "description": "Records all historical changes and movements of product stock for auditing, tracking, and reporting purposes.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the StockLog entry."
+        },
+        "productId": {
+          "type": "string",
+          "description": "Reference to the Product entity whose stock was affected by this log entry. (Relationship: Product 1:N StockLog)"
+        },
+        "storeId": {
+          "type": "string",
+          "description": "Reference to the originating Store entity where the stock change occurred or was initiated. (Relationship: Store 1:N StockLog)"
+        },
+        "changeType": {
+          "type": "string",
+          "description": "The type of stock change (e.g., 'initial_add', 'sale', 'restock', 'mutation_out', 'mutation_in', 'adjustment')."
+        },
+        "quantityChange": {
+          "type": "number",
+          "description": "The numerical change in stock quantity. Positive for increases (restock), negative for decreases (sale)."
+        },
+        "oldQuantity": {
+          "type": "number",
+          "description": "The stock quantity before this specific change occurred."
+        },
+        "newQuantity": {
+          "type": "number",
+          "description": "The stock quantity after this specific change occurred."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "The date and time when this stock change was recorded.",
+          "format": "date-time"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User entity who initiated or recorded this stock change. (Relationship: User 1:N StockLog)"
+        },
+        "targetStoreId": {
+          "type": "string",
+          "description": "Reference to the target Store entity for stock mutation operations (e.g., the destination store for a 'mutation_out' change type). (Relationship: Store 1:N StockLog)"
+        }
+      },
+      "required": [
+        "id",
+        "productId",
+        "storeId",
+        "changeType",
+        "quantityChange",
+        "oldQuantity",
+        "newQuantity",
+        "timestamp",
+        "userId"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profiles. The `userId` corresponds to the `firebaseUid` from Firebase Authentication. Includes denormalized `role` ('ADMIN' or 'CASHIER') and `storeId` (for CASHIERs) which are critical for authorization independence, allowing security rules to directly check `request.auth.uid`'s corresponding user document for permissions without requiring additional `get()` calls.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The Firebase Authentication User ID (UID) of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/stores/{storeId}",
+        "definition": {
+          "entityName": "Store",
+          "schema": {
+            "$ref": "#/backend/entities/Store"
+          },
+          "description": "Defines individual store entities (e.g., 'Toko A', 'Toko B'). Accessible by ADMINs for management, and readable by CASHIERs for their assigned store.",
+          "params": [
+            {
+              "name": "storeId",
+              "description": "Unique identifier for the store."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/products/{productId}",
+        "definition": {
+          "entityName": "Product",
+          "schema": {
+            "$ref": "#/backend/entities/Product"
+          },
+          "description": "Central catalog of all products available across stores. Accessible by ADMINs for management and by CASHIERs for read-only purposes during transactions.",
+          "params": [
+            {
+              "name": "productId",
+              "description": "Unique identifier for the product."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/stores/{storeId}/stock/{stockId}",
+        "definition": {
+          "entityName": "Stock",
+          "schema": {
+            "$ref": "#/backend/entities/Stock"
+          },
+          "description": "Represents the current inventory levels for a specific product at a particular store. The `storeId` is denormalized in the path, ensuring that cashiers can only access stock for their assigned store, thus supporting authorization independence and secure QAPs. Includes `productId` and `quantity`.",
+          "params": [
+            {
+              "name": "storeId",
+              "description": "Unique identifier for the store where the stock is located."
+            },
+            {
+              "name": "stockId",
+              "description": "Unique identifier for the stock entry (often a combination of storeId and productId or a unique ID)."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/stores/{storeId}/transactions/{transactionId}",
+        "definition": {
+          "entityName": "Transaction",
+          "schema": {
+            "$ref": "#/backend/entities/Transaction"
+          },
+          "description": "Records details of individual sales transactions, specific to a particular store. The `storeId` is denormalized in the path, and `cashierId` is included in the document, enabling robust authorization for cashiers to manage transactions only within their assigned store. This design supports authorization independence and secure QAPs for transaction listings.",
+          "params": [
+            {
+              "name": "storeId",
+              "description": "Unique identifier for the store where the transaction occurred."
+            },
+            {
+              "name": "transactionId",
+              "description": "Unique identifier for the transaction."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/stores/{storeId}/transactions/{transactionId}/transactionItems/{transactionItemId}",
+        "definition": {
+          "entityName": "TransactionItem",
+          "schema": {
+            "$ref": "#/backend/entities/TransactionItem"
+          },
+          "description": "Represents individual product line items within a specific sales transaction. This is a subcollection, inheriting `storeId` and `transactionId` from the parent paths. Authorization is implicitly tied to the parent transaction document.",
+          "params": [
+            {
+              "name": "storeId",
+              "description": "Unique identifier for the store where the transaction occurred."
+            },
+            {
+              "name": "transactionId",
+              "description": "Unique identifier for the parent transaction."
+            },
+            {
+              "name": "transactionItemId",
+              "description": "Unique identifier for the transaction item."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/stores/{storeId}/stockLogs/{stockLogId}",
+        "definition": {
+          "entityName": "StockLog",
+          "schema": {
+            "$ref": "#/backend/entities/StockLog"
+          },
+          "description": "Immutable historical log of all stock movements and changes, specific to a store. The `storeId` is denormalized in the path, and `userId` is included in the document, supporting auditing and ensuring authorization independence for log entries. Cashiers can only write and read logs for their assigned store.",
+          "params": [
+            {
+              "name": "storeId",
+              "description": "Unique identifier for the store where the stock change occurred."
+            },
+            {
+              "name": "stockLogId",
+              "description": "Unique identifier for the stock log entry."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The recommended Firestore structure prioritizes authorization independence, clarity, and secure query access patterns (QAPs) by consistently applying denormalization and structural segregation. \n\nAuthorization Independence is achieved primarily through the `/users/{userId}` collection. Each user document directly stores their `role` (ADMIN or CASHIER) and, for cashiers, their `storeId`. This eliminates the need for security rules to perform expensive `get()` calls to retrieve a user's role or associated store from a separate document or a parent collection. Rules can directly check `request.auth.uid` against the document ID to fetch the user's profile and use the `role` and `storeId` fields contained within that single document. \n\nFor store-specific data such as `Stock`, `Transaction`, and `StockLog`, a hierarchical structure under `/stores/{storeId}/...` is used. This embeds the `storeId` directly into the document path. This design choice is crucial for Authorization Independence and QAPs. For instance, a cashier's access to `stock` is restricted to `/stores/{myStoreId}/stock/{stockId}`. When a cashier attempts to access data, security rules can verify that the `{storeId}` wildcard in the path matches the `storeId` denormalized in their `/users/{userId}` document, all without requiring cross-collection `get()` operations. This ensures atomicity for write operations involving multiple documents (e.g., creating a transaction and updating stock) as rules are evaluated against the current document's path and content, and the authenticated user's directly accessible profile.\n\nSecure Query Access Patterns (QAPs) are robustly supported. Admins have broad access and can query across all top-level collections like `/users`, `/stores`, and `/products`. For data within store-specific subcollections (e.g., `/stores/{storeId}/stock`), an admin could perform queries across all store subcollections if needed (e.g., via a Cloud Function for aggregation or client-side iteration). However, for cashiers, the structure naturally enforces QAPs: a cashier associated with 'Toko A' (via `users/{userId}.storeId`) can only perform `list` queries within the `/stores/tokoAId/stock` or `/stores/tokoAId/transactions` paths. The security rules will automatically prevent them from listing documents in another store's subcollection or performing a top-level collection query that isn't already restricted by `storeId` in the path. This eliminates the need for Firestore rules to act as filters (which is insecure) and ensures that all `list` operations return only the data the user is authorized to see, making the system highly debuggable and secure."
+  }
+}

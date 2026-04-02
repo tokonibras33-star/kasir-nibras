@@ -1,0 +1,20 @@
+
+/**
+ * # Firestore Security Rules - Nibras House (Optimized for Multi-Store Operations)
+ */
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // IZIN GLOBAL UNTUK PENGGUNA TEROTENTIKASI
+    // Menggunakan 'read' (get + list) dan 'write' untuk memastikan operasional kasir lancar.
+    match /{document=**} {
+      allow read, write: if isSignedIn();
+    }
+  }
+}
