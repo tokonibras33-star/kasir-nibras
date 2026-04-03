@@ -7,6 +7,16 @@ import { FirebaseClientProvider } from '@/firebase/client-provider';
 export const metadata: Metadata = {
   title: 'Nibras House - Modern POS & Inventory Management',
   description: 'A clean and professional retail dashboard for modern clothing stores.',
+  icons: {
+    icon: [
+      {
+        url: 'https://res.cloudinary.com/dqujkgwah/image/upload/v1775115570/nibras_house-removebg-preview_gwdzut.png',
+        sizes: '32x32',
+        type: 'image/png',
+      },
+    ],
+    apple: 'https://res.cloudinary.com/dqujkgwah/image/upload/v1775115570/nibras_house-removebg-preview_gwdzut.png',
+  },
 };
 
 export default function RootLayout({
