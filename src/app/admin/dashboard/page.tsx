@@ -25,11 +25,13 @@ import {
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, where, Timestamp, orderBy, limit } from "firebase/firestore";
 import { format } from "date-fns";
+import { useAuth } from "@/context/AuthContext";
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))'];
 
 export default function AdminDashboard() {
   const db = useFirestore();
+  const { user } = useAuth();
 
   // Range waktu untuk HARI INI
   const startOfToday = useMemo(() => {
@@ -45,32 +47,32 @@ export default function AdminDashboard() {
   }, []);
 
   // Fetch Transaksi Hari Ini dari 3 Toko
-  const qA = useMemoFirebase(() => query(
+  const qA = useMemoFirebase(() => user ? query(
     collection(db, "stores", "TOKO_A", "transactions"),
     where("date", ">=", Timestamp.fromDate(startOfToday)),
     where("date", "<=", Timestamp.fromDate(endOfToday))
-  ), [db, startOfToday, endOfToday]);
+  ) : null, [db, startOfToday, endOfToday, user]);
 
-  const qB = useMemoFirebase(() => query(
+  const qB = useMemoFirebase(() => user ? query(
     collection(db, "stores", "TOKO_B", "transactions"),
     where("date", ">=", Timestamp.fromDate(startOfToday)),
     where("date", "<=", Timestamp.fromDate(endOfToday))
-  ), [db, startOfToday, endOfToday]);
+  ) : null, [db, startOfToday, endOfToday, user]);
 
-  const qC = useMemoFirebase(() => query(
+  const qC = useMemoFirebase(() => user ? query(
     collection(db, "stores", "TOKO_C", "transactions"),
     where("date", ">=", Timestamp.fromDate(startOfToday)),
     where("date", "<=", Timestamp.fromDate(endOfToday))
-  ), [db, startOfToday, endOfToday]);
+  ) : null, [db, startOfToday, endOfToday, user]);
 
   const { data: trxA } = useCollection<any>(qA);
   const { data: trxB } = useCollection<any>(qB);
   const { data: trxC } = useCollection<any>(qC);
 
   // Fetch Stok untuk "Stok Menipis"
-  const sA = useMemoFirebase(() => collection(db, "stores", "TOKO_A", "stock"), [db]);
-  const sB = useMemoFirebase(() => collection(db, "stores", "TOKO_B", "stock"), [db]);
-  const sC = useMemoFirebase(() => collection(db, "stores", "TOKO_C", "stock"), [db]);
+  const sA = useMemoFirebase(() => user ? collection(db, "stores", "TOKO_A", "stock") : null, [db, user]);
+  const sB = useMemoFirebase(() => user ? collection(db, "stores", "TOKO_B", "stock") : null, [db, user]);
+  const sC = useMemoFirebase(() => user ? collection(db, "stores", "TOKO_C", "stock") : null, [db, user]);
 
   const { data: stockA } = useCollection<any>(sA);
   const { data: stockB } = useCollection<any>(sB);

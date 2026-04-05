@@ -14,7 +14,10 @@ import {
   ChevronDown,
   ClipboardCheck,
   Percent,
-  Settings
+  Settings,
+  Wallet,
+  RotateCcw,
+  Clock
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -52,7 +55,7 @@ const navItems: NavItem[] = [
     href: "/admin/stock",
     isExpandable: true,
     stateKey: "stok",
-    allowedRoles: ["ADMIN", "OWNER"],
+    allowedRoles: ["ADMIN", "OWNER", "KASIR_TOKO_A", "KASIR_TOKO_B", "KASIR_TOKO_C"],
     subItems: [
       { label: "Semua Stok", href: "/admin/stock" },
       { label: "Stok NHS KWT", href: "/admin/stock/toko-a" },
@@ -85,7 +88,15 @@ const navItems: NavItem[] = [
       { label: "Rincian NHS KWT", href: "/owner/transactions/toko-a" },
       { label: "Rincian IND CO", href: "/owner/transactions/toko-b" },
       { label: "Rincian NHS GDM", href: "/owner/transactions/toko-c" },
+      { label: "Histori Retur", href: "/owner/transactions/returns" },
+      { label: "Histori DP", href: "/owner/transactions/dp" },
     ]
+  },
+  {
+    label: "Kas Kasir",
+    icon: Wallet,
+    href: "/owner/cash-reports",
+    allowedRoles: ["OWNER"]
   },
   { 
     label: "Pelanggan Diskon", 
@@ -110,7 +121,18 @@ export function AdminSidebar({ onNavItemClick }: AdminSidebarProps) {
 
   const filteredNavItems = useMemo(() => {
     if (!user) return [];
-    return navItems.filter(item => item.allowedRoles.includes(user.role));
+    return navItems
+      .filter(item => item.allowedRoles.includes(user.role))
+      .map(item => {
+        if (item.subItems && user.role.startsWith("KASIR_")) {
+          const myStoreLabel = user.role === "KASIR_TOKO_A" ? "NHS KWT" : user.role === "KASIR_TOKO_B" ? "IND CO" : "NHS GDM";
+          return {
+            ...item,
+            subItems: item.subItems.filter(sub => sub.label.includes(myStoreLabel))
+          };
+        }
+        return item;
+      });
   }, [user]);
 
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({

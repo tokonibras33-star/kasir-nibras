@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useMemo } from "react";
@@ -47,7 +46,7 @@ export default function StockTokoBPage() {
   const currentProducts = stockB || [];
 
   const flattenedVariants = useMemo(() => {
-    return currentProducts.flatMap(p => 
+    const list = currentProducts.flatMap(p => 
       (p.variants || []).map((v: any) => ({
         ...v,
         productId: p.id,
@@ -57,11 +56,23 @@ export default function StockTokoBPage() {
         series: p.series || "-",
         fullProduct: p
       }))
-    ).filter(v => 
-      v.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      v.color.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      v.brand.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    const searchTokens = searchTerm.toLowerCase().split(/\s+/).filter(t => t.length > 0);
+
+    return list.filter(v => {
+      if (searchTokens.length === 0) return true;
+      const searchableText = [
+        v.productName,
+        v.brand,
+        v.category,
+        v.series,
+        v.color,
+        v.size,
+        v.invoiceNo || ""
+      ].join(" ").toLowerCase();
+      return searchTokens.every(token => searchableText.includes(token));
+    });
   }, [currentProducts, searchTerm]);
 
   const handleSetZero = (productId: string, variantId: string) => {
@@ -176,7 +187,10 @@ export default function StockTokoBPage() {
         </div>
       </div>
 
-      <div className="relative max-w-md"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Cari..." className="pl-10 h-10 shadow-sm" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input placeholder="Cari Nama, Merk, Kategori, Warna, Size..." className="pl-10 h-10 shadow-sm" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+      </div>
 
       <Card className="soft-shadow border-none overflow-hidden">
         <CardContent className="p-0">

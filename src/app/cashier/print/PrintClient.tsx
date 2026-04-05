@@ -6,7 +6,7 @@ import { useFirestore, useDoc, useMemoFirebase, useUser } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Printer, ArrowLeft, Download, Loader2, Info, Lock } from "lucide-react";
+import { Printer, ArrowLeft, Download, Loader2, Info, Lock, RotateCcw } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
@@ -22,13 +22,13 @@ export default function PrintClient() {
   
   const trxId = searchParams.get("id");
   const storeId = searchParams.get("store") || "TOKO_A";
+  const type = searchParams.get("type"); // 'return' or null
   const displayStoreName = storeId === "TOKO_A" ? "NHS KWT" : storeId === "TOKO_B" ? "IND CO" : "NHS GDM";
   
   const mode = searchParams.get("mode");
   const [paperSize, setPaperSize] = useState<"58mm" | "80mm">("58mm");
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // Memoize reference but ONLY start fetch if user is authenticated
   const trxRef = useMemoFirebase(() => (trxId && user) ? doc(db, "stores", storeId, "transactions", trxId) : null, [db, storeId, trxId, user]);
   const { data: trx, isLoading: isDocLoading } = useDoc<any>(trxRef);
 
@@ -60,7 +60,7 @@ export default function PrintClient() {
       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
       
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`struk-${trx.id}.pdf`);
+      pdf.save(`${type === 'return' ? 'retur' : 'struk'}-${trx.id}.pdf`);
     } catch (err) { 
       console.error(err); 
     } finally { 
@@ -68,7 +68,6 @@ export default function PrintClient() {
     }
   };
 
-  // 1. Loading Sesi Auth
   if (isUserLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-4">
@@ -78,7 +77,6 @@ export default function PrintClient() {
     );
   }
 
-  // 2. Jika tidak ada sesi (mencegah error permission)
   if (!user) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center space-y-4 bg-white">
@@ -90,7 +88,6 @@ export default function PrintClient() {
     );
   }
 
-  // 3. Loading Dokumen Firestore
   if (isDocLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-4">
@@ -100,7 +97,6 @@ export default function PrintClient() {
     );
   }
 
-  // 4. Data Tidak Ditemukan
   if (!trx) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center space-y-4">
@@ -111,6 +107,10 @@ export default function PrintClient() {
       </div>
     );
   }
+
+  const isReturn = type === 'return' && trx.returnLog;
+  const itemsToDisplay = isReturn ? trx.returnLog.items : trx.items;
+  const totalQty = itemsToDisplay?.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0) || 0;
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col md:flex-row print:bg-white print:p-0">
@@ -124,11 +124,17 @@ export default function PrintClient() {
               <div className="relative"><RadioGroupItem value="80mm" id="p-80" className="sr-only peer" /><Label htmlFor="p-80" className="flex items-center justify-center h-12 rounded-2xl border-2 peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 cursor-pointer font-black text-sm transition-all">80mm</Label></div>
             </RadioGroup>
           </div>
-          <div className={cn("p-5 rounded-[2rem] border-2 space-y-1", trx.status === 'DP' ? "bg-orange-50 border-orange-100" : "bg-emerald-50 border-emerald-100")}>
-            <p className={cn("text-[9px] font-black uppercase", trx.status === 'DP' ? "text-orange-600" : "text-emerald-600")}>Status Pembayaran</p>
-            <p className="text-xl font-black uppercase">{trx.status === 'DP' ? "Belum Lunas (DP)" : "Lunas / Selesai"}</p>
+          
+          <div className={cn("p-5 rounded-[2rem] border-2 space-y-1", isReturn ? "bg-rose-50 border-rose-100" : trx.status === 'DP' ? "bg-orange-50 border-orange-100" : "bg-emerald-50 border-emerald-100")}>
+            <p className={cn("text-[9px] font-black uppercase", isReturn ? "text-rose-600" : trx.status === 'DP' ? "text-orange-600" : "text-emerald-600")}>
+              {isReturn ? "Status Dokumen" : "Status Pembayaran"}
+            </p>
+            <p className="text-xl font-black uppercase">
+              {isReturn ? "Bukti Retur Barang" : trx.status === 'DP' ? "Belum Lunas (DP)" : "Lunas / Selesai"}
+            </p>
           </div>
-          <Button className="w-full h-20 rounded-[2.5rem] font-black text-lg shadow-2xl" onClick={() => window.print()}><Printer className="h-6 w-6 mr-3" /> CETAK STRUK</Button>
+
+          <Button className={cn("w-full h-20 rounded-[2.5rem] font-black text-lg shadow-2xl", isReturn ? "bg-rose-600 hover:bg-rose-700" : "bg-primary")} onClick={() => window.print()}><Printer className="h-6 w-6 mr-3" /> CETAK STRUK</Button>
           <Button variant="outline" className="w-full h-14 rounded-2xl font-black text-xs" onClick={handleDownloadPDF} disabled={isGenerating}>{isGenerating ? <Loader2 className="animate-spin h-5 w-5 mr-3" /> : <Download className="h-5 w-5 mr-3" />} SIMPAN SEBAGAI PDF</Button>
         </div>
       </aside>
@@ -139,14 +145,14 @@ export default function PrintClient() {
             <div className="flex justify-center mb-2">
               <Image src={LOGO_URL} alt="Logo Nibras" width={60} height={60} className="object-contain" />
             </div>
-            <h2 className="text-sm font-black uppercase">NIBRAS HOUSE</h2>
+            <h2 className="text-sm font-black uppercase">{isReturn ? "STRUK RETUR BARANG" : "NIBRAS HOUSE"}</h2>
             <p className="text-[9px] font-bold uppercase opacity-80">Cabang {displayStoreName}</p>
           </div>
           
           <div className="border-y border-dashed border-black/30 py-3 my-3 space-y-1 text-[9px]">
             <div className="flex justify-between"><span>NO STRUK:</span><span>{trx.id}</span></div>
-            <div className="flex justify-between"><span>TANGGAL:</span><span>{trx.date?.toDate().toLocaleString('id-ID')}</span></div>
-            <div className="flex justify-between"><span>KASIR:</span><span>{trx.cashier?.toUpperCase()}</span></div>
+            <div className="flex justify-between"><span>TANGGAL:</span><span>{isReturn ? trx.returnLog.returnedAt : trx.date?.toDate().toLocaleString('id-ID')}</span></div>
+            <div className="flex justify-between"><span>KASIR:</span><span>{isReturn ? trx.returnLog.returnedBy?.toUpperCase() : trx.cashier?.toUpperCase()}</span></div>
             <div className="pt-1 border-t border-dashed border-black/10 mt-1">
               <div className="flex justify-between font-bold"><span>CUSTOMER:</span><span className="uppercase">{trx.customerName || "UMUM"}</span></div>
               {trx.customerPhone && <div className="flex justify-between opacity-70"><span>WHATSAPP:</span><span>{trx.customerPhone}</span></div>}
@@ -154,9 +160,15 @@ export default function PrintClient() {
           </div>
 
           <table className="w-full mb-6 text-[10px]">
+            <thead>
+              <tr className="border-b border-black/10">
+                <th className="text-left py-1 text-[8px] uppercase">Barang</th>
+                <th className="text-right py-1 text-[8px] uppercase">Subtotal</th>
+              </tr>
+            </thead>
             <tbody>
-              {trx.items?.map((item: any, i: number) => (
-                <tr key={i} className="align-top">
+              {itemsToDisplay?.map((item: any, i: number) => (
+                <tr key={i} className="align-top border-b border-black/5 last:border-none">
                   <td className="py-1.5 pr-2">
                     <div className="font-bold uppercase leading-tight">{item.name}</div>
                     <div className="text-[8px] opacity-70 italic">{item.color} | {item.size} ({item.quantity}x @{item.price.toLocaleString('id-ID')})</div>
@@ -167,47 +179,79 @@ export default function PrintClient() {
             </tbody>
           </table>
 
-          <div className="border-t border-dashed border-black/30 pt-3 space-y-1.5">
-            <div className="flex justify-between text-[9px]"><span>SUBTOTAL (HARGA LABEL)</span><span>Rp{(trx.subtotalLabel || 0).toLocaleString('id-ID')}</span></div>
-            
-            {trx.storeDiscount > 0 && (
-              <div className="flex justify-between text-[9px]"><span>DISC TOKO</span><span>-Rp{(trx.storeDiscount || 0).toLocaleString('id-ID')}</span></div>
-            )}
-            {trx.memberDiscount > 0 && (
-              <div className="flex justify-between text-[9px]"><span>DISC MEMBER</span><span>-Rp{(trx.memberDiscount || 0).toLocaleString('id-ID')}</span></div>
-            )}
-            {trx.agentDiscount > 0 && (
-              <div className="flex justify-between text-[9px]"><span>DISC AGEN</span><span>-Rp{(trx.agentDiscount || 0).toLocaleString('id-ID')}</span></div>
-            )}
-            {trx.voucherDiscount > 0 && (
-              <div className="flex justify-between text-[9px]"><span>DISC VOUCHER {trx.appliedVoucher?.code ? `(${trx.appliedVoucher.code})` : ''}</span><span>-Rp{(trx.voucherDiscount || 0).toLocaleString('id-ID')}</span></div>
-            )}
-            
-            <div className="flex justify-between text-[9px] font-black border-t border-black/10 pt-1"><span>TOTAL POTONGAN</span><span>-Rp{(trx.totalDiscount || 0).toLocaleString('id-ID')}</span></div>
-            
-            <div className="flex justify-between text-[10px] font-black border-t border-black/20 pt-1 bg-black/5 p-1 my-1"><span>GRAND TOTAL</span><span>Rp{(trx.total || 0).toLocaleString('id-ID')}</span></div>
+          {isReturn ? (
+            <div className="border-t border-dashed border-black/30 pt-3 space-y-1.5">
+              <div className="flex justify-between text-[10px] font-black bg-black text-white p-1 my-1">
+                <span>TOTAL PENGEMBALIAN (REFUND)</span>
+                <span>Rp{trx.returnLog.totalRefund.toLocaleString('id-ID')}</span>
+              </div>
+            </div>
+          ) : (
+            <div className="border-t border-dashed border-black/30 pt-3 space-y-1.5">
+              <div className="flex justify-between text-[9px] font-black"><span>JUMLAH QTY</span><span>{totalQty} PCS</span></div>
+              <div className="flex justify-between text-[9px]"><span>SUBTOTAL (HARGA LABEL)</span><span>Rp{(trx.subtotalLabel || 0).toLocaleString('id-ID')}</span></div>
+              
+              {trx.storeDiscount > 0 && (
+                <div className="flex justify-between text-[9px]"><span>DISC TOKO</span><span>-Rp{(trx.storeDiscount || 0).toLocaleString('id-ID')}</span></div>
+              )}
+              {trx.memberDiscount > 0 && (
+                <div className="flex justify-between text-[9px]"><span>DISC MEMBER</span><span>-Rp{(trx.memberDiscount || 0).toLocaleString('id-ID')}</span></div>
+              )}
+              {trx.agentDiscount > 0 && (
+                <div className="flex justify-between text-[9px]"><span>DISC AGEN</span><span>-Rp{(trx.agentDiscount || 0).toLocaleString('id-ID')}</span></div>
+              )}
+              {trx.voucherDiscount > 0 && (
+                <div className="flex justify-between text-[9px]"><span>DISC VOUCHER {trx.appliedVoucher?.code ? `(${trx.appliedVoucher.code})` : ''}</span><span>-Rp{(trx.voucherDiscount || 0).toLocaleString('id-ID')}</span></div>
+              )}
+              
+              <div className="flex justify-between text-[9px] font-black border-t border-black/10 pt-1"><span>TOTAL POTONGAN</span><span>-Rp{(trx.totalDiscount || 0).toLocaleString('id-ID')}</span></div>
+              
+              <div className="flex justify-between text-[10px] font-black border-t border-black/20 pt-1 bg-black/5 p-1 my-1"><span>GRAND TOTAL</span><span>Rp{(trx.total || 0).toLocaleString('id-ID')}</span></div>
 
-            {trx.status === 'DP' ? (
-              <>
-                <div className="flex justify-between text-[9px] font-bold border-t border-black/10 pt-1"><span>DIBAYAR AWAL (DP)</span><span>Rp{(trx.paidAmount || 0).toLocaleString('id-ID')}</span></div>
-                <div className="flex justify-between text-[9px] font-black bg-black text-white p-1 my-1"><span>SISA PELUNASAN</span><span>Rp{(trx.remainingAmount || 0).toLocaleString('id-ID')}</span></div>
-              </>
-            ) : (
-              <>
-                <div className="flex justify-between text-[9px] font-black border-t border-black/10 pt-1"><span>TOTAL DIBAYAR</span><span>Rp{(trx.paidAmount || 0).toLocaleString('id-ID')}</span></div>
-                {trx.paymentMethod === "CASH" && trx.customerType === "UMUM" && trx.cashReceived > 0 && (
-                  <div className="pt-1 space-y-1">
-                    <div className="flex justify-between text-[9px] font-bold"><span>TUNAI</span><span>Rp{(trx.cashReceived || 0).toLocaleString('id-ID')}</span></div>
-                    <div className="flex justify-between text-[9px] font-bold"><span>KEMBALIAN</span><span>Rp{(trx.cashChange || 0).toLocaleString('id-ID')}</span></div>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
+              {trx.paymentBreakdown ? (
+                <div className="pt-1 space-y-1 border-t border-black/10">
+                  <div className="flex justify-between text-[9px]"><span>BAYAR TUNAI (CASH)</span><span>Rp{trx.paymentBreakdown.cash.toLocaleString('id-ID')}</span></div>
+                  <div className="flex justify-between text-[9px]"><span>BAYAR {trx.paymentBreakdown.otherMethod}</span><span>Rp{trx.paymentBreakdown.other.toLocaleString('id-ID')}</span></div>
+                </div>
+              ) : null}
+
+              {(trx.status === 'DP' || trx.settledAt) && (trx.paidAmount || 0) > 0 ? (
+                <div className="pt-1 space-y-1 border-t border-black/10">
+                  {trx.lastAddedDP > 0 && (trx.paidAmount - trx.lastAddedDP) > 0 ? (
+                    <>
+                      <div className="flex justify-between text-[9px] opacity-70 italic"><span>DP SEBELUMNYA</span><span>Rp{(trx.paidAmount - trx.lastAddedDP).toLocaleString('id-ID')}</span></div>
+                      <div className="flex justify-between text-[9px] font-bold"><span>DP SAAT INI</span><span>Rp{trx.lastAddedDP.toLocaleString('id-ID')}</span></div>
+                      <div className="flex justify-between text-[9px] font-black border-t border-black/5 pt-1"><span>TOTAL DIBAYAR</span><span>Rp{(trx.paidAmount || 0).toLocaleString('id-ID')}</span></div>
+                    </>
+                  ) : (
+                    <div className="flex justify-between text-[9px] font-bold"><span>TOTAL DIBAYAR {trx.status === 'DP' ? '(DP)' : ''}</span><span>Rp{(trx.paidAmount || 0).toLocaleString('id-ID')}</span></div>
+                  )}
+
+                  {trx.remainingAmount > 0 ? (
+                    <div className="flex justify-between text-[9px] font-black bg-black text-white p-1 my-1"><span>SISA PELUNASAN</span><span>Rp{trx.remainingAmount.toLocaleString('id-ID')}</span></div>
+                  ) : trx.settledAt ? (
+                    <div className="flex justify-between text-[9px] font-black bg-emerald-600 text-white p-1 my-1"><span>STATUS: LUNAS</span><span>Rp0</span></div>
+                  ) : null}
+                </div>
+              ) : !trx.paymentBreakdown ? (
+                <div className="pt-1 space-y-1 border-t border-black/10">
+                  <div className="flex justify-between text-[9px] font-black"><span>TOTAL DIBAYAR</span><span>Rp{(trx.paidAmount || 0).toLocaleString('id-ID')}</span></div>
+                  {trx.paymentMethod.includes("CASH") && trx.cashReceived > 0 && (
+                    <>
+                      <div className="flex justify-between text-[9px]"><span>TUNAI</span><span>Rp{(trx.cashReceived || 0).toLocaleString('id-ID')}</span></div>
+                      <div className="flex justify-between text-[9px]"><span>KEMBALIAN</span><span>Rp{(trx.cashChange || 0).toLocaleString('id-ID')}</span></div>
+                    </>
+                  )}
+                </div>
+              ) : null}
+            </div>
+          )}
 
           <div className="text-center mt-10 space-y-1 text-[8px] opacity-60">
             <p className="font-bold text-[9px]">*** TERIMA KASIH ***</p>
-            {trx.status === 'DP' && (
+            {isReturn ? (
+              <div className="font-bold text-black border border-black p-2 my-2 leading-tight">BUKTI PENGEMBALIAN BARANG SAH<br/>STOK SISTEM TELAH DIPERBARUI</div>
+            ) : trx.status === 'DP' && (
               <div className="font-bold text-black border border-black p-2 my-2 leading-tight">BARANG DAPAT DIAMBIL<br/>SETELAH PELUNASAN SISA TAGIHAN</div>
             )}
             <p>BARANG YANG SUDAH DIBELI TIDAK DAPAT DITUKAR / DIKEMBALIKAN</p>

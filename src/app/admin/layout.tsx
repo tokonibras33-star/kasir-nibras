@@ -18,12 +18,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   useEffect(() => {
-    if (!loading && (!user || (user.role !== "ADMIN" && user.role !== "OWNER"))) {
+    if (!loading && (!user || (user.role !== "ADMIN" && user.role !== "OWNER" && !user.role.startsWith("KASIR_")))) {
       router.push("/login");
     }
   }, [user, loading, router]);
 
-  if (loading || !user || (user.role !== "ADMIN" && user.role !== "OWNER")) return null;
+  if (loading || !user || (user.role !== "ADMIN" && user.role !== "OWNER" && !user.role.startsWith("KASIR_"))) return null;
 
   return (
     <div className="min-h-screen bg-background flex flex-col md:flex-row">

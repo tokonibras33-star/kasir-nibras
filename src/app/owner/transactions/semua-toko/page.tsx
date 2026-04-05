@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Search, Download, Eye, FileText, Calendar, Filter, Trash2, Store, FileSpreadsheet } from "lucide-react";
+import { Search, Download, Eye, FileText, Calendar, Filter, Trash2, Store, FileSpreadsheet, Banknote, CreditCard, QrCode } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -64,13 +64,31 @@ export default function TransactionsAllStoresPage() {
     });
   }, [hA, hB, hC]);
 
-  const totalSales = useMemo(() => history.reduce((sum, trx) => sum + (trx.total || 0), 0), [history]);
-  const avgTicket = history.length > 0 ? totalSales / history.length : 0;
-
   const filtered = useMemo(() => history.filter(trx => 
     (trx.id || "").toLowerCase().includes(search.toLowerCase()) ||
     (trx.customerName || "").toLowerCase().includes(search.toLowerCase())
   ), [history, search]);
+
+  const stats = useMemo(() => {
+    return filtered.reduce((acc, trx) => {
+      acc.total += (trx.total || 0);
+      const method = trx.paymentMethod || "CASH";
+      const paid = trx.paidAmount || 0;
+
+      if (trx.paymentBreakdown) {
+        acc.cash += (trx.paymentBreakdown.cash || 0);
+        if (trx.paymentBreakdown.otherMethod === "TRANSFER") acc.transfer += (trx.paymentBreakdown.other || 0);
+        if (trx.paymentBreakdown.otherMethod === "QRIS") acc.qris += (trx.paymentBreakdown.other || 0);
+      } else {
+        if (method === "CASH") acc.cash += paid;
+        else if (method === "TRANSFER") acc.transfer += paid;
+        else if (method === "QRIS") acc.qris += paid;
+      }
+      return acc;
+    }, { total: 0, cash: 0, transfer: 0, qris: 0 });
+  }, [filtered]);
+
+  const avgTicket = filtered.length > 0 ? stats.total / filtered.length : 0;
 
   const handleDeleteSingle = (trx: any) => {
     if (!trx.id) return;
@@ -130,44 +148,22 @@ export default function TransactionsAllStoresPage() {
           <p className="text-muted-foreground text-[10px] md:text-sm">Konsolidasi riwayat penjualan (NHS KWT, IND CO, NHS GDM).</p>
         </div>
         <div className="flex gap-2 w-full sm:w-auto justify-end">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={exportToPDF} 
-            className="h-8 md:h-10 text-[10px] md:text-sm font-bold gap-1 md:gap-2 px-3"
-          >
+          <Button variant="outline" size="sm" onClick={exportToPDF} className="h-8 md:h-10 text-[10px] md:text-sm font-bold gap-1 md:gap-2 px-3">
             <FileText className="h-3 w-3 md:h-4 md:w-4 text-rose-600" /> PDF
           </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={handleExportExcel}
-            className="h-8 md:h-10 text-[10px] md:text-sm font-bold gap-1 md:gap-2 px-3"
-          >
+          <Button variant="outline" size="sm" onClick={handleExportExcel} className="h-8 md:h-10 text-[10px] md:text-sm font-bold gap-1 md:gap-2 px-3">
             <Download className="h-3 w-3 md:h-4 md:w-4 text-emerald-600" /> EXCEL
           </Button>
         </div>
       </div>
 
       <div className="flex flex-col gap-3 md:gap-4 bg-white p-3 md:p-4 rounded-2xl shadow-sm border">
-        {/* Filter Row 1 */}
         <div className="flex flex-col md:flex-row items-center gap-3">
           <div className="grid grid-cols-2 md:flex gap-2 w-full md:w-auto shrink-0">
             <div className="flex bg-slate-100 p-1 rounded-xl">
-              <button 
-                onClick={() => setFilterMode("daily")} 
-                className={cn("flex-1 px-3 md:px-4 py-2 text-[10px] md:text-xs font-black rounded-lg transition-all", filterMode === "daily" ? "bg-white text-primary shadow-sm" : "text-slate-500")}
-              >
-                HARIAN
-              </button>
-              <button 
-                onClick={() => setFilterMode("monthly")} 
-                className={cn("flex-1 px-3 md:px-4 py-2 text-[10px] md:text-xs font-black rounded-lg transition-all", filterMode === "monthly" ? "bg-white text-primary shadow-sm" : "text-slate-500")}
-              >
-                BULANAN
-              </button>
+              <button onClick={() => setFilterMode("daily")} className={cn("flex-1 px-3 md:px-4 py-2 text-[10px] md:text-xs font-black rounded-lg transition-all", filterMode === "daily" ? "bg-white text-primary shadow-sm" : "text-slate-500")}>HARIAN</button>
+              <button onClick={() => setFilterMode("monthly")} className={cn("flex-1 px-3 md:px-4 py-2 text-[10px] md:text-xs font-black rounded-lg transition-all", filterMode === "monthly" ? "bg-white text-primary shadow-sm" : "text-slate-500")}>BULANAN</button>
             </div>
-            
             <div className="flex-1">
               {filterMode === "daily" ? (
                 <Input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} className="w-full md:w-44 h-10 rounded-xl bg-slate-50 border-none font-bold text-xs" />
@@ -176,45 +172,38 @@ export default function TransactionsAllStoresPage() {
               )}
             </div>
           </div>
-
           <div className="hidden md:block h-8 w-px bg-slate-100" />
-
           <div className="relative flex-1 w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input placeholder="Cari ID atau Nama..." className="pl-10 h-10 rounded-xl bg-slate-50 border-none w-full text-xs" value={search} onChange={e => setSearch(e.target.value)} />
           </div>
         </div>
-
-        {/* Action Row (Mobile Only stack, Desktop inline) */}
-        <div className="flex flex-col md:hidden gap-3">
-          <Button 
-            variant="destructive" 
-            onClick={handleDeleteFiltered} 
-            disabled={filtered.length === 0} 
-            className="w-full h-10 rounded-xl font-black gap-2 text-xs"
-          >
-            <Trash2 className="h-4 w-4" /> HAPUS TRANSAKSI TERFILTER
-          </Button>
-        </div>
-
-        {/* Action Row (Desktop View - merged into header or row) */}
-        <div className="hidden md:flex justify-end">
-          <Button 
-            variant="destructive" 
-            size="sm"
-            onClick={handleDeleteFiltered} 
-            disabled={filtered.length === 0} 
-            className="rounded-xl font-black gap-2 px-4 h-9 text-xs"
-          >
+        <div className="flex justify-end">
+          <Button variant="destructive" size="sm" onClick={handleDeleteFiltered} disabled={filtered.length === 0} className="rounded-xl font-black gap-2 px-4 h-9 text-xs">
             <Trash2 className="h-3.5 w-3.5" /> HAPUS TRANSAKSI
           </Button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
-        <Card className="bg-primary text-white rounded-3xl border-none shadow-sm"><CardHeader className="p-4 md:p-5"><p className="text-[9px] md:text-[10px] uppercase font-black opacity-70">Omzet Gabungan</p><CardTitle className="text-xl md:text-2xl font-black">Rp {totalSales.toLocaleString('id-ID')}</CardTitle></CardHeader></Card>
-        <Card className="bg-blue-600 text-white rounded-3xl border-none shadow-sm"><CardHeader className="p-4 md:p-5"><p className="text-[9px] md:text-[10px] uppercase font-black opacity-70">Total Transaksi</p><CardTitle className="text-xl md:text-2xl font-black">{history.length} TRX</CardTitle></CardHeader></Card>
+        <Card className="bg-primary text-white rounded-3xl border-none shadow-sm"><CardHeader className="p-4 md:p-5"><p className="text-[9px] md:text-[10px] uppercase font-black opacity-70">Omzet Gabungan</p><CardTitle className="text-xl md:text-2xl font-black">Rp {stats.total.toLocaleString('id-ID')}</CardTitle></CardHeader></Card>
+        <Card className="bg-blue-600 text-white rounded-3xl border-none shadow-sm"><CardHeader className="p-4 md:p-5"><p className="text-[9px] md:text-[10px] uppercase font-black opacity-70">Total Transaksi</p><CardTitle className="text-xl md:text-2xl font-black">{filtered.length} TRX</CardTitle></CardHeader></Card>
         <Card className="bg-emerald-600 text-white rounded-3xl border-none shadow-sm"><CardHeader className="p-4 md:p-5"><p className="text-[9px] md:text-[10px] uppercase font-black opacity-70">Rata-rata Penjualan</p><CardTitle className="text-xl md:text-2xl font-black">Rp {avgTicket.toLocaleString('id-ID')}</CardTitle></CardHeader></Card>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
+        <Card className="bg-white rounded-3xl border border-slate-100 soft-shadow flex flex-row items-center p-4 gap-4">
+          <div className="bg-emerald-50 p-2 rounded-xl"><Banknote className="h-5 w-5 text-emerald-600" /></div>
+          <div><p className="text-[9px] font-black uppercase text-slate-400">Total Cash</p><p className="text-sm font-black text-emerald-700">Rp {stats.cash.toLocaleString('id-ID')}</p></div>
+        </Card>
+        <Card className="bg-white rounded-3xl border border-slate-100 soft-shadow flex flex-row items-center p-4 gap-4">
+          <div className="bg-blue-50 p-2 rounded-xl"><CreditCard className="h-5 w-5 text-blue-600" /></div>
+          <div><p className="text-[9px] font-black uppercase text-slate-400">Total Transfer</p><p className="text-sm font-black text-blue-700">Rp {stats.transfer.toLocaleString('id-ID')}</p></div>
+        </Card>
+        <Card className="bg-white rounded-3xl border border-slate-100 soft-shadow flex flex-row items-center p-4 gap-4">
+          <div className="bg-purple-50 p-2 rounded-xl"><QrCode className="h-5 w-5 text-purple-600" /></div>
+          <div><p className="text-[9px] font-black uppercase text-slate-400">Total QRIS</p><p className="text-sm font-black text-purple-700">Rp {stats.qris.toLocaleString('id-ID')}</p></div>
+        </Card>
       </div>
 
       <Card className="soft-shadow border-none rounded-3xl overflow-hidden">
