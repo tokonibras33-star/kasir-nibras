@@ -26,7 +26,10 @@ import {
   Banknote,
   RotateCcw,
   TrendingUp,
-  ArrowRight
+  ArrowRight,
+  FileSearch,
+  CheckCircle2,
+  Info
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -73,7 +76,7 @@ export default function CashReportsPage() {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editWithdrawalData, setEditWithdrawalData] = useState({ amount: "", note: "" });
 
-  // 1. Fetch Cash Log (Modal & Pengambilan)
+  // 1. Fetch Cash Log (Modal, Pengambilan, Pengeluaran)
   const cashLogRef = useMemoFirebase(() => 
     doc(db, "stores", selectedStore, "cashLogs", selectedDate), 
     [db, selectedStore, selectedDate]
@@ -136,11 +139,14 @@ export default function CashReportsPage() {
   }, [transactions]);
 
   const yesterdaySplit = useMemo(() => {
-    if (!yesterdayLog) return { murni: 0, lanjutan: 0, totalOpening: 0, totalCash: 0, totalWithdrawals: 0, closingBalance: 0 };
+    if (!yesterdayLog) return { murni: 0, lanjutan: 0, totalOpening: 0, totalCash: 0, totalWithdrawals: 0, totalExpenses: 0, closingBalance: 0 };
     
     const openingY = (yesterdayLog.saldo_awal_kemarin || 0) + (yesterdayLog.modal_awal || 0);
     const withdrawalsY = yesterdayLog.pengambilan || [];
     const totalWithdrawalsY = withdrawalsY.reduce((s: number, w: any) => s + w.amount, 0);
+    
+    const expensesY = yesterdayLog.pengeluaran || [];
+    const totalExpensesY = expensesY.reduce((s: number, e: any) => s + e.amount, 0);
     
     const cashTrxY = yesterdayTrx.filter(t => {
       if (t.paymentBreakdown) return (t.paymentBreakdown.cash || 0) > 0;
@@ -152,31 +158,33 @@ export default function CashReportsPage() {
       return s + cash;
     }, 0);
 
-    if (withdrawalsY.length === 0) {
-      return { murni: openingY, lanjutan: totalCashSalesY, totalOpening: openingY, totalCash: totalCashSalesY, totalWithdrawals: 0, closingBalance: openingY + totalCashSalesY };
+    if (withdrawalsY.length === 0 && expensesY.length === 0) {
+      return { murni: openingY, lanjutan: totalCashSalesY, totalOpening: openingY, totalCash: totalCashSalesY, totalWithdrawals: 0, totalExpenses: 0, closingBalance: openingY + totalCashSalesY };
     }
 
-    const lastW = [...withdrawalsY].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
-    const lastWTime = new Date(lastW.timestamp).getTime();
+    const latestWithdrawal = withdrawalsY.length > 0 ? [...withdrawalsY].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0].timestamp : "1970-01-01";
+    const latestExpense = expensesY.length > 0 ? [...expensesY].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0].timestamp : "1970-01-01";
+    const lastActionTime = Math.max(new Date(latestWithdrawal).getTime(), new Date(latestExpense).getTime());
 
     let salesBefore = 0;
     let salesAfter = 0;
     cashTrxY.forEach(t => {
       const tTime = t.date?.toDate?.()?.getTime() || 0;
       const cash = t.paymentBreakdown ? (t.paymentBreakdown.cash || 0) : (t.paidAmount || 0);
-      if (tTime <= lastWTime) salesBefore += cash;
+      if (tTime <= lastActionTime) salesBefore += cash;
       else salesAfter += cash;
     });
 
-    const murni = openingY + salesBefore - totalWithdrawalsY;
+    const murni = openingY + salesBefore - totalWithdrawalsY - totalExpensesY;
     const lanjutan = salesAfter;
 
-    return { murni, lanjutan, totalOpening: openingY, totalCash: totalCashSalesY, totalWithdrawals: totalWithdrawalsY, closingBalance: murni + lanjutan };
+    return { murni, lanjutan, totalOpening: openingY, totalCash: totalCashSalesY, totalWithdrawals: totalWithdrawalsY, totalExpenses: totalExpensesY, closingBalance: murni + lanjutan };
   }, [yesterdayLog, yesterdayTrx]);
 
   const yesterdayRemaining = yesterdaySplit.closingBalance;
   const totalWithdrawal = useMemo(() => cashLog?.pengambilan?.reduce((s: number, w: any) => s + w.amount, 0) || 0, [cashLog]);
-  const expectedBalance = yesterdayRemaining + (cashLog?.modal_awal || 0) + liveSalesStats.cash - totalWithdrawal;
+  const totalExpense = useMemo(() => cashLog?.pengeluaran?.reduce((s: number, e: any) => s + e.amount, 0) || 0, [cashLog]);
+  const expectedBalance = yesterdayRemaining + (cashLog?.modal_awal || 0) + liveSalesStats.cash - totalWithdrawal - totalExpense;
 
   const handleEditClick = (item: any, index: number) => {
     setEditingIndex(index);
@@ -202,6 +210,13 @@ export default function CashReportsPage() {
     toast({ title: "Terhapus" });
   };
 
+  const handleDeleteExpense = (index: number) => {
+    if (!cashLog || !confirm("Hapus data pengeluaran ini?")) return;
+    const newExpenses = (cashLog.pengeluaran || []).filter((_: any, i: number) => i !== index);
+    updateDocumentNonBlocking(cashLogRef!, { pengeluaran: newExpenses });
+    toast({ title: "Terhapus" });
+  };
+
   const handleResetCashLog = () => {
     if (!cashLog) return;
     if (confirm(`HAPUS LOG KAS ${STORES.find(s => s.id === selectedStore)?.name} pada ${selectedDate}?`)) {
@@ -218,11 +233,11 @@ export default function CashReportsPage() {
       startY: 35,
       head: [['Deskripsi', 'Nominal']],
       body: [
-        ['Modal Murni (Start)', `Rp ${yesterdaySplit.murni.toLocaleString('id-ID')}`],
-        ['Trx Lanjutan (Start)', `Rp ${yesterdaySplit.lanjutan.toLocaleString('id-ID')}`],
-        ['Modal Awal Baru hari ini', `Rp ${(cashLog.modal_awal || 0).toLocaleString('id-ID')}`],
-        ['Total Sales Cash', `Rp ${liveSalesStats.cash.toLocaleString('id-ID')}`],
-        ['Total Pengambilan', `Rp ${totalWithdrawal.toLocaleString('id-ID')}`],
+        ['Saldo Carry Over (Start)', `Rp ${yesterdayRemaining.toLocaleString('id-ID')}`],
+        ['Modal Baru Hari Ini', `Rp ${(cashLog.modal_awal || 0).toLocaleString('id-ID')}`],
+        ['Total Penjualan Tunai', `Rp ${liveSalesStats.cash.toLocaleString('id-ID')}`],
+        ['Total Pengeluaran Toko', `Rp ${totalExpense.toLocaleString('id-ID')}`],
+        ['Total Pengambilan Owner', `Rp ${totalWithdrawal.toLocaleString('id-ID')}`],
         ['SALDO AKHIR SISTEM', `Rp ${expectedBalance.toLocaleString('id-ID')}`],
       ],
       theme: 'grid',
@@ -237,8 +252,8 @@ export default function CashReportsPage() {
     <div className="space-y-6 md:space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-black text-primary uppercase">Audit Running Cash</h1>
-          <p className="text-muted-foreground text-sm">Monitoring saldo kas berkelanjutan antar hari.</p>
+          <h1 className="text-2xl md:text-3xl font-black text-primary uppercase">Audit Kas Berjalan</h1>
+          <p className="text-muted-foreground text-sm">Monitoring saldo kas berkelanjutan dan operasional cabang.</p>
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
           <Button variant="outline" onClick={handleResetCashLog} disabled={!cashLog} className="flex-1 sm:flex-none h-11 rounded-xl font-bold border-rose-200 text-rose-600 hover:bg-rose-50">
@@ -270,10 +285,10 @@ export default function CashReportsPage() {
       {!isLoading && cashLog && (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <SummaryCard title="Modal Murni" value={yesterdaySplit.murni} icon={ShieldCheck} color="primary" />
-            <SummaryCard title="Trx Lanjutan" value={yesterdaySplit.lanjutan} icon={TrendingUp} color="blue" />
+            <SummaryCard title="Carry Over" value={yesterdayRemaining} icon={ShieldCheck} color="primary" />
             <SummaryCard title="Penjualan Tunai" value={liveSalesStats.cash} icon={Banknote} color="emerald" />
-            <SummaryCard title="Total Pengambilan" value={totalWithdrawal} icon={ArrowDownToLine} color="rose" />
+            <SummaryCard title="Pengeluaran Toko" value={totalExpense} icon={ArrowDownToLine} color="rose" />
+            <SummaryCard title="Pengambilan Owner" value={totalWithdrawal} icon={User} color="rose" />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -281,11 +296,11 @@ export default function CashReportsPage() {
               <CardHeader className="bg-primary/5 p-6 border-b"><CardTitle className="text-xs font-black uppercase tracking-widest text-primary">Rekapitulasi Saldo Berjalan</CardTitle></CardHeader>
               <CardContent className="p-6 space-y-4">
                 <div className="space-y-3">
-                  <div className="flex justify-between text-[11px] font-bold"><span>MODAL MURNI</span><span>Rp {yesterdaySplit.murni.toLocaleString('id-ID')}</span></div>
-                  <div className="flex justify-between text-[11px] font-bold"><span>TRX LANJUTAN</span><span>Rp {yesterdaySplit.lanjutan.toLocaleString('id-ID')}</span></div>
+                  <div className="flex justify-between text-[11px] font-bold"><span>SALDO CARRY OVER</span><span>Rp {yesterdayRemaining.toLocaleString('id-ID')}</span></div>
                   <div className="flex justify-between text-[11px] font-bold"><span>MODAL BARU</span><span>Rp {(cashLog.modal_awal || 0).toLocaleString('id-ID')}</span></div>
                   <div className="flex justify-between text-[11px] font-bold text-emerald-600"><span>TOTAL JUAL TUNAI</span><span>Rp {liveSalesStats.cash.toLocaleString('id-ID')}</span></div>
-                  <div className="flex justify-between text-[11px] font-bold text-rose-600"><span>TOTAL PENGAMBILAN</span><span>- Rp {totalWithdrawal.toLocaleString('id-ID')}</span></div>
+                  <div className="flex justify-between text-[11px] font-bold text-rose-600"><span>TOTAL PENGELUARAN TOKO</span><span>- Rp {totalExpense.toLocaleString('id-ID')}</span></div>
+                  <div className="flex justify-between text-[11px] font-bold text-rose-600"><span>TOTAL PENGAMBILAN OWNER</span><span>- Rp {totalWithdrawal.toLocaleString('id-ID')}</span></div>
                 </div>
                 <div className="pt-4 border-t border-dashed space-y-3">
                   <div className="flex justify-between items-center text-primary"><span className="text-[11px] font-black uppercase">SALDO SISTEM</span><span className="font-black text-xl">Rp {expectedBalance.toLocaleString('id-ID')}</span></div>
@@ -294,32 +309,62 @@ export default function CashReportsPage() {
               </CardContent>
             </Card>
 
-            <Card className="lg:col-span-2 rounded-[2rem] border-none soft-shadow bg-white overflow-hidden">
-              <CardHeader className="bg-rose-50 p-6 border-b flex flex-row items-center justify-between"><CardTitle className="text-xs font-black uppercase tracking-widest text-rose-600">Riwayat Pengambilan Owner</CardTitle><Badge className="bg-rose-500 text-white border-none font-black text-[10px]">{cashLog.pengambilan?.length || 0} TRX</Badge></CardHeader>
-              <CardContent className="p-0">
-                <ScrollArea className="h-[350px]">
-                  <Table>
-                    <TableHeader className="bg-slate-50/50"><TableRow className="border-none"><TableHead className="pl-8 text-[10px] font-black uppercase">Waktu</TableHead><TableHead className="text-[10px] font-black uppercase">Nominal</TableHead><TableHead className="text-[10px] font-black uppercase">Catatan</TableHead><TableHead className="text-[10px] font-black uppercase text-right pr-8">Aksi</TableHead></TableRow></TableHeader>
-                    <TableBody>
-                      {cashLog.pengambilan?.map((w: any, idx: number) => (
-                        <TableRow key={idx} className="hover:bg-rose-50/30 border-b border-slate-50 last:border-none">
-                          <TableCell className="pl-8 py-4 font-black text-xs">{format(new Date(w.timestamp), "HH:mm:ss")}</TableCell>
-                          <TableCell className="font-black text-rose-600 text-sm">Rp {w.amount.toLocaleString('id-ID')}</TableCell>
-                          <TableCell className="text-[10px] text-slate-500 uppercase font-bold">{w.note || "-"}</TableCell>
-                          <TableCell className="text-right pr-8">
-                            <div className="flex justify-end gap-1">
-                              <button onClick={() => handleEditClick(w, idx)} className="p-2 hover:bg-rose-100 rounded-lg text-slate-400 hover:text-primary transition-all"><Edit2 className="h-3.5 w-3.5" /></button>
-                              <button onClick={() => handleDeleteWithdrawal(idx)} className="p-2 hover:bg-rose-100 rounded-lg text-slate-400 hover:text-rose-600 transition-all"><Trash2 className="h-3.5 w-3.5" /></button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                      {(!cashLog.pengambilan || cashLog.pengambilan.length === 0) && (<TableRow><TableCell colSpan={4} className="h-32 text-center text-slate-400 italic text-sm">Tidak ada riwayat pengambilan.</TableCell></TableRow>)}
-                    </TableBody>
-                  </Table>
-                </ScrollArea>
-              </CardContent>
-            </Card>
+            <div className="lg:col-span-2 space-y-6">
+              <Card className="rounded-[2rem] border-none soft-shadow bg-white overflow-hidden">
+                <CardHeader className="bg-rose-50 p-6 border-b flex flex-row items-center justify-between"><CardTitle className="text-xs font-black uppercase tracking-widest text-rose-600 flex items-center gap-2"><ArrowDownToLine className="h-4 w-4" /> Riwayat Pengeluaran Operasional</CardTitle><Badge className="bg-rose-500 text-white border-none font-black text-[10px]">{cashLog.pengeluaran?.length || 0} TRX</Badge></CardHeader>
+                <CardContent className="p-0">
+                  <ScrollArea className="h-[250px]">
+                    <Table>
+                      <TableHeader className="bg-slate-50/50"><TableRow className="border-none"><TableHead className="pl-8 text-[10px] font-black uppercase">Waktu</TableHead><TableHead className="text-[10px] font-black uppercase">Jenis & Qty</TableHead><TableHead className="text-[10px] font-black uppercase">Nominal</TableHead><TableHead className="text-[10px] font-black uppercase">Ket & Bukti</TableHead><TableHead className="text-[10px] font-black uppercase text-right pr-8">Aksi</TableHead></TableRow></TableHeader>
+                      <TableBody>
+                        {cashLog.pengeluaran?.map((e: any, idx: number) => (
+                          <TableRow key={idx} className="hover:bg-rose-50/30 border-b border-slate-50 last:border-none">
+                            <TableCell className="pl-8 py-4 font-black text-xs">{format(new Date(e.timestamp), "HH:mm:ss")}</TableCell>
+                            <TableCell className="font-black uppercase text-xs">{e.type} <span className="opacity-50">({e.qty})</span></TableCell>
+                            <TableCell className="font-black text-rose-600 text-sm">Rp {e.amount.toLocaleString('id-ID')}</TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] text-slate-500 italic max-w-[80px] truncate">{e.note || "-"}</span>
+                                {e.image && <button onClick={() => window.open(e.image, '_blank')} className="p-1.5 bg-slate-100 rounded-lg hover:bg-primary/10 text-slate-400 hover:text-primary"><FileSearch className="h-3.5 w-3.5" /></button>}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right pr-8"><button onClick={() => handleDeleteExpense(idx)} className="p-2 hover:bg-rose-100 rounded-lg text-slate-400 hover:text-rose-600 transition-all"><Trash2 className="h-3.5 w-3.5" /></button></TableCell>
+                          </TableRow>
+                        ))}
+                        {(!cashLog.pengeluaran || cashLog.pengeluaran.length === 0) && (<TableRow><TableCell colSpan={5} className="h-24 text-center text-slate-400 italic text-sm">Tidak ada pengeluaran operasional.</TableCell></TableRow>)}
+                      </TableBody>
+                    </Table>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+
+              <Card className="rounded-[2rem] border-none soft-shadow bg-white overflow-hidden">
+                <CardHeader className="bg-slate-50 p-6 border-b flex flex-row items-center justify-between"><CardTitle className="text-xs font-black uppercase tracking-widest text-slate-600 flex items-center gap-2"><User className="h-4 w-4" /> Riwayat Pengambilan Owner</CardTitle><Badge className="bg-slate-800 text-white border-none font-black text-[10px]">{cashLog.pengambilan?.length || 0} TRX</Badge></CardHeader>
+                <CardContent className="p-0">
+                  <ScrollArea className="h-[250px]">
+                    <Table>
+                      <TableHeader className="bg-slate-50/50"><TableRow className="border-none"><TableHead className="pl-8 text-[10px] font-black uppercase">Waktu</TableHead><TableHead className="text-[10px] font-black uppercase">Nominal</TableHead><TableHead className="text-[10px] font-black uppercase">Catatan</TableHead><TableHead className="text-[10px] font-black uppercase text-right pr-8">Aksi</TableHead></TableRow></TableHeader>
+                      <TableBody>
+                        {cashLog.pengambilan?.map((w: any, idx: number) => (
+                          <TableRow key={idx} className="hover:bg-slate-50/30 border-b border-slate-50 last:border-none">
+                            <TableCell className="pl-8 py-4 font-black text-xs">{format(new Date(w.timestamp), "HH:mm:ss")}</TableCell>
+                            <TableCell className="font-black text-rose-600 text-sm">Rp {w.amount.toLocaleString('id-ID')}</TableCell>
+                            <TableCell className="text-[10px] text-slate-500 uppercase font-bold">{w.note || "-"}</TableCell>
+                            <TableCell className="text-right pr-8">
+                              <div className="flex justify-end gap-1">
+                                <button onClick={() => handleEditClick(w, idx)} className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-primary transition-all"><Edit2 className="h-3.5 w-3.5" /></button>
+                                <button onClick={() => handleDeleteWithdrawal(idx)} className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-rose-600 transition-all"><Trash2 className="h-3.5 w-3.5" /></button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                        {(!cashLog.pengambilan || cashLog.pengambilan.length === 0) && (<TableRow><TableCell colSpan={4} className="h-24 text-center text-slate-400 italic text-sm">Tidak ada riwayat pengambilan.</TableCell></TableRow>)}
+                      </TableBody>
+                    </Table>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       )}

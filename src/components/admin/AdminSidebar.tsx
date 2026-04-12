@@ -96,7 +96,13 @@ const navItems: NavItem[] = [
     label: "Kas Kasir",
     icon: Wallet,
     href: "/owner/cash-reports",
-    allowedRoles: ["OWNER"]
+    isExpandable: true,
+    stateKey: "kaskasir",
+    allowedRoles: ["OWNER"],
+    subItems: [
+      { label: "Audit Kas Berjalan", href: "/owner/cash-reports" },
+      { label: "Operasional Pengeluaran", href: "/owner/expenses" },
+    ]
   },
   { 
     label: "Pelanggan Diskon", 
@@ -111,7 +117,19 @@ const navItems: NavItem[] = [
       { label: "Agen Diskon", href: "/admin/agents" },
     ]
   },
-  { label: "Laporan", icon: BarChart3, href: "/admin/reports", allowedRoles: ["ADMIN", "OWNER"] },
+  { 
+    label: "Laporan", 
+    icon: BarChart3, 
+    href: "/admin/reports",
+    isExpandable: true,
+    stateKey: "reports",
+    allowedRoles: ["ADMIN", "OWNER"],
+    subItems: [
+      { label: "Laporan Penjualan", href: "/admin/reports/sales" },
+      { label: "Laporan Pengeluaran", href: "/admin/reports/expenses" },
+      { label: "Laporan Arus Kas", href: "/admin/reports/cash-flow" },
+    ]
+  },
   { label: "Seting", icon: Settings, href: "/owner/settings", allowedRoles: ["OWNER"] },
 ];
 
@@ -139,7 +157,9 @@ export function AdminSidebar({ onNavItemClick }: AdminSidebarProps) {
     stok: pathname.startsWith("/admin/stock"),
     opname: pathname.startsWith("/admin/stock-opname"),
     transaksi: pathname.startsWith("/owner/transactions"),
-    discounts: pathname.startsWith("/admin/members") || pathname.startsWith("/admin/coupons") || pathname.startsWith("/admin/agents")
+    kaskasir: pathname.startsWith("/owner/cash-reports") || pathname.startsWith("/owner/expenses"),
+    discounts: pathname.startsWith("/admin/members") || pathname.startsWith("/admin/coupons") || pathname.startsWith("/admin/agents"),
+    reports: pathname.startsWith("/admin/reports")
   });
 
   const toggleMenu = (key: string) => {
