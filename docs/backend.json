@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "User": {
@@ -278,6 +279,27 @@
         "timestamp",
         "userId"
       ]
+    },
+    "MutationRequest": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "MutationRequest",
+      "type": "object",
+      "description": "Permintaan mutasi barang antar cabang toko.",
+      "properties": {
+        "id": { "type": "string" },
+        "fromStore": { "type": "string" },
+        "targetStore": { "type": "string" },
+        "productId": { "type": "string" },
+        "variantId": { "type": "string" },
+        "productName": { "type": "string" },
+        "color": { "type": "string" },
+        "size": { "type": "string" },
+        "quantity": { "type": "number" },
+        "status": { "type": "string", "enum": ["PENDING", "APPROVED"] },
+        "requestedAt": { "type": "string", "format": "date-time" },
+        "requestedBy": { "type": "string" }
+      },
+      "required": ["id", "fromStore", "targetStore", "productId", "variantId", "quantity", "status", "requestedAt"]
     }
   },
   "auth": {
@@ -416,6 +438,22 @@
             {
               "name": "stockLogId",
               "description": "Unique identifier for the stock log entry."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/mutationRequests/{reqId}",
+        "definition": {
+          "entityName": "MutationRequest",
+          "schema": {
+            "$ref": "#/backend/entities/MutationRequest"
+          },
+          "description": "Manages stock mutation requests between different store branches.",
+          "params": [
+            {
+              "name": "reqId",
+              "description": "Unique identifier for the mutation request."
             }
           ]
         }

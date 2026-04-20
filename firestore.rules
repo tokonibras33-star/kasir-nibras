@@ -11,8 +11,46 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // IZIN GLOBAL UNTUK PENGGUNA TEROTENTIKASI
-    // Menggunakan 'read' (get + list) dan 'write' untuk memastikan operasional kasir lancar.
+    // IZIN SPESIFIK UNTUK KOLEKSI UTAMA
+    // Memastikan akses lancar untuk fitur baru seperti mutasi dan database pelanggan
+    
+    match /mutationRequests/{reqId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /members/{memberId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /agents/{agentId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /coupons/{couponId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /stockEntries/{entryId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /users/{userId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /ownerExpenses/{dateId} {
+      allow read, write: if isSignedIn();
+    }
+
+    // IZIN UNTUK STRUKTUR TOKO (SUB-COLLECTIONS)
+    match /stores/{storeId} {
+      allow read, write: if isSignedIn();
+      match /{allSubcollections=**} {
+        allow read, write: if isSignedIn();
+      }
+    }
+
+    // IZIN GLOBAL UNTUK PENGGUNA TEROTENTIKASI (FALLBACK)
     match /{document=**} {
       allow read, write: if isSignedIn();
     }

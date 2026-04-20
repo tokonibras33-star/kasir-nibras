@@ -185,24 +185,24 @@ export default function TransactionsAllStoresPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
-        <Card className="bg-primary text-white rounded-3xl border-none shadow-sm"><CardHeader className="p-4 md:p-5"><p className="text-[9px] md:text-[10px] uppercase font-black opacity-70">Omzet Gabungan</p><CardTitle className="text-xl md:text-2xl font-black">Rp {stats.total.toLocaleString('id-ID')}</CardTitle></CardHeader></Card>
-        <Card className="bg-blue-600 text-white rounded-3xl border-none shadow-sm"><CardHeader className="p-4 md:p-5"><p className="text-[9px] md:text-[10px] uppercase font-black opacity-70">Total Transaksi</p><CardTitle className="text-xl md:text-2xl font-black">{filtered.length} TRX</CardTitle></CardHeader></Card>
-        <Card className="bg-emerald-600 text-white rounded-3xl border-none shadow-sm"><CardHeader className="p-4 md:p-5"><p className="text-[9px] md:text-[10px] uppercase font-black opacity-70">Rata-rata Penjualan</p><CardTitle className="text-xl md:text-2xl font-black">Rp {avgTicket.toLocaleString('id-ID')}</CardTitle></CardHeader></Card>
+      <div className="grid grid-cols-3 md:grid-cols-3 gap-2 md:gap-4">
+        <Card className="bg-primary text-white rounded-xl md:rounded-3xl border-none shadow-sm"><CardHeader className="p-2 md:p-5"><p className="text-[7px] md:text-[10px] uppercase font-black opacity-70">Omzet</p><CardTitle className="text-[10px] md:text-2xl font-black">Rp {stats.total.toLocaleString('id-ID')}</CardTitle></CardHeader></Card>
+        <Card className="bg-blue-600 text-white rounded-xl md:rounded-3xl border-none shadow-sm"><CardHeader className="p-2 md:p-5"><p className="text-[7px] md:text-[10px] uppercase font-black opacity-70">Trx</p><CardTitle className="text-[10px] md:text-2xl font-black">{filtered.length} TRX</CardTitle></CardHeader></Card>
+        <Card className="bg-emerald-600 text-white rounded-xl md:rounded-3xl border-none shadow-sm"><CardHeader className="p-2 md:p-5"><p className="text-[7px] md:text-[10px] uppercase font-black opacity-70">Avg</p><CardTitle className="text-[10px] md:text-2xl font-black">Rp {avgTicket.toLocaleString('id-ID')}</CardTitle></CardHeader></Card>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
-        <Card className="bg-white rounded-3xl border border-slate-100 soft-shadow flex flex-row items-center p-4 gap-4">
-          <div className="bg-emerald-50 p-2 rounded-xl"><Banknote className="h-5 w-5 text-emerald-600" /></div>
-          <div><p className="text-[9px] font-black uppercase text-slate-400">Total Cash</p><p className="text-sm font-black text-emerald-700">Rp {stats.cash.toLocaleString('id-ID')}</p></div>
+      <div className="grid grid-cols-3 md:grid-cols-3 gap-2 md:gap-4">
+        <Card className="bg-white rounded-xl md:rounded-3xl border border-slate-100 soft-shadow flex flex-col md:flex-row items-center p-2 md:p-4 gap-1 md:gap-4">
+          <div className="bg-emerald-50 p-1.5 md:p-2 rounded-lg md:rounded-xl"><Banknote className="h-3 w-3 md:h-5 md:w-5 text-emerald-600" /></div>
+          <div className="text-center md:text-left"><p className="text-[6px] md:text-[9px] font-black uppercase text-slate-400">Cash</p><p className="text-[8px] md:text-sm font-black text-emerald-700">Rp {stats.cash.toLocaleString('id-ID')}</p></div>
         </Card>
-        <Card className="bg-white rounded-3xl border border-slate-100 soft-shadow flex flex-row items-center p-4 gap-4">
-          <div className="bg-blue-50 p-2 rounded-xl"><CreditCard className="h-5 w-5 text-blue-600" /></div>
-          <div><p className="text-[9px] font-black uppercase text-slate-400">Total Transfer</p><p className="text-sm font-black text-blue-700">Rp {stats.transfer.toLocaleString('id-ID')}</p></div>
+        <Card className="bg-white rounded-xl md:rounded-3xl border border-slate-100 soft-shadow flex flex-col md:flex-row items-center p-2 md:p-4 gap-1 md:gap-4">
+          <div className="bg-blue-50 p-1.5 md:p-2 rounded-lg md:rounded-xl"><CreditCard className="h-3 w-3 md:h-5 md:w-5 text-blue-600" /></div>
+          <div className="text-center md:text-left"><p className="text-[6px] md:text-[9px] font-black uppercase text-slate-400">Transfer</p><p className="text-[8px] md:text-sm font-black text-blue-700">Rp {stats.transfer.toLocaleString('id-ID')}</p></div>
         </Card>
-        <Card className="bg-white rounded-3xl border border-slate-100 soft-shadow flex flex-row items-center p-4 gap-4">
-          <div className="bg-purple-50 p-2 rounded-xl"><QrCode className="h-5 w-5 text-purple-600" /></div>
-          <div><p className="text-[9px] font-black uppercase text-slate-400">Total QRIS</p><p className="text-sm font-black text-purple-700">Rp {stats.qris.toLocaleString('id-ID')}</p></div>
+        <Card className="bg-white rounded-xl md:rounded-3xl border border-slate-100 soft-shadow flex flex-col md:flex-row items-center p-2 md:p-4 gap-1 md:gap-4">
+          <div className="bg-purple-50 p-1.5 md:p-2 rounded-lg md:rounded-xl"><QrCode className="h-3 w-3 md:h-5 md:w-5 text-purple-600" /></div>
+          <div className="text-center md:text-left"><p className="text-[6px] md:text-[9px] font-black uppercase text-slate-400">QRIS</p><p className="text-[8px] md:text-sm font-black text-purple-700">Rp {stats.qris.toLocaleString('id-ID')}</p></div>
         </Card>
       </div>
 

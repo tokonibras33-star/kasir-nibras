@@ -129,51 +129,56 @@ export default function ExpensesReportPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 bg-white p-5 rounded-3xl soft-shadow border">
-        <div className="space-y-2">
-          <Label className="text-[10px] font-black uppercase text-slate-400">Mode</Label>
-          <div className="flex bg-slate-100 p-1 rounded-xl">
-            <button onClick={() => setFilterMode("daily")} className={cn("flex-1 py-2 text-[10px] font-black rounded-lg transition-all", filterMode === "daily" ? "bg-white text-primary shadow-sm" : "text-slate-500")}>HARIAN</button>
-            <button onClick={() => setFilterMode("monthly")} className={cn("flex-1 py-2 text-[10px] font-black rounded-lg transition-all", filterMode === "monthly" ? "bg-white text-primary shadow-sm" : "text-slate-500")}>BULANAN</button>
-          </div>
+        <div className="grid grid-cols-2 lg:contents gap-4 lg:col-span-2">
+            <div className="space-y-2">
+              <Label className="text-[10px] font-black uppercase text-slate-400">Mode</Label>
+              <div className="flex bg-slate-100 p-1 rounded-xl">
+                <button onClick={() => setFilterMode("daily")} className={cn("flex-1 py-2 text-[10px] font-black rounded-lg transition-all", filterMode === "daily" ? "bg-white text-primary shadow-sm" : "text-slate-500")}>HARIAN</button>
+                <button onClick={() => setFilterMode("monthly")} className={cn("flex-1 py-2 text-[10px] font-black rounded-lg transition-all", filterMode === "monthly" ? "bg-white text-primary shadow-sm" : "text-slate-500")}>BULANAN</button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-[10px] font-black uppercase text-slate-400">Pilih Waktu</Label>
+              {filterMode === "daily" ? (
+                <Input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} className="h-11 rounded-xl bg-slate-50 border-none font-bold text-xs" />
+              ) : (
+                <Input type="month" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="h-11 rounded-xl bg-slate-50 border-none font-bold text-xs" />
+              )}
+            </div>
         </div>
-        <div className="space-y-2">
-          <Label className="text-[10px] font-black uppercase text-slate-400">Pilih Waktu</Label>
-          {filterMode === "daily" ? (
-            <Input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} className="h-11 rounded-xl bg-slate-50 border-none font-bold text-xs" />
-          ) : (
-            <Input type="month" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="h-11 rounded-xl bg-slate-50 border-none font-bold text-xs" />
-          )}
-        </div>
-        <div className="space-y-2">
-          <Label className="text-[10px] font-black uppercase text-slate-400">Sumber Kas</Label>
-          <Select value={storeFilter} onValueChange={setStoreFilter}>
-            <SelectTrigger className="h-11 rounded-xl bg-slate-50 border-none font-bold text-xs"><SelectValue /></SelectTrigger>
-            <SelectContent className="rounded-xl">
-              <SelectItem value="ALL">SEMUA SUMBER</SelectItem>
-              <SelectItem value="OWNER">OWNER PUSAT</SelectItem>
-              <SelectItem value="TOKO_A">NHS KWT</SelectItem>
-              <SelectItem value="TOKO_B">IND CO</SelectItem>
-              <SelectItem value="TOKO_C">NHS GDM</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-2">
-          <Label className="text-[10px] font-black uppercase text-slate-400">Cari</Label>
-          <Input placeholder="Ketik sesuatu..." value={search} onChange={e => setSearch(e.target.value)} className="h-11 rounded-xl bg-slate-50 border-none font-bold text-xs" />
+        
+        <div className="grid grid-cols-2 lg:contents gap-4 lg:col-span-2">
+            <div className="space-y-2">
+              <Label className="text-[10px] font-black uppercase text-slate-400">Sumber Kas</Label>
+              <Select value={storeFilter} onValueChange={setStoreFilter}>
+                <SelectTrigger className="h-11 rounded-xl bg-slate-50 border-none font-black text-[9px] md:text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent className="rounded-xl">
+                  <SelectItem value="ALL">SEMUA SUMBER</SelectItem>
+                  <SelectItem value="OWNER">OWNER PUSAT</SelectItem>
+                  <SelectItem value="TOKO_A">NHS KWT</SelectItem>
+                  <SelectItem value="TOKO_B">IND CO</SelectItem>
+                  <SelectItem value="TOKO_C">NHS GDM</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-[10px] font-black uppercase text-slate-400">Cari</Label>
+              <Input placeholder="Ketik sesuatu..." value={search} onChange={e => setSearch(e.target.value)} className="h-11 rounded-xl bg-slate-50 border-none font-bold text-xs" />
+            </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card className="rounded-[2rem] border-none soft-shadow bg-rose-600 text-white p-6">
-          <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-1">Total Pengeluaran Periode Ini</p>
-          <h3 className="text-3xl font-black">Rp {totalExpense.toLocaleString('id-ID')}</h3>
+      <div className="grid grid-cols-2 md:grid-cols-2 gap-3 md:gap-4">
+        <Card className="rounded-xl md:rounded-[2rem] border-none soft-shadow bg-rose-600 text-white p-3 md:p-6">
+          <p className="text-[7px] md:text-[10px] font-black uppercase tracking-widest opacity-70 mb-0.5 md:mb-1">Total Biaya</p>
+          <h3 className="text-xs md:text-3xl font-black">Rp {totalExpense.toLocaleString('id-ID')}</h3>
         </Card>
-        <Card className="rounded-[2rem] border-none soft-shadow bg-white p-6 flex items-center justify-between">
+        <Card className="rounded-xl md:rounded-[2rem] border-none soft-shadow bg-white p-3 md:p-6 flex items-center justify-between">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Jumlah Transaksi Biaya</p>
-            <h3 className="text-3xl font-black text-slate-800">{aggregatedExpenses.length} <span className="text-xs opacity-40">ITEM</span></h3>
+            <p className="text-[7px] md:text-[10px] font-black uppercase tracking-widest text-slate-400 mb-0.5 md:mb-1">Jml Trx</p>
+            <h3 className="text-xs md:text-3xl font-black text-slate-800">{aggregatedExpenses.length} <span className="text-[7px] md:text-xs opacity-40">ITEM</span></h3>
           </div>
-          <div className="bg-slate-100 p-4 rounded-[2rem]"><ArrowDownToLine className="h-8 w-8 text-rose-600" /></div>
+          <div className="bg-slate-100 p-1.5 md:p-4 rounded-lg md:rounded-[2rem]"><ArrowDownToLine className="h-4 w-4 md:h-8 md:w-8 text-rose-600" /></div>
         </Card>
       </div>
 

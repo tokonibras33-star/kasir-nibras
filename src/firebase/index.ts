@@ -3,35 +3,44 @@
 import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { initializeFirestore, getFirestore } from 'firebase/firestore'
+import { initializeFirestore, getFirestore, Firestore } from 'firebase/firestore'
 import { getStorage } from 'firebase/storage';
 
-// Fungsi inisialisasi yang lebih eksplisit untuk memastikan stabilitas koneksi
-export function initializeFirebase() {
-  if (!getApps().length) {
-    const firebaseApp = initializeApp(firebaseConfig);
-    return getSdks(firebaseApp);
-  }
+// Singleton instance untuk mencegah re-initialization error dan menjaga stabilitas
+let firestoreInstance: Firestore | null = null;
 
-  return getSdks(getApp());
+/**
+ * Menginisialisasi aplikasi Firebase dan mengembalikan instance layanan yang diperlukan.
+ */
+export function initializeFirebase() {
+  const app = getApps().length === 0 
+    ? initializeApp(firebaseConfig) 
+    : getApp();
+
+  return getSdks(app);
 }
 
+/**
+ * Mengambil instance layanan Firebase (Auth, Firestore, Storage).
+ */
 export function getSdks(firebaseApp: FirebaseApp) {
-  let firestore;
-  try {
-    // Mengaktifkan long polling dan menonaktifkan streams untuk stabilitas maksimal di lingkungan cloud
-    firestore = initializeFirestore(firebaseApp, {
-      experimentalForceLongPolling: true,
-      useFetchStreams: false,
-    });
-  } catch (e) {
-    firestore = getFirestore(firebaseApp);
+  if (!firestoreInstance) {
+    try {
+      // Mengaktifkan long polling dan menonaktifkan streams untuk stabilitas maksimal di lingkungan cloud/proxy
+      firestoreInstance = initializeFirestore(firebaseApp, {
+        experimentalForceLongPolling: true,
+        useFetchStreams: false,
+      });
+    } catch (e) {
+      // Fallback jika instance sudah ada atau terjadi kegagalan inisialisasi eksplisit
+      firestoreInstance = getFirestore(firebaseApp);
+    }
   }
 
   return {
     firebaseApp,
     auth: getAuth(firebaseApp),
-    firestore,
+    firestore: firestoreInstance,
     storage: getStorage(firebaseApp)
   };
 }

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useMemo } from "react";
@@ -634,24 +633,5 @@ export default function OperationalExpensesPage() {
         </DialogContent>
       </Dialog>
     </div>
-  );
-}
-
-function SummaryCard({ title, value, icon: Icon, color }: any) {
-  const colorMap: any = {
-    primary: "bg-primary/10 text-primary",
-    blue: "bg-blue-50 text-blue-600",
-    rose: "bg-rose-50 text-rose-600",
-    emerald: "bg-emerald-50 text-emerald-600",
-    amber: "bg-amber-50 text-amber-600",
-  };
-  return (
-    <Card className="rounded-3xl border-none soft-shadow group hover:scale-[1.02] transition-transform">
-      <CardContent className="p-5">
-        <div className={cn("p-3 rounded-2xl w-fit mb-3 transition-all group-hover:rotate-6", colorMap[color])}><Icon className="h-5 w-5" /></div>
-        <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">{title}</p>
-        <h3 className="text-lg font-black text-slate-800">Rp {value.toLocaleString('id-ID')}</h3>
-      </CardContent>
-    </Card>
   );
 }

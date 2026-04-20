@@ -1,14 +1,10 @@
-
 "use client";
 
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { 
   TrendingUp, 
-  Users, 
   AlertTriangle, 
-  ArrowUpRight, 
-  ArrowDownRight,
   ShoppingBag,
   Clock
 } from "lucide-react";
@@ -23,17 +19,21 @@ import {
   Cell
 } from "recharts";
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, where, Timestamp, orderBy, limit } from "firebase/firestore";
+import { collection, query, where, Timestamp } from "firebase/firestore";
 import { format } from "date-fns";
 import { useAuth } from "@/context/AuthContext";
+import { cn } from "@/lib/utils";
 
-const COLORS = ['hsl(var(--primary))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))'];
+const COLORS = ['#1F7A63', '#10b981', '#1e293b'];
 
+/**
+ * Dashboard Manajemen Nibras House
+ * Memantau aktivitas real-time seluruh cabang.
+ */
 export default function AdminDashboard() {
   const db = useFirestore();
   const { user } = useAuth();
 
-  // Range waktu untuk HARI INI
   const startOfToday = useMemo(() => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
@@ -46,7 +46,6 @@ export default function AdminDashboard() {
     return d;
   }, []);
 
-  // Fetch Transaksi Hari Ini dari 3 Toko
   const qA = useMemoFirebase(() => user ? query(
     collection(db, "stores", "TOKO_A", "transactions"),
     where("date", ">=", Timestamp.fromDate(startOfToday)),
@@ -69,7 +68,6 @@ export default function AdminDashboard() {
   const { data: trxB } = useCollection<any>(qB);
   const { data: trxC } = useCollection<any>(qC);
 
-  // Fetch Stok untuk "Stok Menipis"
   const sA = useMemoFirebase(() => user ? collection(db, "stores", "TOKO_A", "stock") : null, [db, user]);
   const sB = useMemoFirebase(() => user ? collection(db, "stores", "TOKO_B", "stock") : null, [db, user]);
   const sC = useMemoFirebase(() => user ? collection(db, "stores", "TOKO_C", "stock") : null, [db, user]);
@@ -78,7 +76,6 @@ export default function AdminDashboard() {
   const { data: stockB } = useCollection<any>(sB);
   const { data: stockC } = useCollection<any>(sC);
 
-  // Kalkulasi Data Grafik & Stats
   const salesData = useMemo(() => {
     const totalA = (trxA || []).reduce((sum, t) => sum + (t.total || 0), 0);
     const totalB = (trxB || []).reduce((sum, t) => sum + (t.total || 0), 0);
@@ -95,7 +92,6 @@ export default function AdminDashboard() {
     const totalTodaySales = salesData.reduce((sum, s) => sum + s.sales, 0);
     const totalTodayTrx = (trxA?.length || 0) + (trxB?.length || 0) + (trxC?.length || 0);
     
-    // Hitung Low Stock (Stok <= 5)
     let lowStockCount = 0;
     [stockA, stockB, stockC].forEach(storeStock => {
       (storeStock || []).forEach(p => {
@@ -110,7 +106,6 @@ export default function AdminDashboard() {
         title: "Penjualan Hari Ini",
         value: `Rp ${totalTodaySales.toLocaleString('id-ID')}`,
         change: totalTodaySales > 0 ? "Aktif" : "0",
-        trend: "up",
         icon: TrendingUp,
         color: "text-primary"
       },
@@ -118,7 +113,6 @@ export default function AdminDashboard() {
         title: "Total Transaksi",
         value: totalTodayTrx.toString(),
         change: "Hari Ini",
-        trend: "neutral",
         icon: ShoppingBag,
         color: "text-blue-500"
       },
@@ -126,7 +120,6 @@ export default function AdminDashboard() {
         title: "Stok Menipis",
         value: lowStockCount.toString(),
         change: "Item (<= 5)",
-        trend: "neutral",
         icon: AlertTriangle,
         color: "text-amber-500"
       },
@@ -134,14 +127,12 @@ export default function AdminDashboard() {
         title: "Status Sistem",
         value: "Online",
         change: "Real-time",
-        trend: "up",
         icon: Clock,
         color: "text-purple-500"
       }
     ];
   }, [salesData, trxA, trxB, trxC, stockA, stockB, stockC]);
 
-  // Transaksi Terkini Gabungan
   const recentTransactions = useMemo(() => {
     const combined = [
       ...(trxA || []).map(t => ({ ...t, storeName: 'NHS KWT' })),
@@ -156,10 +147,10 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-6 md:space-y-8">
       <div>
-        <h1 className="text-2xl md:text-3xl font-bold font-headline tracking-tight text-foreground text-center md:text-left">
+        <h1 className="text-2xl md:text-3xl font-bold font-headline tracking-tight text-foreground">
           Dashboard Manajemen
         </h1>
-        <p className="text-muted-foreground mt-1 text-center md:text-left text-sm md:text-base">
+        <p className="text-muted-foreground mt-1 text-sm md:text-base">
           Ringkasan aktivitas riil seluruh cabang Nibras House.
         </p>
       </div>
@@ -169,7 +160,7 @@ export default function AdminDashboard() {
           <Card key={i} className="soft-shadow border-none overflow-hidden group">
             <CardContent className="p-5 md:p-6">
               <div className="flex items-center justify-between mb-4">
-                <div className={stat.color + " bg-current/10 p-2.5 rounded-lg transition-transform group-hover:scale-110"}>
+                <div className={cn(stat.color, "bg-current/10 p-2.5 rounded-lg transition-transform group-hover:scale-110")}>
                   <stat.icon className="h-5 w-5" />
                 </div>
                 <span className="text-muted-foreground text-xs font-bold">{stat.change}</span>
