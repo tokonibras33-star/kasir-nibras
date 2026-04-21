@@ -33,7 +33,10 @@ import {
   RotateCcw,
   GitMerge,
   Wallet,
-  MessageSquare
+  MessageSquare,
+  User,
+  Globe,
+  Wifi
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -127,29 +130,33 @@ const CartItemRow = ({
 
   return (
     <div className={cn("flex flex-col gap-1 pb-3 mb-1 border-b last:border-0 border-white/10")}>
-      <div className="flex justify-between items-start gap-2">
+      <div className="flex justify-between items-start gap-1">
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] md:text-[11px] uppercase leading-tight font-black text-white">{item.name}</p>
-          <p className="text-[8px] md:text-[9px] font-bold text-white/60">
+          <p className="text-[9px] md:text-[11px] uppercase leading-tight font-black text-white line-clamp-2">{item.name}</p>
+          <p className="text-[7px] md:text-[9px] font-bold text-white/60">
             {item.color}/{item.size}/{item.buyDiscount || '0'}%
           </p>
         </div>
         {!isSuccess && !settlementTrx && (
           <button onClick={() => removeFromCart(item.cartId)} className="shrink-0 p-1 rounded-full hover:bg-white/10 transition-colors text-rose-300">
-            <Trash2 className="h-3.5 w-3.5" />
+            <Trash2 className="h-3 md:h-3.5 w-3 md:w-3.5" />
           </button>
         )}
       </div>
       {!isSuccess && !settlementTrx && (
-        <div className="flex items-center gap-2 pt-2 mt-1 border-t border-dashed border-white/10">
-          <div className="w-[20%] md:w-[15%]"><Input placeholder="%" value={localPct} onChange={(e) => { setLocalPct(e.target.value); if (e.target.value !== "") setLocalNom(""); }} onBlur={handlePctBlur} className="h-7 border-none text-[10px] font-black text-center px-1 rounded-lg bg-white/20 text-white placeholder:text-white/40 shadow-none focus-visible:ring-0 focus-visible:ring-white/20" /></div>
-          <div className="w-[30%] md:w-[35%]"><Input placeholder="DISC" value={localNom} onChange={(e) => { setLocalNom(e.target.value); if (e.target.value !== "") setLocalPct(""); }} onBlur={handleNomBlur} className="h-7 border-none text-[10px] font-black text-center px-1 rounded-lg bg-white/20 text-white placeholder:text-white/40 shadow-none focus-visible:ring-0 focus-visible:ring-white/20" /></div>
-          <div className="flex items-center gap-1 w-[25%] justify-center">
-            <button onClick={() => updateQuantity(item.cartId, -1)} className="h-7 w-7 rounded-lg flex items-center justify-center bg-white/10 text-white hover:bg-white/20"><Minus className="h-2.5 w-2.5" /></button>
-            <span className="text-[10px] font-black w-4 text-center text-white">{item.quantity}</span>
-            <button onClick={() => updateQuantity(item.cartId, 1)} className="h-7 w-7 rounded-lg flex items-center justify-center bg-white/10 text-white hover:bg-white/20"><Plus className="h-2.5 w-2.5" /></button>
+        <div className="flex flex-col sm:flex-row items-center gap-1.5 pt-1.5 mt-1 border-t border-dashed border-white/10">
+          <div className="flex gap-1 w-full sm:w-auto">
+            <div className="flex-1 sm:w-10"><Input placeholder="%" value={localPct} onChange={(e) => { setLocalPct(e.target.value); if (e.target.value !== "") setLocalNom(""); }} onBlur={handlePctBlur} className="h-6 md:h-7 border-none text-[8px] md:text-[10px] font-black text-center px-1 rounded-lg bg-white/20 text-white placeholder:text-white/40 shadow-none focus-visible:ring-0" /></div>
+            <div className="flex-1 sm:w-16"><Input placeholder="DISC" value={localNom} onChange={(e) => { setLocalNom(e.target.value); if (e.target.value !== "") setLocalPct(""); }} onBlur={handleNomBlur} className="h-6 md:h-7 border-none text-[8px] md:text-[10px] font-black text-center px-1 rounded-lg bg-white/20 text-white placeholder:text-white/40 shadow-none focus-visible:ring-0" /></div>
           </div>
-          <div className="w-[25%] text-right"><p className="text-[10px] font-black leading-none text-white">Rp{(item.price * item.quantity).toLocaleString('id-ID')}</p></div>
+          <div className="flex items-center justify-between w-full sm:w-auto sm:flex-1 gap-2">
+            <div className="flex items-center gap-1">
+              <button onClick={() => updateQuantity(item.cartId, -1)} className="h-6 w-6 rounded-lg flex items-center justify-center bg-white/10 text-white hover:bg-white/20"><Minus className="h-2 w-2" /></button>
+              <span className="text-[9px] font-black w-3 text-center text-white">{item.quantity}</span>
+              <button onClick={() => updateQuantity(item.cartId, 1)} className="h-6 w-6 rounded-lg flex items-center justify-center bg-white/10 text-white hover:bg-white/20"><Plus className="h-2 w-2" /></button>
+            </div>
+            <p className="text-[9px] font-black leading-none text-white text-right">Rp{(item.price * item.quantity).toLocaleString('id-ID')}</p>
+          </div>
         </div>
       )}
     </div>
@@ -533,7 +540,7 @@ export default function CashierPage() {
       <header className="h-14 flex items-center justify-between px-4 bg-[#1F7A63] shrink-0 z-30 shadow-md">
         <div className="flex items-center gap-2">
           <div className="bg-white p-1 rounded-lg w-8 h-8 flex items-center justify-center border border-white/20 overflow-hidden"><Image src={LOGO_URL} alt="Logo" width={24} height={24} /></div>
-          <div><p className="font-black text-xs text-white uppercase leading-tight tracking-tight">NIBRAS HOUSE</p><p className="text-[8px] text-white/70 font-bold uppercase tracking-widest">{displayStoreName}</p></div>
+          <div><p className="font-black text-xs text-white uppercase leading-tight tracking-tight">INDAH FASHION</p><p className="text-[8px] text-white/70 font-bold uppercase tracking-widest">{displayStoreName}</p></div>
         </div>
         <div className="hidden md:flex items-center gap-2 lg:gap-6">
           <button onClick={() => setShowCashLogs(true)} className="px-2 py-2 text-[10px] font-black tracking-widest text-white/90 hover:text-white uppercase flex items-center gap-2 rounded-md transition-all"><Wallet className="h-3.5 w-3.5" /> KAS KASIR</button>
@@ -571,10 +578,10 @@ export default function CashierPage() {
           </div>
         </main>
 
-        <div className="h-[55vh] md:h-full md:grid md:grid-cols-6 overflow-hidden md:col-span-6">
-          <aside className="border-r flex flex-col bg-slate-50 md:col-span-3 h-full overflow-hidden">
+        <div className="h-[55vh] md:h-full grid grid-cols-2 md:grid md:grid-cols-6 overflow-hidden md:col-span-6">
+          <aside className="border-r flex flex-col bg-slate-50 col-span-1 md:col-span-3 h-full overflow-hidden">
             <Card className="flex-1 border-none shadow-none md:soft-shadow md:rounded-[2rem] bg-[#1F7A63] text-white flex flex-col overflow-hidden md:shadow-2xl relative md:m-4">
-              <div className="p-2 md:p-4 border-b border-white/10 shrink-0">
+              <div className="p-1 md:p-4 border-b border-white/10 shrink-0">
                 <div className="hidden md:flex items-center gap-2 mb-3"><ShoppingCart className="h-4 w-4 text-white/70" /><span className="text-[10px] font-black uppercase tracking-widest">KERANJANG</span><Badge className="ml-auto bg-white/20 text-white border-none h-5 px-1.5 text-[9px] font-black">{cart.length}</Badge></div>
                 {settlementTrx ? (
                   <div className="bg-white/10 p-2 md:p-3 rounded-xl md:rounded-2xl border border-white/20 flex justify-between items-center animate-in slide-in-from-top duration-300">
@@ -582,7 +589,7 @@ export default function CashierPage() {
                     <button onClick={() => { setSettlementTrx(null); setIsAdditionalDP(false); }} className="text-white/40 hover:text-white p-1 bg-white/5 rounded-lg transition-all ml-2"><X className="h-3.5 w-3.5 md:h-4 md:w-4" /></button>
                   </div>
                 ) : (
-                  <div className="flex gap-1 p-0.5 bg-white/10 rounded-lg md:rounded-xl border border-white/5">
+                  <div className="flex gap-0.5 md:gap-1 p-0.5 bg-white/10 rounded-lg md:rounded-xl border border-white/5">
                     {(["UMUM", "MEMBER", "AGEN", "ONLINE"] as const).map(type => (
                       <button 
                         key={type} 
@@ -598,15 +605,22 @@ export default function CashierPage() {
                             setSelectedAgent(null);
                           }
                         }} 
-                        className={cn("flex-1 py-1.5 md:py-2 text-[8px] md:text-[9px] font-black rounded-md md:rounded-lg transition-all", customerType === type ? "bg-white text-primary shadow-sm" : "text-white/50 hover:text-white")}
+                        className={cn(
+                          "flex-1 flex flex-col items-center justify-center py-1 md:py-2 rounded-md md:rounded-lg transition-all", 
+                          customerType === type ? "bg-white text-primary shadow-sm" : "text-white/50 hover:text-white"
+                        )}
                       >
-                        {type}
+                        {type === "UMUM" && <User className="h-2.5 w-2.5 md:hidden mb-0.5" />}
+                        {type === "MEMBER" && <UserPlus className="h-2.5 w-2.5 md:hidden mb-0.5" />}
+                        {type === "AGEN" && <ShieldCheck className="h-2.5 w-2.5 md:hidden mb-0.5" />}
+                        {type === "ONLINE" && <Globe className="h-2.5 w-2.5 md:hidden mb-0.5" />}
+                        <span className="text-[6px] xs:text-[7px] md:text-[9px] font-black uppercase leading-none">{type}</span>
                       </button>
                     ))}
                   </div>
                 )}
               </div>
-              <ScrollArea className="flex-1 px-2 md:px-4 py-2">
+              <ScrollArea className="flex-1 px-1.5 md:px-4 py-2">
                 {cart.map((item) => (
                   <CartItemRow 
                     key={item.cartId} 
@@ -620,72 +634,78 @@ export default function CashierPage() {
                   />
                 ))}
               </ScrollArea>
-              <div className="p-2 md:p-5 border-t border-dashed border-white/20 shrink-0 space-y-2 md:space-y-4 bg-black/10">
-                <div className="space-y-2">
-                  <div className="grid grid-cols-2 gap-2">
-                    <button onClick={() => setIsDPMode(!isDPMode)} disabled={!!settlementTrx || customerType === "ONLINE"} className={cn("h-8 md:h-9 rounded-lg md:rounded-xl text-[9px] md:text-[10px] font-black uppercase transition-all flex items-center justify-center gap-2", isDPMode ? "bg-white text-primary shadow-lg" : "bg-white/10 text-white/70 border border-white/10")}><Wallet className="h-3.5 w-3.5" /> DP</button>
-                    <button onClick={() => setIsMultiMode(!isMultiMode)} disabled={!!settlementTrx || customerType === "ONLINE"} className={cn("h-8 md:h-9 rounded-lg md:rounded-xl text-[9px] md:text-[10px] font-black uppercase transition-all flex items-center justify-center gap-2", isMultiMode ? "bg-white text-primary shadow-lg" : "bg-white/10 text-white/70 border border-white/10")}><Calculator className="h-3.5 w-3.5" /> MULTI</button>
+              <div className="p-1.5 md:p-5 border-t border-dashed border-white/20 shrink-0 space-y-1.5 md:space-y-4 bg-black/10">
+                <div className="space-y-1.5">
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <button onClick={() => setIsDPMode(!isDPMode)} disabled={!!settlementTrx || customerType === "ONLINE"} className={cn("h-7 md:h-9 rounded-lg md:rounded-xl text-[8px] md:text-[10px] font-black uppercase transition-all flex items-center justify-center gap-1", isDPMode ? "bg-white text-primary shadow-lg" : "bg-white/10 text-white/70 border border-white/10")}><Wallet className="h-3 w-3 md:h-3.5 md:w-3.5" /> DP</button>
+                    <button onClick={() => setIsMultiMode(!isMultiMode)} disabled={!!settlementTrx || customerType === "ONLINE"} className={cn("h-7 md:h-9 rounded-lg md:rounded-xl text-[8px] md:text-[10px] font-black uppercase transition-all flex items-center justify-center gap-1", isMultiMode ? "bg-white text-primary shadow-lg" : "bg-white/10 text-white/70 border border-white/10")}><Calculator className="h-3 w-3 md:h-3.5 md:w-3.5" /> MULTI</button>
                   </div>
-                  <div className="relative group"><div className="absolute left-2.5 top-1/2 -translate-y-1/2 text-white/40"><Percent className="h-3.5 w-3.5" /></div><Input placeholder="DISC TAMBAHAN" type="number" value={manualAdditionalDiscount} onChange={e => setManualAdditionalDiscount(e.target.value)} disabled={!!settlementTrx} className="h-8 md:h-9 pl-8 bg-white/10 border-none text-white text-[9px] md:text-[10px] font-black rounded-lg md:rounded-xl placeholder:text-white/30 focus-visible:ring-1 focus-visible:ring-white/20" /></div>
+                  <div className="relative group"><div className="absolute left-2 top-1/2 -translate-y-1/2 text-white/40"><Percent className="h-3 w-3 md:h-3.5 md:w-3.5" /></div><Input placeholder="DISC TAMBAHAN" type="number" value={manualAdditionalDiscount} onChange={e => setManualAdditionalDiscount(e.target.value)} disabled={!!settlementTrx} className="h-7 md:h-9 pl-6 md:pl-8 bg-white/10 border-none text-white text-[8px] md:text-[10px] font-black rounded-lg md:rounded-xl placeholder:text-white/30 focus-visible:ring-1 focus-visible:ring-white/20" /></div>
                 </div>
-                <div className="relative group"><div className="absolute left-2.5 top-1/2 -translate-y-1/2 text-white/40"><Ticket className="h-3.5 w-3.5" /></div><Input placeholder="VOCER" value={voucherInput} onChange={e => setVoucherCode(e.target.value)} disabled={!!settlementTrx} className="h-8 md:h-10 pl-8 pr-12 bg-white/10 border-none text-white text-[9px] md:text-[10px] font-black rounded-lg md:rounded-xl placeholder:text-white/30" /><button onClick={handleApplyVoucher} disabled={isValidatingVoucher} className="absolute right-0.5 top-0.5 bottom-0.5 px-2 bg-[#1A6351] text-white rounded-md text-[8px] font-black hover:bg-white/30">CEK</button></div>
-                <div className="hidden md:block space-y-1 pt-2"><div className="flex justify-between items-center text-[10px] opacity-60 font-bold"><span>Subtotal</span><span>Rp {subtotalLabel.toLocaleString('id-ID')}</span></div><div className="flex justify-between items-center text-[10px] font-black text-rose-300"><span>Total Potongan</span><span>- Rp {totalPotongan.toLocaleString('id-ID')}</span></div><div className="pt-3 flex flex-col items-end"><p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Tagihan</p><p className="text-3xl font-black text-white tracking-tighter leading-none">Rp{totalTagihan.toLocaleString('id-ID')}</p></div></div>
+                <div className="relative group"><div className="absolute left-2 top-1/2 -translate-y-1/2 text-white/40"><Ticket className="h-3 w-3 md:h-3.5 md:w-3.5" /></div><Input placeholder="VOCER" value={voucherInput} onChange={e => setVoucherCode(e.target.value)} disabled={!!settlementTrx} className="h-7 md:h-10 pl-6 md:pl-8 pr-10 md:pr-12 bg-white/10 border-none text-white text-[8px] md:text-[10px] font-black rounded-lg md:rounded-xl placeholder:text-white/30" /><button onClick={handleApplyVoucher} disabled={isValidatingVoucher} className="absolute right-0.5 top-0.5 bottom-0.5 px-1 md:px-2 bg-[#1A6351] text-white rounded-md text-[7px] md:text-[8px] font-black hover:bg-white/30">CEK</button></div>
+                <div className="block md:block space-y-1 pt-1 md:pt-2 border-t border-white/5 md:border-none">
+                  <div className="flex justify-between items-center text-[7px] md:text-[10px] opacity-60 font-bold"><span>Total Potongan</span><span className="text-rose-300">-Rp {totalPotongan.toLocaleString('id-ID')}</span></div>
+                  <div className="flex flex-col items-end pt-1 md:pt-3">
+                    <p className="text-[7px] md:text-[10px] font-black text-white/40 uppercase tracking-widest leading-none">Tagihan</p>
+                    <p className="text-sm md:text-3xl font-black text-white tracking-tighter leading-none">Rp{totalTagihan.toLocaleString('id-ID')}</p>
+                  </div>
+                </div>
               </div>
             </Card>
           </aside>
-          <aside className="bg-white flex flex-col h-full overflow-hidden md:col-span-3 md:border-l">
+          <aside className="bg-white flex flex-col h-full overflow-hidden col-span-1 md:col-span-3 md:border-l">
             <div className="hidden md:flex p-3 md:p-6 shrink-0 items-center gap-2 md:gap-3 border-b border-slate-100"><div className="bg-primary/5 p-1.5 md:p-2 rounded-lg md:rounded-xl text-primary"><CreditCard className="h-4 w-4 md:h-5 md:w-5" /></div><span className="text-[10px] md:text-[12px] font-black uppercase tracking-widest text-slate-800">Pembayaran</span></div>
-            <div className="flex-1 overflow-y-auto p-2 md:p-6 space-y-3 md:space-y-8 scrollbar-hide">
+            <div className="flex-1 overflow-y-auto p-2 md:p-6 space-y-2 md:space-y-8 scrollbar-hide">
               {!isSuccess ? (
                 <div className="space-y-3 md:space-y-8 animate-in fade-in slide-in-from-right duration-500">
                   {settlementTrx ? (
                     <div className="p-2 md:p-5 rounded-xl md:rounded-[2rem] border-2 bg-orange-50 border-orange-100 space-y-0.5 md:space-y-2">
                       <p className="text-[7px] md:text-[10px] font-black uppercase opacity-60 leading-none">{isAdditionalDP ? "MODE DP+" : "TOTAL PELUNASAN"}</p>
-                      <h3 className="text-sm md:text-2xl font-black tracking-tighter text-orange-700">Rp{settlementTrx.remainingAmount.toLocaleString()}</h3>
+                      <h3 className="text-xs md:text-2xl font-black tracking-tighter text-orange-700">Rp{settlementTrx.remainingAmount.toLocaleString()}</h3>
                       {(isAdditionalDP || settlementTrx) && (
-                        <div className="space-y-1.5 mt-4">
-                          <Label className="text-[8px] md:text-[10px] font-black uppercase text-orange-600">NOMINAL BAYAR (RP)</Label>
-                          <Input type="text" value={isAdditionalDP ? formatCurrencyInput(additionalDPInput) : formatCurrencyInput(receivedCash)} onChange={e => isAdditionalDP ? setAdditionalDPInput(parseCurrencyInput(e.target.value)) : setReceivedCash(parseCurrencyInput(e.target.value))} className="h-10 md:h-12 text-sm md:text-xl font-black bg-white border-none text-orange-700 text-center rounded-lg shadow-inner" placeholder="Rp 0" />
+                        <div className="space-y-1 mt-2">
+                          <Label className="text-[7px] md:text-[10px] font-black uppercase text-orange-600">NOMINAL BAYAR</Label>
+                          <Input type="text" value={isAdditionalDP ? formatCurrencyInput(additionalDPInput) : formatCurrencyInput(receivedCash)} onChange={e => isAdditionalDP ? setAdditionalDPInput(parseCurrencyInput(e.target.value)) : setReceivedCash(parseCurrencyInput(e.target.value))} className="h-8 md:h-12 text-[10px] md:text-xl font-black bg-white border-none text-orange-700 text-center rounded-lg shadow-inner" placeholder="Rp 0" />
                         </div>
                       )}
                     </div>
                   ) : (
                     <>
-                      {isDPMode && <div className="p-3 md:p-5 bg-orange-50 rounded-xl md:rounded-[2rem] border-2 border-orange-100 space-y-1.5"><Label className="text-[8px] md:text-[10px] font-black uppercase text-orange-600">BAYAR DP (RP)</Label><Input type="text" value={formatCurrencyInput(manualDPInput)} onChange={e => setManualDPInput(parseCurrencyInput(e.target.value))} className="h-10 md:h-14 text-sm md:text-2xl font-black bg-white border-none text-orange-700 text-center rounded-lg shadow-inner" placeholder="Rp 0" /></div>}
-                      {isMultiMode && <div className="p-3 md:p-5 bg-blue-50 rounded-xl md:rounded-[2rem] border-2 border-blue-100 space-y-1.5"><Label className="text-[8px] md:text-[10px] font-black uppercase text-blue-600">INPUT TUNAI (SISANYA {paymentMethod})</Label><Input type="text" value={formatCurrencyInput(multiCashAmount)} onChange={e => setMultiCashAmount(parseCurrencyInput(e.target.value))} className="h-10 md:h-14 text-sm md:text-2xl font-black bg-white border-none text-blue-700 text-center rounded-lg shadow-inner" placeholder="Rp 0" /></div>}
-                      {(customerType === "UMUM" || customerType === "ONLINE") && <div className="space-y-2 md:space-y-6"><Input value={generalName} onChange={e => setGeneralName(e.target.value)} placeholder="Nama..." className="h-9 md:h-12 rounded-lg bg-slate-50 border-none font-bold text-[10px] md:text-sm" /><Input value={generalPhone} onChange={e => setGeneralPhone(e.target.value)} placeholder="No WA..." className="h-9 md:h-12 rounded-lg bg-slate-50 border-none font-bold text-[10px] md:text-sm" /></div>}
-                      {(customerType === "MEMBER" && selectedMember) && <Card className="p-2 md:p-4 rounded-lg bg-primary/5 border-2 border-primary/20"><p className="text-[7px] md:text-[10px] font-black text-primary uppercase">MEMBER:</p><p className="font-black text-[10px] md:text-sm uppercase text-slate-800">{selectedMember.name}</p></Card>}
-                      {(customerType === "AGEN" && selectedAgent) && <Card className="p-2 md:p-4 rounded-lg bg-blue-50/50 border-2 border-blue-100"><p className="text-[7px] md:text-[10px] font-black text-blue-600 uppercase">AGEN:</p><p className="font-black text-[10px] md:text-sm uppercase text-slate-800">{selectedAgent.name}</p></Card>}
+                      {isDPMode && <div className="p-2 md:p-5 bg-orange-50 rounded-xl md:rounded-[2rem] border-2 border-orange-100 space-y-1"><Label className="text-[7px] md:text-[10px] font-black uppercase text-orange-600">BAYAR DP (RP)</Label><Input type="text" value={formatCurrencyInput(manualDPInput)} onChange={e => setManualDPInput(parseCurrencyInput(e.target.value))} className="h-8 md:h-14 text-[10px] md:text-2xl font-black bg-white border-none text-orange-700 text-center rounded-lg shadow-inner" placeholder="Rp 0" /></div>}
+                      {isMultiMode && <div className="p-2 md:p-5 bg-blue-50 rounded-xl md:rounded-[2rem] border-2 border-blue-100 space-y-1"><Label className="text-[7px] md:text-[10px] font-black uppercase text-blue-600">INPUT TUNAI</Label><Input type="text" value={formatCurrencyInput(multiCashAmount)} onChange={e => setMultiCashAmount(parseCurrencyInput(e.target.value))} className="h-8 md:h-14 text-[10px] md:text-2xl font-black bg-white border-none text-blue-700 text-center rounded-lg shadow-inner" placeholder="Rp 0" /></div>}
+                      {(customerType === "UMUM" || customerType === "ONLINE") && <div className="space-y-1.5 md:space-y-6"><Input value={generalName} onChange={e => setGeneralName(e.target.value)} placeholder="Nama..." className="h-8 md:h-12 rounded-lg bg-slate-50 border-none font-bold text-[9px] md:text-sm" /><Input value={generalPhone} onChange={e => setGeneralPhone(e.target.value)} placeholder="No WA..." className="h-8 md:h-12 rounded-lg bg-slate-50 border-none font-bold text-[9px] md:text-sm" /></div>}
+                      {(customerType === "MEMBER" && selectedMember) && <Card className="p-1.5 md:p-4 rounded-lg bg-primary/5 border border-primary/20"><p className="text-[6px] md:text-[10px] font-black text-primary uppercase leading-none">MEMBER:</p><p className="font-black text-[9px] md:text-sm uppercase text-slate-800 truncate">{selectedMember.name}</p></Card>}
+                      {(customerType === "AGEN" && selectedAgent) && <Card className="p-1.5 md:p-4 rounded-lg bg-blue-50/50 border border-blue-100"><p className="text-[6px] md:text-[10px] font-black text-blue-600 uppercase leading-none">AGEN:</p><p className="font-black text-[9px] md:text-sm uppercase text-slate-800 truncate">{selectedAgent.name}</p></Card>}
                     </>
                   )}
-                  <div className="grid grid-cols-3 md:grid-cols-1 gap-2">
+                  <div className="grid grid-cols-1 gap-1.5 md:gap-2">
                     {(["CASH", "TRANSFER", "QRIS"] as const).map(m => (
                       <button 
                         key={m} 
                         onClick={() => setPaymentMethod(m)} 
                         disabled={customerType === "ONLINE" && m !== "TRANSFER"}
                         className={cn(
-                          "flex flex-col md:flex-row items-center justify-center md:justify-start h-12 md:h-16 px-1 md:px-6 gap-1 md:gap-5 rounded-lg md:rounded-2xl border-2 transition-all", 
+                          "flex flex-row items-center h-10 md:h-16 px-2 md:px-6 gap-2 md:gap-5 rounded-lg md:rounded-2xl border-2 transition-all", 
                           paymentMethod === m ? "border-primary bg-primary/5 text-primary" : "border-slate-50 text-slate-300",
                           customerType === "ONLINE" && m !== "TRANSFER" && "opacity-30 grayscale cursor-not-allowed"
                         )}
                       >
-                        <div className={cn("p-1.5 md:p-2.5 rounded-lg transition-all", paymentMethod === m ? "bg-primary text-white" : "bg-slate-100")}>{m === "CASH" ? <Banknote className="h-4 w-4 md:h-6 md:w-6" /> : m === "TRANSFER" ? <CreditCard className="h-4 w-4 md:h-6 md:w-6" /> : <QrCode className="h-4 w-4 md:h-6 md:w-6" />}</div>
-                        <span className="text-[7px] md:text-[13px] font-black uppercase">{m}</span>
+                        <div className={cn("p-1 md:p-2.5 rounded-lg transition-all", paymentMethod === m ? "bg-primary text-white" : "bg-slate-100")}>{m === "CASH" ? <Banknote className="h-3.5 w-3.5 md:h-6 md:w-6" /> : m === "TRANSFER" ? <CreditCard className="h-3.5 w-3.5 md:h-6 md:w-6" /> : <QrCode className="h-3.5 w-3.5 md:h-6 md:w-6" />}</div>
+                        <span className="text-[9px] md:text-[13px] font-black uppercase">{m}</span>
                       </button>
                     ))}
                   </div>
                 </div>
               ) : (
                 <div className="space-y-4 md:space-y-6 animate-in zoom-in duration-500 h-full flex flex-col justify-center text-center">
-                  <div className="bg-emerald-50 p-4 md:p-8 rounded-[1.5rem] md:rounded-[3rem] border-2 border-emerald-100 flex flex-col items-center gap-2">
-                    <div className="bg-emerald-500 p-2 md:p-4 rounded-full text-white"><CheckCircle2 className="h-5 w-5 md:h-10 md:w-10" /></div>
-                    <p className="text-[9px] md:text-xl font-black text-emerald-900 truncate w-full">{lastTrxId}</p>
+                  <div className="bg-emerald-50 p-3 md:p-8 rounded-2xl md:rounded-[3rem] border-2 border-emerald-100 flex flex-col items-center gap-1.5">
+                    <div className="bg-emerald-500 p-1.5 md:p-4 rounded-full text-white"><CheckCircle2 className="h-4 w-4 md:h-10 md:w-10" /></div>
+                    <p className="text-[8px] md:text-xl font-black text-emerald-900 truncate w-full">{lastTrxId}</p>
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    <button className="h-10 md:h-14 rounded-lg md:rounded-xl font-black text-[10px] md:text-[12px] bg-[#1F7A63] text-white flex items-center justify-center gap-2" onClick={() => window.open(`/cashier/print?id=${lastTrxId}&store=${storeId}`, '_blank')}><Printer className="h-4 w-4" /> STRUK</button>
-                    <button className="h-10 md:h-14 rounded-lg md:rounded-xl font-black text-[10px] md:text-[12px] bg-[#25D366] text-white flex items-center justify-center gap-2 hover:bg-[#128C7E]" onClick={() => handleWhatsAppReceipt(lastTrxData)}><MessageSquare className="h-4 w-4" /> KIRIM WA</button>
-                    <button className="col-span-2 md:col-span-1 h-10 md:h-14 rounded-lg md:rounded-xl font-black text-[10px] md:text-[12px] bg-slate-800 text-white" onClick={handleNewTransaction}>BARU</button>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-1.5">
+                    <button className="h-9 md:h-14 rounded-lg md:rounded-xl font-black text-[9px] md:text-[12px] bg-[#1F7A63] text-white flex items-center justify-center gap-1.5" onClick={() => window.open(`/cashier/print?id=${lastTrxId}&store=${storeId}`, '_blank')}><Printer className="h-3.5 w-3.5" /> STRUK</button>
+                    <button className="h-9 md:h-14 rounded-lg md:rounded-xl font-black text-[9px] md:text-[12px] bg-[#25D366] text-white flex items-center justify-center gap-1.5 hover:bg-[#128C7E]" onClick={() => handleWhatsAppReceipt(lastTrxData)}><MessageSquare className="h-3.5 w-3.5" /> WA</button>
+                    <button className="h-9 md:h-14 rounded-lg md:rounded-xl font-black text-[9px] md:text-[12px] bg-slate-800 text-white" onClick={handleNewTransaction}>BARU</button>
                   </div>
                 </div>
               )}
@@ -778,3 +798,4 @@ export default function CashierPage() {
     </div>
   );
 }
+
