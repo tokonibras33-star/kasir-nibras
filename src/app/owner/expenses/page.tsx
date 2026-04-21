@@ -74,6 +74,17 @@ const STORES = [
   { id: "TOKO_C", name: "NHS GDM" },
 ];
 
+const formatCurrencyInput = (val: string | number) => {
+  if (val === undefined || val === null || val === '') return '';
+  const num = typeof val === 'string' ? val.replace(/[^0-9]/g, '') : Math.round(val).toString();
+  if (!num) return '';
+  return 'Rp ' + parseInt(num).toLocaleString('id-ID');
+};
+
+const parseCurrencyInput = (val: string) => {
+  return val.replace(/[^0-9]/g, '');
+};
+
 export default function OperationalExpensesPage() {
   const db = useFirestore();
   const storage = useStorage();
@@ -417,7 +428,13 @@ export default function OperationalExpensesPage() {
                   </div>
                   <div className="space-y-1">
                     <Label className="text-[9px] font-black uppercase text-slate-400">Nominal Rp</Label>
-                    <Input type="number" value={expenseAmount} onChange={e => setExpenseAmount(e.target.value)} placeholder="0" className="h-10 bg-white/10 border-none text-white text-xs font-bold rounded-xl" />
+                    <Input 
+                      type="text" 
+                      value={formatCurrencyInput(expenseAmount)} 
+                      onChange={e => setExpenseAmount(parseCurrencyInput(e.target.value))} 
+                      placeholder="Rp 0" 
+                      className="h-10 bg-white/10 border-none text-white text-xs font-bold rounded-xl" 
+                    />
                   </div>
                 </div>
                 <div className="space-y-1">
@@ -580,9 +597,9 @@ export default function OperationalExpensesPage() {
                 <div className="space-y-1.5">
                   <Label className="text-[10px] font-black uppercase text-slate-400 ml-1">Nominal (Rp)</Label>
                   <Input 
-                    type="number"
-                    value={editingExpense?.amount || ""} 
-                    onChange={e => setEditingExpense({...editingExpense, amount: e.target.value})}
+                    type="text"
+                    value={formatCurrencyInput(editingExpense?.amount || "")} 
+                    onChange={e => setEditingExpense({...editingExpense, amount: parseCurrencyInput(e.target.value)})}
                     className="h-12 rounded-xl bg-white border-none font-black text-primary shadow-sm"
                   />
                 </div>

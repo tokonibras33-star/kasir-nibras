@@ -125,6 +125,7 @@ const navItems: NavItem[] = [
       { label: "Laporan Pembelian", href: "/admin/reports/purchases" },
       { label: "Laporan Pengeluaran", href: "/admin/reports/expenses" },
       { label: "Laporan Arus Kas", href: "/admin/reports/cash-flow" },
+      { label: "Perbandingan Keuangan", href: "/admin/reports/financial-comparison" },
     ]
   },
   { label: "Seting", icon: Settings, href: "/owner/settings", allowedRoles: ["OWNER"] },

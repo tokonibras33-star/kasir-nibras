@@ -73,7 +73,7 @@ export default function PrintClient() {
   // CONSOLIDATE IDENTICAL ITEMS BY NAME (Peleburan Item Identik)
   const consolidatedItems = trx.items?.reduce((acc: any[], item: any) => {
     const itemName = (item.name || "").toUpperCase();
-    const existing = acc.find(i => i.name.toUpperCase() === itemName);
+    const existing = acc.find(i => i.name.toUpperCase() === itemName && i.variantId === item.variantId);
     const labelPrice = item.labelPrice || item.price;
     const qty = item.quantity || 1;
     const itemDiscTotal = ((item.storeDiscountPercent > 0 ? (labelPrice * item.storeDiscountPercent / 100) : (item.storeDiscountNominal || 0)) * qty);
@@ -109,14 +109,11 @@ export default function PrintClient() {
 
       <main className="flex-1 flex items-center justify-center p-4 md:p-12 overflow-y-auto print:p-0 print:m-0">
         <div id="print-area" className="bg-white shadow-2xl print:shadow-none transition-all duration-300" style={{ width: paperSize, minHeight: '100mm', padding: '5mm', fontFamily: 'monospace', color: '#000', fontSize: '10px', lineHeight: '1.2' }}>
-          {/* Header Area */}
           <div className="text-center mb-6 space-y-1">
             <div className="flex justify-center mb-2">
               <img src={logoToUse} alt="Logo" className="h-14 w-auto object-contain mx-auto" />
             </div>
-            {/* Baris 1: Nama Toko */}
             {headerInfo.name && <h2 className="text-sm font-black uppercase leading-tight">{headerInfo.name}</h2>}
-            {/* Baris 2: Alamat (No Telepon) */}
             {headerInfo.address && (
               <p className="text-[9px] font-bold uppercase opacity-80">
                 {headerInfo.address} {headerInfo.phone && `(Tlp. ${headerInfo.phone})`}
@@ -140,12 +137,10 @@ export default function PrintClient() {
               
               return (
                 <div key={i} className="space-y-1 border-b border-dashed border-black/5 pb-2 last:border-none">
-                  {/* Baris 1: Nama Barang (Kiri) & Harga Label (Kanan) */}
                   <div className="flex justify-between items-start gap-4">
                     <p className="font-black uppercase leading-tight text-[10px] flex-1">{item.name}</p>
                     <p className="font-black text-[10px] whitespace-nowrap text-right">Rp{labelPrice.toLocaleString('id-ID')}</p>
                   </div>
-                  {/* Baris 2: item | ukuran | 2x @label (%disc per item | total nominal diskon) */}
                   <p className="text-[9px] opacity-90 italic">
                     {item.series || item.category} | {item.size} | {item.quantity}x @Rp{labelPrice.toLocaleString('id-ID')} 
                     {totalDisc > 0 && ` (disc ${effectiveDiscPct}% | Rp${totalDisc.toLocaleString('id-ID')})`}
@@ -186,3 +181,4 @@ export default function PrintClient() {
     </div>
   );
 }
+

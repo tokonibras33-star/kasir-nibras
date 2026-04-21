@@ -54,7 +54,7 @@ import {
   setDocumentNonBlocking,
   updateDocumentNonBlocking 
 } from "@/firebase";
-import { collection, doc, query, orderBy, serverTimestamp, where, getDocs, limit, Timestamp } from "firebase/firestore";
+import { collection, doc, query, orderBy, serverTimestamp, where, getDocs, limit, Timestamp, getDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { format, subDays } from "date-fns";
@@ -102,6 +102,19 @@ const formatCurrencyInput = (val: string | number) => {
 
 const parseCurrencyInput = (val: string) => {
   return val.replace(/[^0-9]/g, '');
+};
+
+const generateSearchTokens = (name: string, brand: string, category: string, series: string, variants: any[]) => {
+  const tokens = new Set<string>();
+  const add = (val: string) => {
+    if (!val) return;
+    val.toLowerCase().split(/[\s-/]+/).forEach(t => {
+      if (t && t.length > 0) tokens.add(t);
+    });
+  };
+  add(name); add(brand); add(category); add(series);
+  variants.forEach(v => { add(v.color); add(v.size); });
+  return Array.from(tokens);
 };
 
 const CartItemRow = ({ 
@@ -223,7 +236,6 @@ export default function CashierPage() {
   const [isReturnDialogOpen, setIsReturnDialogOpen] = useState(false);
   const [returnQtys, setReturnQtys] = useState<Record<string, number>>({});
   const [trxForReturn, setTrxForReturn] = useState<any>(null);
-  const [historyDateFilter, setHistoryDateFilter] = useState("");
 
   const [isRegisterMemberOpen, setIsRegisterMemberOpen] = useState(false);
   const [isRegisterAgentOpen, setIsRegisterAgentOpen] = useState(false);
@@ -255,23 +267,16 @@ export default function CashierPage() {
   const { data: products } = useCollection<any>(productsQuery);
 
   const stockAQuery = useMemoFirebase(() => user ? collection(db, 'stores', 'TOKO_A', 'stock') : null, [db, user]);
-  const { data: stockA, isLoading: loadingA } = useCollection<any>(stockAQuery);
-  
+  const { data: dataA } = useCollection<any>(stockAQuery);
+  const stockA = dataA || [];
+
   const stockBQuery = useMemoFirebase(() => user ? collection(db, 'stores', 'TOKO_B', 'stock') : null, [db, user]);
-  const { data: stockB, isLoading: loadingB } = useCollection<any>(stockBQuery);
+  const { data: dataB } = useCollection<any>(stockBQuery);
+  const stockB = dataB || [];
 
   const stockCQuery = useMemoFirebase(() => user ? collection(db, 'stores', 'TOKO_C', 'stock') : null, [db, user]);
-  const { data: stockC, isLoading: loadingC } = useCollection<any>(stockCQuery);
-
-  const stockEntriesQuery = useMemoFirebase(() => {
-    if (!user) return null;
-    let q = query(collection(db, "stockEntries"), orderBy("timestamp", "desc"));
-    if (historyDateFilter) {
-        q = query(q, where("entryDate", "==", historyDateFilter));
-    }
-    return q;
-  }, [db, user, historyDateFilter]);
-  const { data: stockEntries } = useCollection<any>(stockEntriesQuery);
+  const { data: dataC } = useCollection<any>(stockCQuery);
+  const stockC = dataC || [];
 
   const membersQuery = useMemoFirebase(() => collection(db, "members"), [db]);
   const { data: members } = useCollection<Member>(membersQuery);
@@ -280,14 +285,14 @@ export default function CashierPage() {
   const { data: agents } = useCollection<Agent>(agentsQuery);
 
   const stockDialogProducts = useMemo(() => {
-    if (stockViewingStoreId === "ALL") return [...(stockA || []), ...(stockB || []), ...(stockC || [])];
-    if (stockViewingStoreId === "TOKO_A") return stockA || [];
-    if (stockViewingStoreId === "TOKO_B") return stockB || [];
-    if (stockViewingStoreId === "TOKO_C") return stockC || [];
+    if (stockViewingStoreId === "ALL") return [...stockA, ...stockB, ...stockC];
+    if (stockViewingStoreId === "TOKO_A") return stockA;
+    if (stockViewingStoreId === "TOKO_B") return stockB;
+    if (stockViewingStoreId === "TOKO_C") return stockC;
     return [];
   }, [stockViewingStoreId, stockA, stockB, stockC]);
 
-  const isStockLoading = loadingA || loadingB || loadingC;
+  const isStockLoading = false; 
 
   const historyQuery = useMemoFirebase(() => {
     if (!user || !historyDate) return null;
@@ -513,7 +518,10 @@ export default function CashierPage() {
         const p = products?.find(prod => prod.id === item.productId);
         if (p) {
           const updated = p.variants.map((v: any) => v.id === item.variantId ? { ...v, stock: v.stock - item.quantity } : v);
-          updateDocumentNonBlocking(doc(db, "stores", storeId, "stock", p.id), { variants: updated });
+          updateDocumentNonBlocking(doc(db, "stores", storeId, "stock", p.id), { 
+            variants: updated,
+            searchTokens: generateSearchTokens(p.name, p.brand || '-', p.category || '-', p.series || '-', updated)
+          });
         }
       });
       setDocumentNonBlocking(doc(db, "stores", storeId, "transactions", trxId), trxData, { merge: true });
@@ -533,7 +541,124 @@ export default function CashierPage() {
     setIsProcessing(false); setIsSuccess(true); setLastTrxId(settlementTrx.id); setLastTrxData(updated); setSettlementTrx(null); setIsCashDialogOpen(false);
   };
 
+  const handleConfirmReturn = async () => {
+    if (!trxForReturn) return;
+    setIsProcessing(true);
+
+    try {
+      const trxId = trxForReturn.id;
+      const currentTrxItems = [...(trxForReturn.items || [])];
+      let refundTotalValue = 0;
+      let labelValueReduction = 0;
+      let discountValueReduction = 0;
+      const returnedItemsList: any[] = [];
+      const updatedItems: any[] = [];
+
+      for (const item of currentTrxItems) {
+        const key = `${item.productId}-${item.variantId}`;
+        const qToReturn = returnQtys[key] || 0;
+        
+        if (qToReturn > 0) {
+          const lPrice = item.labelPrice || item.price || 0;
+          const sPrice = item.price || 0;
+          const refundForItem = sPrice * qToReturn;
+          
+          refundTotalValue += refundForItem;
+          labelValueReduction += lPrice * qToReturn;
+          discountValueReduction += (lPrice - sPrice) * qToReturn;
+          
+          returnedItemsList.push({
+            ...item,
+            quantity: qToReturn,
+            refundAmount: refundForItem
+          });
+
+          // 1. UPDATE STOK DI FIRESTORE (SINYAL AKURAT KE ADMIN)
+          const pRef = doc(db, "stores", storeId, "stock", item.productId);
+          const pSnap = await getDoc(pRef);
+          if (pSnap.exists()) {
+            const pData = pSnap.data();
+            const variants = [...(pData.variants || [])];
+            const vIdx = variants.findIndex((v: any) => v.id === item.variantId);
+            if (vIdx > -1) {
+              variants[vIdx].stock = (variants[vIdx].stock || 0) + qToReturn;
+              updateDocumentNonBlocking(pRef, { 
+                variants: variants,
+                searchTokens: generateSearchTokens(pData.name, pData.brand || '-', pData.category || '-', pData.series || '-', variants)
+              });
+            }
+          }
+
+          // Hitung sisa kuantitas untuk rincian transaksi
+          const remainingQty = item.quantity - qToReturn;
+          if (remainingQty > 0) {
+            updatedItems.push({
+              ...item,
+              quantity: remainingQty
+            });
+          }
+        } else {
+          updatedItems.push(item);
+        }
+      }
+
+      // 2. HITUNG ULANG DATA FINANSIAL TRANSAKSI (SINYAL AKURAT KE LAPORAN OMZET)
+      const newSubtotalLabel = Math.max(0, (trxForReturn.subtotalLabel || 0) - labelValueReduction);
+      const newTotalDiscount = Math.max(0, (trxForReturn.totalDiscount || 0) - discountValueReduction);
+      const newTotal = Math.max(0, (trxForReturn.total || 0) - refundTotalValue);
+      
+      // Sesuaikan jumlah bayar karena uang dikembalikan ke customer
+      const newPaidAmount = Math.max(0, (trxForReturn.paidAmount || 0) - refundTotalValue);
+      const newRemainingAmount = Math.max(0, newTotal - newPaidAmount);
+
+      const now = new Date();
+      const refundEntry = {
+        index: (trxForReturn.paymentHistory?.length || 0) + 1,
+        date: format(now, "yyyy-MM-dd"),
+        time: format(now, "HH:mm:ss"),
+        amount: -refundTotalValue,
+        note: "PENGEMBALIAN DANA (RETUR)"
+      };
+
+      const newHistory = [...(trxForReturn.paymentHistory || []), refundEntry];
+      const newReturnLog = {
+        returnedAt: now.toISOString(),
+        items: returnedItemsList,
+        totalRefund: refundTotalValue,
+        cashier: cashierName
+      };
+
+      // 3. PERMANEN UPDATE DOKUMEN TRANSAKSI DI FIRESTORE
+      updateDocumentNonBlocking(doc(db, "stores", storeId, "transactions", trxId), {
+        items: updatedItems,
+        subtotalLabel: newSubtotalLabel,
+        totalDiscount: newTotalDiscount,
+        total: newTotal,
+        paidAmount: newPaidAmount,
+        remainingAmount: newRemainingAmount,
+        status: newRemainingAmount > 0 ? "DP" : "COMPLETED",
+        returnLog: newReturnLog,
+        paymentHistory: newHistory
+      });
+
+      setIsReturnDialogOpen(false);
+      setTrxForReturn(null);
+      setReturnQtys({});
+      toast({ title: "Retur Berhasil", description: "Stok dan laporan keuangan telah diperbarui secara otomatis." });
+    } catch (err) {
+      console.error("Return error:", err);
+      toast({ title: "Gagal Proses Retur", variant: "destructive" });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const handleNewTransaction = () => { setCart([]); setGeneralName(""); setGeneralPhone(""); setSelectedMember(null); setSelectedAgent(null); setIsDPMode(false); setManualDPInput(""); setIsSuccess(false); setSettlementTrx(null); setAppliedVoucher(null); setManualAdditionalDiscount(""); setIsMultiMode(false); setMultiCashAmount(""); setAdditionalDPInput(""); };
+
+  const liveTrxDetails = useMemo(() => {
+    if (!selectedTrxForDetails || !historyData) return selectedTrxForDetails;
+    return historyData.find(t => t.id === selectedTrxForDetails.id) || selectedTrxForDetails;
+  }, [selectedTrxForDetails, historyData]);
 
   return (
     <div className="flex flex-col h-screen bg-[#F7F9FB] overflow-hidden font-body">
@@ -665,14 +790,14 @@ export default function CashierPage() {
                       {(isAdditionalDP || settlementTrx) && (
                         <div className="space-y-1 mt-2">
                           <Label className="text-[7px] md:text-[10px] font-black uppercase text-orange-600">NOMINAL BAYAR</Label>
-                          <Input type="text" value={isAdditionalDP ? formatCurrencyInput(additionalDPInput) : formatCurrencyInput(receivedCash)} onChange={e => isAdditionalDP ? setAdditionalDPInput(parseCurrencyInput(e.target.value)) : setReceivedCash(parseCurrencyInput(e.target.value))} className="h-8 md:h-12 text-[10px] md:text-xl font-black bg-white border-none text-orange-700 text-center rounded-lg shadow-inner" placeholder="Rp 0" />
+                          <input type="text" value={isAdditionalDP ? formatCurrencyInput(additionalDPInput) : formatCurrencyInput(receivedCash)} onChange={e => isAdditionalDP ? setAdditionalDPInput(parseCurrencyInput(e.target.value)) : setReceivedCash(parseCurrencyInput(e.target.value))} className="h-8 md:h-12 w-full text-[10px] md:text-xl font-black bg-white border-none text-orange-700 text-center rounded-lg shadow-inner" placeholder="Rp 0" />
                         </div>
                       )}
                     </div>
                   ) : (
                     <>
-                      {isDPMode && <div className="p-2 md:p-5 bg-orange-50 rounded-xl md:rounded-[2rem] border-2 border-orange-100 space-y-1"><Label className="text-[7px] md:text-[10px] font-black uppercase text-orange-600">BAYAR DP (RP)</Label><Input type="text" value={formatCurrencyInput(manualDPInput)} onChange={e => setManualDPInput(parseCurrencyInput(e.target.value))} className="h-8 md:h-14 text-[10px] md:text-2xl font-black bg-white border-none text-orange-700 text-center rounded-lg shadow-inner" placeholder="Rp 0" /></div>}
-                      {isMultiMode && <div className="p-2 md:p-5 bg-blue-50 rounded-xl md:rounded-[2rem] border-2 border-blue-100 space-y-1"><Label className="text-[7px] md:text-[10px] font-black uppercase text-blue-600">INPUT TUNAI</Label><Input type="text" value={formatCurrencyInput(multiCashAmount)} onChange={e => setMultiCashAmount(parseCurrencyInput(e.target.value))} className="h-8 md:h-14 text-[10px] md:text-2xl font-black bg-white border-none text-blue-700 text-center rounded-lg shadow-inner" placeholder="Rp 0" /></div>}
+                      {isDPMode && <div className="p-2 md:p-5 bg-orange-50 rounded-xl md:rounded-[2rem] border-2 border-orange-100 space-y-1"><Label className="text-[7px] md:text-[10px] font-black uppercase text-orange-600">BAYAR DP (RP)</Label><input type="text" value={formatCurrencyInput(manualDPInput)} onChange={e => setManualDPInput(parseCurrencyInput(e.target.value))} className="h-8 md:h-14 w-full text-[10px] md:text-2xl font-black bg-white border-none text-orange-700 text-center rounded-lg shadow-inner" placeholder="Rp 0" /></div>}
+                      {isMultiMode && <div className="p-2 md:p-5 bg-blue-50 rounded-xl md:rounded-[2rem] border-2 border-blue-100 space-y-1"><Label className="text-[7px] md:text-[10px] font-black uppercase text-blue-600">INPUT TUNAI</Label><input type="text" value={formatCurrencyInput(multiCashAmount)} onChange={e => setMultiCashAmount(parseCurrencyInput(e.target.value))} className="h-8 md:h-14 w-full text-[10px] md:text-2xl font-black bg-white border-none text-blue-700 text-center rounded-lg shadow-inner" placeholder="Rp 0" /></div>}
                       {(customerType === "UMUM" || customerType === "ONLINE") && <div className="space-y-1.5 md:space-y-6"><Input value={generalName} onChange={e => setGeneralName(e.target.value)} placeholder="Nama..." className="h-8 md:h-12 rounded-lg bg-slate-50 border-none font-bold text-[9px] md:text-sm" /><Input value={generalPhone} onChange={e => setGeneralPhone(e.target.value)} placeholder="No WA..." className="h-8 md:h-12 rounded-lg bg-slate-50 border-none font-bold text-[9px] md:text-sm" /></div>}
                       {(customerType === "MEMBER" && selectedMember) && <Card className="p-1.5 md:p-4 rounded-lg bg-primary/5 border border-primary/20"><p className="text-[6px] md:text-[10px] font-black text-primary uppercase leading-none">MEMBER:</p><p className="font-black text-[9px] md:text-sm uppercase text-slate-800 truncate">{selectedMember.name}</p></Card>}
                       {(customerType === "AGEN" && selectedAgent) && <Card className="p-1.5 md:p-4 rounded-lg bg-blue-50/50 border border-blue-100"><p className="text-[6px] md:text-[10px] font-black text-blue-600 uppercase leading-none">AGEN:</p><p className="font-black text-[9px] md:text-sm uppercase text-slate-800 truncate">{selectedAgent.name}</p></Card>}
@@ -720,7 +845,7 @@ export default function CashierPage() {
       <CashDrawerDialog open={showCashDrawer} onOpenChange={setShowCashLogs} storeId={storeId} displayStoreName={displayStoreName} cashierName={cashierName} cashLog={cashLog} yesterdayRemaining={yesterdayRemaining} todaySalesStats={todaySalesStats} yesterdaySplit={yesterdaySplit} />
       <StockManagementDialog open={showStockList} onOpenChange={setShowStockList} storeId={storeId} cashierName={cashierName} stockDialogProducts={stockDialogProducts || []} isStockLoading={isStockLoading} outgoingMutations={[]} incomingMutations={[]} stockViewingStoreId={stockViewingStoreId} setStockViewingStoreId={setStockViewingStoreId} />
       <TransactionHistorySheet open={showHistory} onOpenChange={setShowHistory} isMobile={isMobile} historyDate={historyDate} setHistoryDate={setHistoryDate} historyFilterMode={historyFilterMode} setHistoryFilterMode={setHistoryFilterMode} showOnlyDP={showOnlyDP} setShowOnlyDP={setShowOnlyDP} history={historyData || []} storeId={storeId} onViewDetails={setSelectedTrxForDetails} onPrint={(id) => window.open(`/cashier/print?id=${id}&store=${storeId}`, '_blank')} onWhatsApp={handleWhatsAppReceipt} onReturn={(trx) => { setTrxForReturn(trx); setIsReturnDialogOpen(true); }} onSettle={(trx, isAdd) => { setSettlementTrx(trx); setIsAdditionalDP(isAdd); setShowHistory(false); setPaymentMethod("CASH"); }} />
-      <TransactionDetailsDialog trx={selectedTrxForDetails} onClose={() => setSelectedTrxForDetails(null)} />
+      <TransactionDetailsDialog trx={liveTrxDetails} onClose={() => setSelectedTrxForDetails(null)} />
 
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
         <DialogContent className="max-w-md rounded-3xl p-8 border-none shadow-2xl">
@@ -785,7 +910,7 @@ export default function CashierPage() {
           <div className="py-8 space-y-6">
             <p className="text-[10px] font-black text-slate-400 uppercase">Total Tagihan</p>
             <p className="text-3xl font-black text-primary">{formatCurrencyInput(amountToProcess)}</p>
-            <Input type="text" value={formatCurrencyInput(receivedCash)} onChange={e => setReceivedCash(parseCurrencyInput(e.target.value))} className="h-16 text-center text-3xl font-black border-none bg-slate-50 rounded-2xl shadow-inner" placeholder="Rp 0" autoFocus />
+            <input type="text" value={formatCurrencyInput(receivedCash)} onChange={e => setReceivedCash(parseCurrencyInput(e.target.value))} className="h-16 w-full text-center text-3xl font-black border-none bg-slate-50 rounded-2xl shadow-inner" placeholder="Rp 0" autoFocus />
             {parseFloat(receivedCash) >= amountToProcess && (<div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100"><p className="text-[10px] font-black text-emerald-600 uppercase mb-1">Kembalian</p><p className="text-2xl font-black text-emerald-700">Rp{(parseFloat(receivedCash) - amountToProcess).toLocaleString('id-ID')}</p></div>)}
           </div>
           <DialogFooter className="flex gap-3"><Button variant="ghost" className="flex-1 font-bold h-12" onClick={() => setIsCashDialogOpen(false)}>BATAL</Button><Button className="flex-1 font-black h-12 shadow-lg" disabled={!receivedCash || parseFloat(receivedCash) < amountToProcess} onClick={() => { if (settlementTrx) handleSettlement({ received: parseFloat(receivedCash), change: parseFloat(receivedCash) - amountToProcess }); else handleProcessTransaction({ received: parseFloat(receivedCash), change: parseFloat(receivedCash) - amountToProcess }); }}>PROSES</Button></DialogFooter>
@@ -793,9 +918,43 @@ export default function CashierPage() {
       </Dialog>
 
       <Dialog open={isReturnDialogOpen} onOpenChange={setIsReturnDialogOpen}>
-        <DialogContent className="max-w-2xl rounded-[2rem] p-0 overflow-hidden border-none shadow-2xl"><DialogHeader className="p-8 bg-rose-600 text-white shrink-0"><DialogTitle className="text-2xl font-black uppercase flex items-center gap-3"><RotateCcw /> Retur Barang</DialogTitle></DialogHeader><div className="p-8 space-y-3 max-h-[60vh] overflow-y-auto bg-slate-50/50">{trxForReturn?.items?.map((item: any) => (<Card key={`${item.productId}-${item.variantId}`} className="p-4 rounded-2xl border-none shadow-sm flex items-center justify-between"><div><p className="font-black text-xs uppercase">{item.name}</p><p className="text-[9px] text-muted-foreground uppercase font-bold">{item.color} | {item.size}</p></div><div className="flex items-center gap-3"><span className="text-[10px] font-bold text-slate-400">Max: {item.quantity}</span><div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl"><button className="h-8 w-8 bg-white rounded-lg flex items-center justify-center shadow-sm" onClick={() => setReturnQtys(prev => ({ ...prev, [`${item.productId}-${item.variantId}`]: Math.max(0, (prev[`${item.productId}-${item.variantId}`] || 0) - 1) }))}><Minus className="h-3 w-3" /></button><span className="w-6 text-center font-black">{returnQtys[`${item.productId}-${item.variantId}`] || 0}</span><button className="h-8 w-8 bg-white rounded-lg flex items-center justify-center shadow-sm" onClick={() => setReturnQtys(prev => ({ ...prev, [`${item.productId}-${item.variantId}`]: Math.min(item.quantity, (prev[`${item.productId}-${item.variantId}`] || 0) + 1) }))}><Plus className="h-3 w-3" /></button></div></div></Card>))}</div><DialogFooter className="p-6 bg-white border-t"><Button className="w-full h-12 rounded-xl font-black bg-rose-600 uppercase tracking-widest text-white shadow-lg" disabled={!Object.values(returnQtys).some(q => q > 0)}>KONFIRMASI RETUR</Button></DialogFooter></DialogContent>
+        <DialogContent className="max-w-2xl rounded-[2rem] p-0 overflow-hidden border-none shadow-2xl">
+          <DialogHeader className="p-8 bg-rose-600 text-white shrink-0">
+            <DialogTitle className="text-2xl font-black uppercase flex items-center gap-3"><RotateCcw /> Retur Barang</DialogTitle>
+          </DialogHeader>
+          <div className="p-8 space-y-3 max-h-[60vh] overflow-y-auto bg-slate-50/50">
+            {trxForReturn?.items?.map((item: any) => (
+              <Card key={`${item.productId}-${item.variantId}`} className="p-4 rounded-2xl border-none shadow-sm flex items-center justify-between">
+                <div>
+                  <p className="font-black text-xs uppercase">{item.name}</p>
+                  <p className="text-[9px] text-muted-foreground uppercase font-bold">{item.color} | {item.size}</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-[10px] font-bold text-slate-400">Max: {item.quantity}</span>
+                  <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl">
+                    <button className="h-8 w-8 bg-white rounded-lg flex items-center justify-center shadow-sm" onClick={() => setReturnQtys(prev => ({ ...prev, [`${item.productId}-${item.variantId}`]: Math.max(0, (prev[`${item.productId}-${item.variantId}`] || 0) - 1) }))}>
+                      <Minus className="h-3 w-3" />
+                    </button>
+                    <span className="w-6 text-center font-black">{returnQtys[`${item.productId}-${item.variantId}`] || 0}</span>
+                    <button className="h-8 w-8 bg-white rounded-lg flex items-center justify-center shadow-sm" onClick={() => setReturnQtys(prev => ({ ...prev, [`${item.productId}-${item.variantId}`]: Math.min(item.quantity, (prev[`${item.productId}-${item.variantId}`] || 0) + 1) }))}>
+                      <Plus className="h-3 w-3" />
+                    </button>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+          <DialogFooter className="p-6 bg-white border-t">
+            <Button 
+              className="w-full h-12 rounded-xl font-black bg-rose-600 uppercase tracking-widest text-white shadow-lg" 
+              disabled={isProcessing || !Object.values(returnQtys).some(q => q > 0)}
+              onClick={handleConfirmReturn}
+            >
+              {isProcessing ? <Loader2 className="animate-spin h-5 w-5" /> : "KONFIRMASI RETUR"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
       </Dialog>
     </div>
   );
 }
-

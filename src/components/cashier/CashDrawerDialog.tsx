@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo, useEffect } from "react";
@@ -50,6 +49,17 @@ interface CashDrawerDialogProps {
   yesterdaySplit: any;
 }
 
+const formatCurrencyInput = (val: string | number) => {
+  if (val === undefined || val === null || val === '') return '';
+  const num = typeof val === 'string' ? val.replace(/[^0-9]/g, '') : Math.round(val).toString();
+  if (!num) return '';
+  return 'Rp ' + parseInt(num).toLocaleString('id-ID');
+};
+
+const parseCurrencyInput = (val: string) => {
+  return val.replace(/[^0-9]/g, '');
+};
+
 export function CashDrawerDialog({ 
   open, 
   onOpenChange, 
@@ -76,6 +86,11 @@ export function CashDrawerDialog({
   const [expenseNote, setExpenseNote] = useState("");
   const [expenseImage, setExpenseImage] = useState("");
   const [isUploadingExpense, setIsUploadingExpense] = useState(false);
+
+  useEffect(() => {
+    if (cashLog?.modal_awal) setInitialCapitalInput(cashLog.modal_awal.toString());
+    if (cashLog?.uang_fisik) setPhysicalCashInput(cashLog.uang_fisik.toString());
+  }, [cashLog]);
 
   const totalWithdrawal = cashLog?.pengambilan?.reduce((s: number, w: any) => s + w.amount, 0) || 0;
   const totalExpense = cashLog?.pengeluaran?.reduce((s: number, e: any) => s + e.amount, 0) || 0;
@@ -220,8 +235,19 @@ export function CashDrawerDialog({
                 <CardContent className="p-5 md:p-6 space-y-4">
                   <div className="space-y-3">
                     <div className="flex justify-between items-center"><span className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase">1. Saldo Carry Over</span><span className="text-xs font-black">Rp {yesterdayRemaining.toLocaleString('id-ID')}</span></div>
-                    <div className="flex justify-between items-center"><span className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase">2. Modal Baru</span><span className="text-xs font-black">Rp {(cashLog?.modal_awal || 0).toLocaleString('id-ID')}</span></div>
-                    <div className="pt-3 border-t border-dashed flex justify-between items-center"><span className="text-[9px] md:text-[10px] font-black text-slate-800 uppercase">Total Modal Start</span><span className="text-sm font-black text-primary">Rp {(yesterdayRemaining + (cashLog?.modal_awal || 0)).toLocaleString('id-ID')}</span></div>
+                    <div className="flex flex-col gap-1.5 pt-1">
+                      <Label className="text-[9px] font-black uppercase text-slate-400">2. Modal Baru Hari Ini</Label>
+                      <div className="flex gap-2">
+                        <Input 
+                          type="text" 
+                          value={formatCurrencyInput(initialCapitalInput)} 
+                          onChange={e => setInitialCapitalInput(parseCurrencyInput(e.target.value))} 
+                          className="h-10 rounded-xl bg-slate-50 border-none font-black text-sm" 
+                          placeholder="Rp 0"
+                        />
+                        <Button onClick={handleSaveModal} size="sm" className="rounded-xl font-black h-10 px-4">OK</Button>
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -253,7 +279,13 @@ export function CashDrawerDialog({
               <div className="flex flex-wrap gap-2 w-full sm:w-auto">
                 <Input value={expenseType} onChange={e => setExpenseType(e.target.value)} placeholder="Jenis..." className="h-9 w-full sm:w-32 rounded-xl text-[10px] shadow-sm" />
                 <Input value={expenseQty} onChange={e => setExpenseQty(e.target.value)} placeholder="Qty" className="h-9 w-full sm:w-16 rounded-xl text-[10px] text-center shadow-sm" />
-                <Input type="number" value={expenseAmount} onChange={e => setExpenseAmount(e.target.value)} placeholder="Rp" className="h-9 w-full sm:w-24 rounded-xl text-[10px] shadow-sm" />
+                <Input 
+                  type="text" 
+                  value={formatCurrencyInput(expenseAmount)} 
+                  onChange={e => setExpenseAmount(parseCurrencyInput(e.target.value))} 
+                  placeholder="Rp 0" 
+                  className="h-9 w-full sm:w-28 rounded-xl text-[10px] shadow-sm font-bold" 
+                />
                 <div className="relative h-9 w-9">
                   <Input type="file" accept="image/*" onChange={handleImageUpload} className="absolute inset-0 opacity-0 cursor-pointer z-10" disabled={isUploadingExpense} />
                   <Button variant="outline" size="icon" className="h-full w-full rounded-xl bg-white shadow-sm">{isUploadingExpense ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : expenseImage ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> : <Camera className="h-3.5 w-3.5 text-slate-400" />}</Button>
@@ -283,7 +315,13 @@ export function CashDrawerDialog({
             <CardHeader className="bg-slate-50 border-b p-4 md:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <CardTitle className="text-[10px] md:text-xs font-black uppercase text-slate-600 flex items-center gap-2"><UserCheck className="h-3.5 w-3.5 md:h-4 md:w-4" /> Pengambilan Uang (Owner)</CardTitle>
               <div className="flex gap-2 w-full sm:w-auto">
-                <Input type="number" value={withdrawalAmountInput} onChange={e => setWithdrawalAmountInput(e.target.value)} placeholder="Nominal Rp" className="h-9 flex-1 sm:w-32 rounded-xl text-[10px] shadow-sm" />
+                <Input 
+                  type="text" 
+                  value={formatCurrencyInput(withdrawalAmountInput)} 
+                  onChange={e => setWithdrawalAmountInput(parseCurrencyInput(e.target.value))} 
+                  placeholder="Rp 0" 
+                  className="h-9 flex-1 sm:w-32 rounded-xl text-[10px] shadow-sm font-bold" 
+                />
                 <Input value={withdrawalNoteInput} onChange={e => setWithdrawalNoteInput(e.target.value)} placeholder="Catatan" className="h-9 flex-1 sm:w-40 rounded-xl text-[10px] shadow-sm" />
                 <Button size="sm" onClick={handleAddWithdrawal} className="h-9 rounded-xl font-black bg-slate-800 text-[10px]">CATAT</Button>
               </div>
@@ -310,7 +348,13 @@ export function CashDrawerDialog({
           <div className="w-full flex flex-col md:flex-row gap-4 items-center">
             <div className="flex-1 space-y-1 w-full">
               <Label className="text-[10px] font-black uppercase text-slate-400 ml-1">Uang Fisik di Tangan Kasir (Hasil Opname)</Label>
-              <Input type="number" value={physicalCashInput || cashLog?.uang_fisik || ""} onChange={e => setPhysicalCashInput(e.target.value)} placeholder="Input nominal fisik..." className="h-12 md:h-14 rounded-2xl bg-slate-50 border-none font-black text-lg md:text-xl text-primary text-center shadow-inner" />
+              <Input 
+                type="text" 
+                value={formatCurrencyInput(physicalCashInput)} 
+                onChange={e => setPhysicalCashInput(parseCurrencyInput(e.target.value))} 
+                placeholder="Rp 0" 
+                className="h-12 md:h-14 rounded-2xl bg-slate-50 border-none font-black text-lg md:text-xl text-primary text-center shadow-inner" 
+              />
             </div>
             <Button className="w-full md:w-auto h-12 md:h-14 px-10 rounded-2xl font-black text-xs md:text-sm shadow-xl shadow-primary/20 uppercase tracking-widest" disabled={!physicalCashInput} onClick={handleSaveCashSettlement}>SIMPAN & TUTUP KAS</Button>
           </div>

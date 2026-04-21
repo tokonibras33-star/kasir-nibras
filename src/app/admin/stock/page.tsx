@@ -143,7 +143,7 @@ export default function StockPage() {
       TOKO_B: '',
       TOKO_C: '',
     },
-    showDistribution: false,
+    showDistribution: true, // Dipaksa true agar terlihat kewajibannya
   });
 
   const [items, setItems] = useState<StockItemInput[]>([createNewItem()]);
@@ -203,7 +203,6 @@ export default function StockPage() {
     processStore(stockC, 'TOKO_C', 'NHS GDM');
 
     const grouped = allItems.reduce((acc, item) => {
-        // Group by identity AND financial data to ensure separate rows for different purchase prices
         const key = `${item.productName}-${item.invoiceDate || 'noinvdate'}-${item.invoiceNo || 'noinv'}-${item.color}-${item.size}-${item.labelPrice}-${item.buyDiscount}`;
         
         if (!acc[key]) {
@@ -258,7 +257,7 @@ export default function StockPage() {
     });
 }, [stockA, stockB, stockC, searchTerm, storeFilter, brandFilter, categoryFilter, invoiceDateFilter, filterMode]);
 
-const handleExportExcel = () => {
+  const handleExportExcel = () => {
     if (detailedStockList.length === 0) return;
     const headers = ['Tgl Nota', 'No Nota', 'Merk', 'Kategori', 'Seri', 'Size', 'Warna', 'Harga Label', '% Beli', 'H. Beli', 'H. Jual', 'Qty Toko NHS KWT', 'Qty Toko IND CO', 'Qty NHS GDM', 'Jumlah Qty', 'Nama Barang'];
     const data = detailedStockList.map((item: any) => [item.invoiceDate || '-', item.invoiceNo || '-', item.brand, item.category, item.series, item.size, item.color, item.labelPrice, item.buyDiscount, item.buyPrice, item.price, item.qty_TOKO_A, item.qty_TOKO_B, item.qty_TOKO_C, item.totalQty, item.productName]);
@@ -267,7 +266,7 @@ const handleExportExcel = () => {
     XLSX.utils.book_append_sheet(wb, ws, 'Stok Global');
     XLSX.writeFile(wb, `ekspor-stok-nibras-${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
     toast({ title: 'Excel Berhasil Diunduh' });
-};
+  };
 
   const handleExportPDF = () => {
     if (detailedStockList.length === 0) return;
@@ -371,7 +370,6 @@ const handleExportExcel = () => {
             setDocumentNonBlocking(doc(db, 'stores', targetStore, 'stock', productId), { id: productId, name: autoName, brand: merk || '-', category: kategori || '-', series: seri || '-', image: `https://picsum.photos/seed/${autoName.replace(/\s+/g, '-')}/400/500`, variants: [variantData], searchTokens: generateSearchTokens(autoName, merk || '-', kategori || '-', seri || '-', [variantData]) }, { merge: true });
           } else {
             const updatedVariants = [...(existingProduct.variants || [])];
-            // Unique check including financial data and invoice number to prevent merging items with different purchase prices
             const vIdx = updatedVariants.findIndex(v => 
               v.color.toLowerCase() === (warna || 'Default').toLowerCase() && 
               v.size === (size || 'L') &&
@@ -468,8 +466,18 @@ const handleExportExcel = () => {
     }));
   };
 
+  const isRowDistributed = (item: StockItemInput) => {
+    const total = parseInt(item.quantity) || 0;
+    const distributed = Object.values(item.distribution).reduce((sum, v) => sum + (parseInt(v) || 0), 0);
+    return total > 0 && distributed === total;
+  };
+
+  const isAllDistributed = items.every(isRowDistributed);
+
   const handleInputStock = () => {
     if (!invoiceHeader.invoiceNo) return toast({ title: 'No Nota Beli wajib diisi.', variant: 'destructive' });
+    if (!isAllDistributed) return toast({ title: 'Distribusi cabang belum sesuai QTY total.', variant: 'destructive' });
+    
     let successCount = 0;
     const entryItems: any[] = [];
     items.forEach(item => {
@@ -477,7 +485,6 @@ const handleExportExcel = () => {
       if (!brand || !series || !color || !labelPrice) return;
       
       const finalLabelPrice = parseFloat(labelPrice) || 0;
-      // Force sellPrice to labelPrice if not entered
       const finalSellPrice = sellPrice ? parseFloat(sellPrice) : finalLabelPrice;
       const finalBuyPrice = parseFloat(buyPriceRp || '0') || 0;
 
@@ -497,7 +504,6 @@ const handleExportExcel = () => {
           setDocumentNonBlocking(doc(db, 'stores', targetStore, 'stock', productId), { id: productId, name: autoName, brand: brand || '-', category: category || '-', series: series || '-', image: `https://picsum.photos/seed/${autoName.replace(/\s+/g, '-')}/400/500`, variants: [variantData], searchTokens: generateSearchTokens(autoName, brand || '-', category || '-', series || '-', [variantData]) }, { merge: true });
         } else {
           const updatedVariants = [...(existingProduct.variants || [])];
-          // Differentiate items with same name/variant but different prices or invoice
           const vIdx = updatedVariants.findIndex(v => 
             v.color.toLowerCase() === color.toLowerCase() && 
             v.size === size &&
@@ -567,7 +573,6 @@ const handleExportExcel = () => {
             const docPath = `stores/${targetStore}/stock/${productDoc.id}`;
             let currentVariants = productUpdates.get(docPath) || JSON.parse(JSON.stringify(productDoc.variants));
 
-            // Use comprehensive check to match the specific price batch
             const variantIndex = currentVariants.findIndex((v: any) => 
               v.color === color && 
               v.size === size && 
@@ -603,7 +608,6 @@ const handleExportExcel = () => {
         }
 
         await deleteDocumentNonBlocking(doc(db, "stockEntries", entry.id));
-
         toast({ title: "Riwayat Input Dihapus", description: "Stok telah berhasil dikembalikan." });
 
     } catch (error) {
@@ -693,13 +697,18 @@ const handleExportExcel = () => {
                   <div className='space-y-6 py-4'>
                     <Card className='border-none shadow-none bg-muted/30 rounded-2xl'><CardContent className='p-4 grid grid-cols-1 sm:grid-cols-4 gap-4'><div className='space-y-1.5'><Label className='text-[10px] font-black uppercase text-muted-foreground'>Tanggal Entry</Label><Input type='date' value={invoiceHeader.entryDate} disabled className='h-10 bg-white/50 border-none' /></div><div className='space-y-1.5'><Label className='text-[10px] font-black uppercase'>No Nota Beli</Label><Input placeholder='NB-001' value={invoiceHeader.invoiceNo} onChange={e => setInvoiceHeader({...invoiceHeader, invoiceNo: e.target.value})} className='h-10 bg-white font-bold' /></div><div className='space-y-1.5'><Label className='text-[10px] font-black uppercase'>Tanggal Nota</Label><Input type='date' value={invoiceHeader.invoiceDate} onChange={e => setInvoiceHeader({...invoiceHeader, invoiceDate: e.target.value})} className='h-10 bg-white' /></div><div className='space-y-1.5'><Label className='text-[10px] font-black uppercase'>Bukti Nota</Label><div className='relative group'><Input type='file' accept='image/*' onChange={(e) => handleImageUpload(e)} className='h-10 bg-white cursor-pointer file:hidden pr-10' />{isUploading === 'invoice' ? <Loader2 className='absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-primary' /> : <ImageIcon className='absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground' />}{invoiceHeader.proofImage && <div className='absolute right-10 top-1/2 -translate-y-1/2 h-6 w-6 rounded-md overflow-hidden border'><img src={invoiceHeader.proofImage} className='w-full h-full object-cover' /></div>}</div></div></CardContent></Card>
                     <div className='flex items-center justify-between'><h3 className='text-sm font-black uppercase flex items-center gap-2'><Package className='h-4 w-4 text-primary' /> Daftar Barang ({items.length})</h3></div>
-                    <div className='space-y-4 pb-8'>{items.map((item, index) => (
-                        <Card key={item.id} className='group relative border-2 border-primary/10 hover:border-primary/30 transition-all rounded-2xl overflow-hidden bg-primary/5 shadow-sm'>{items.length > 1 && <Button variant='destructive' size='icon' className='absolute top-2 right-2 h-8 w-8 rounded-full shadow-lg z-10' onClick={() => setItems(items.filter(i => i.id !== item.id))}><Trash2 className='h-4 w-4' /></Button>}<CardContent className='p-4 sm:p-5 space-y-4'><div className='grid grid-cols-2 md:grid-cols-6 gap-3 sm:gap-4'><div className='space-y-1'><Label className='text-[10px] font-black uppercase'>Merk</Label><Input placeholder='Merk...' value={item.brand} list='brand-recommendations' autoComplete='off' onChange={e => updateItemField(item.id, 'brand', e.target.value)} className='h-9 bg-white' /></div><div className='space-y-1'><Label className='text-[10px] font-black uppercase'>Kategori</Label><Input placeholder='Kategori...' value={item.category} list='category-recommendations' autoComplete='off' onChange={e => updateItemField(item.id, 'category', e.target.value)} className='h-9 bg-white' /></div><div className='space-y-1'><Label className='text-[10px] font-black uppercase'>Seri</Label><Input placeholder='Seri...' value={item.series} autoComplete='off' onChange={e => updateItemField(item.id, 'series', e.target.value)} className='h-9 bg-white' /></div><div className='space-y-1'><Label className='text-[10px] font-black uppercase'>Size</Label><Input placeholder='Size...' value={item.size} list='size-recommendations' autoComplete='off' onChange={e => updateItemField(item.id, 'size', e.target.value)} className='h-9 bg-white' /></div><div className='space-y-1'><Label className='text-[10px] font-black uppercase'>Warna</Label><Input placeholder='Warna...' value={item.color} list='color-recommendations' autoComplete='off' onChange={e => updateItemField(item.id, 'color', e.target.value)} className='h-9 bg-white' /></div><div className='space-y-1'><Label className='text-[10px] font-black uppercase'>Harga Label</Label><Input type='text' value={formatCurrency(item.labelPrice)} autoComplete='off' onChange={e => updateItemField(item.id, 'labelPrice', e.target.value)} className='h-9 font-bold bg-white' /></div><div className='space-y-1'><Label className='text-[10px] font-black uppercase text-emerald-600'>% Beli</Label><Input type='number' step='0.01' value={item.buyDiscount} autoComplete='off' onChange={e => updateItemField(item.id, 'buyDiscount', e.target.value)} className='h-9 bg-white font-bold border-emerald-200' /></div><div className='space-y-1'><Label className='text-[10px] font-black uppercase text-primary'>Harga Beli</Label><Input type='text' value={formatCurrency(item.buyPriceRp)} autoComplete='off' onChange={e => updateItemField(item.id, 'buyPriceRp', e.target.value)} className='h-9 font-bold bg-white border-primary/20 text-primary' /></div><div className='space-y-1'><Label className='text-[10px] font-black uppercase text-accent'>Harga Jual (Opsional)</Label><Input type='text' value={formatCurrency(item.sellPrice)} autoComplete='off' onChange={e => updateItemField(item.id, 'sellPrice', e.target.value)} className='h-9 font-bold bg-white border-accent/30' /></div><div className='space-y-1'><Label className='text-[10px] font-black uppercase text-blue-600'>QTY (Total)</Label><Input type='number' value={item.quantity} autoComplete='off' onChange={e => updateItemField(item.id, 'quantity', e.target.value)} className='h-9 bg-white border-blue-200' /></div><div className='col-span-2 flex items-end'><Button variant={item.showDistribution ? 'secondary' : 'outline'} onClick={() => updateItemField(item.id, 'showDistribution', !item.showDistribution)} className={cn('w-full h-9 font-black gap-2', item.showDistribution ? 'bg-primary text-white' : 'border-primary text-primary hover:bg-primary/5')}><GitMerge className='h-4 w-4' /> {item.showDistribution ? 'TUTUP' : 'BAGI CABANG'}</Button></div></div>{item.showDistribution && (<div className='pt-4 border-t border-primary/10 grid grid-cols-3 gap-4 animate-in slide-in-from-top-2 duration-200'><div className='space-y-1.5'><Label className='text-[9px] font-black uppercase text-primary'>NHS KWT</Label><Input type='number' value={item.distribution.TOKO_A} onChange={e => updateItemField(item.id, 'dist-TOKO_A', e.target.value)} className='h-10 bg-white border-primary/20 font-black text-center' /></div><div className='space-y-1.5'><Label className='text-[9px] font-black uppercase text-blue-600'>IND CO</Label><Input type='number' value={item.distribution.TOKO_B} onChange={e => updateItemField(item.id, 'dist-TOKO_B', e.target.value)} className='h-10 bg-white border-blue-200 font-black text-center' /></div><div className='space-y-1.5'><Label className='text-[9px] font-black uppercase text-emerald-600'>NHS GDM</Label><Input type='number' value={item.distribution.TOKO_C} onChange={e => updateItemField(item.id, 'dist-TOKO_C', e.target.value)} className='h-10 bg-white border-emerald-200 font-black text-center' /></div></div>)}</CardContent></Card>))}
-                      <Button variant='outline' onClick={() => setItems([...items, createNewItem()])} className='w-full h-14 border-2 border-dashed border-primary/20 text-primary hover:bg-primary/10 font-black rounded-2xl flex items-center justify-center gap-2'><Plus className='h-5 w-5' /> TAMBAH BARIS BARU</Button>
+                    <div className='space-y-4 pb-8'>{items.map((item, index) => {
+                        const distTotal = Object.values(item.distribution).reduce((sum, v) => sum + (parseInt(v) || 0), 0);
+                        const isDistOk = isRowDistributed(item);
+                        return (
+                          <Card key={item.id} className={cn('group relative border-2 transition-all rounded-2xl overflow-hidden shadow-sm', isDistOk ? 'border-emerald-200 bg-emerald-50/20' : 'border-primary/10 bg-primary/5 hover:border-primary/30')}>{items.length > 1 && <Button variant='destructive' size='icon' className='absolute top-2 right-2 h-8 w-8 rounded-full shadow-lg z-10' onClick={() => setItems(items.filter(i => i.id !== item.id))}><Trash2 className='h-4 w-4' /></Button>}<CardContent className='p-4 sm:p-5 space-y-4'><div className='grid grid-cols-2 md:grid-cols-6 gap-3 sm:gap-4'><div className='space-y-1'><Label className='text-[10px] font-black uppercase'>Merk</Label><Input placeholder='Merk...' value={item.brand} list='brand-recommendations' autoComplete='off' onChange={e => updateItemField(item.id, 'brand', e.target.value)} className='h-9 bg-white' /></div><div className='space-y-1'><Label className='text-[10px] font-black uppercase'>Kategori</Label><Input placeholder='Kategori...' value={item.category} list='category-recommendations' autoComplete='off' onChange={e => updateItemField(item.id, 'category', e.target.value)} className='h-9 bg-white' /></div><div className='space-y-1'><Label className='text-[10px] font-black uppercase'>Seri</Label><Input placeholder='Seri...' value={item.series} autoComplete='off' onChange={e => updateItemField(item.id, 'series', e.target.value)} className='h-9 bg-white' /></div><div className='space-y-1'><Label className='text-[10px] font-black uppercase'>Size</Label><Input placeholder='Size...' value={item.size} list='size-recommendations' autoComplete='off' onChange={e => updateItemField(item.id, 'size', e.target.value)} className='h-9 bg-white' /></div><div className='space-y-1'><Label className='text-[10px] font-black uppercase'>Warna</Label><Input placeholder='Warna...' value={item.color} list='color-recommendations' autoComplete='off' onChange={e => updateItemField(item.id, 'color', e.target.value)} className='h-9 bg-white' /></div><div className='space-y-1'><Label className='text-[10px] font-black uppercase'>Harga Label</Label><Input type='text' value={formatCurrency(item.labelPrice)} autoComplete='off' onChange={e => updateItemField(item.id, 'labelPrice', e.target.value)} className='h-9 font-bold bg-white' /></div><div className='space-y-1'><Label className='text-[10px] font-black uppercase text-emerald-600'>% Beli</Label><Input type='number' step='0.01' value={item.buyDiscount} autoComplete='off' onChange={e => updateItemField(item.id, 'buyDiscount', e.target.value)} className='h-9 bg-white font-bold border-emerald-200' /></div><div className='space-y-1'><Label className='text-[10px] font-black uppercase text-primary'>Harga Beli</Label><Input type='text' value={formatCurrency(item.buyPriceRp)} autoComplete='off' onChange={e => updateItemField(item.id, 'buyPriceRp', e.target.value)} className='h-9 font-bold bg-white border-primary/20 text-primary' /></div><div className='space-y-1'><Label className='text-[10px] font-black uppercase text-accent'>Harga Jual (Opsional)</Label><Input type='text' value={formatCurrency(item.sellPrice)} autoComplete='off' onChange={e => updateItemField(item.id, 'sellPrice', e.target.value)} className='h-9 font-bold bg-white border-accent/30' /></div><div className='space-y-1'><Label className='text-[10px] font-black uppercase text-blue-600'>QTY (Total)</Label><Input type='number' value={item.quantity} autoComplete='off' onChange={e => updateItemField(item.id, 'quantity', e.target.value)} className='h-9 bg-white border-blue-200' /></div><div className='col-span-2 flex flex-col justify-end'>{!isDistOk && <p className='text-[9px] font-black text-rose-600 mb-1 uppercase animate-pulse'>Wajib Bagi Cabang ({distTotal}/{item.quantity || 0})</p>}<Button variant={isDistOk ? 'secondary' : 'outline'} className={cn('w-full h-9 font-black gap-2', isDistOk ? 'bg-emerald-500 text-white hover:bg-emerald-600' : 'border-primary text-primary hover:bg-primary/5')}><GitMerge className='h-4 w-4' /> BAGI CABANG</Button></div></div><div className='pt-4 border-t border-primary/10 grid grid-cols-3 gap-4'><div className='space-y-1.5'><Label className='text-[9px] font-black uppercase text-primary'>NHS KWT</Label><Input type='number' value={item.distribution.TOKO_A} onChange={e => updateItemField(item.id, 'dist-TOKO_A', e.target.value)} className='h-10 bg-white border-primary/20 font-black text-center' /></div><div className='space-y-1.5'><Label className='text-[9px] font-black uppercase text-blue-600'>IND CO</Label><Input type='number' value={item.distribution.TOKO_B} onChange={e => updateItemField(item.id, 'dist-TOKO_B', e.target.value)} className='h-10 bg-white border-blue-200 font-black text-center' /></div><div className='space-y-1.5'><Label className='text-[9px] font-black uppercase text-emerald-600'>NHS GDM</Label><Input type='number' value={item.distribution.TOKO_C} onChange={e => updateItemField(item.id, 'dist-TOKO_C', e.target.value)} className='h-10 bg-white border-emerald-200 font-black text-center' /></div></div></CardContent></Card>
+                        );
+                    })}
+                      <Button variant='outline' disabled={!isAllDistributed} onClick={() => setItems([...items, createNewItem()])} className='w-full h-14 border-2 border-dashed border-primary/20 text-primary hover:bg-primary/10 font-black rounded-2xl flex items-center justify-center gap-2'><Plus className='h-5 w-5' /> TAMBAH BARIS BARU</Button>
                     </div>
                   </div>
                 </div>
-                <DialogFooter className='p-6 bg-white border-t shrink-0'><Button className='w-full font-black h-14 rounded-2xl shadow-2xl text-lg flex items-center justify-center gap-2 text-white' disabled={!!isUploading} onClick={handleInputStock}><Calculator className='h-5 w-5' /> SIMPAN KE DATABASE</Button></DialogFooter>
+                <DialogFooter className='p-6 bg-white border-t shrink-0'><Button className='w-full font-black h-14 rounded-2xl shadow-2xl text-lg flex items-center justify-center gap-2 text-white' disabled={!!isUploading || !isAllDistributed} onClick={handleInputStock}><Calculator className='h-5 w-5' /> SIMPAN KE DATABASE</Button></DialogFooter>
               </DialogContent>
             </Dialog>
           </div>
