@@ -12,7 +12,7 @@ import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 
-const LOGO_URL = "https://res.cloudinary.com/dqujkgwah/image/upload/v1775115570/nibras_house-removebg-preview_gwdzut.png";
+const LOGO_URL = "https://res.cloudinary.com/dqujkgwah/image/upload/v1776748909/copy_of_logo_ig-nbrs_1_1_xxfcon_e3288e.png";
 
 export default function LoginPage() {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -65,22 +65,21 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-100/50 p-4 font-body">
-      <div className="w-full max-w-2xl space-y-8">
-        <div className="text-center space-y-2">
-          <div className="flex justify-center">
-            <div className="bg-white p-2 rounded-[2.5rem] shadow-2xl shadow-primary/10 animate-in zoom-in duration-500 w-24 h-24 flex items-center justify-center border border-primary/5">
+      <div className="min-h-screen flex items-center justify-center bg-slate-100/50 p-4 font-body">
+        <div className="w-full max-w-2xl space-y-8">
+          <div className="text-center space-y-2">
+            <div className="flex justify-center animate-in zoom-in duration-500">
               <Image 
                 src={LOGO_URL} 
                 alt="Logo Nibras House" 
-                width={80} 
-                height={80} 
+                width={420} 
+                height={120} 
                 className="object-contain"
+                priority
               />
             </div>
-          </div>
           <h1 className="text-4xl font-black tracking-tighter text-foreground font-headline uppercase mt-4">
-            Nibras House
+            Indah Fashion
           </h1>
           <p className="text-muted-foreground font-bold text-sm tracking-widest uppercase opacity-60">
             Sistem Kasir & Inventaris Modern

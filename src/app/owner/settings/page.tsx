@@ -6,10 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useFirestore, useCollection, useMemoFirebase, setDocumentNonBlocking } from "@/firebase";
+import { useFirestore, useCollection, useMemoFirebase, setDocumentNonBlocking, useDoc } from "@/firebase";
 import { collection, doc } from "firebase/firestore";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, User, Key, Mail, ShieldCheck, Store, Shirt } from "lucide-react";
+import { Loader2, User, Key, Mail, ShieldCheck, Store, Shirt, Save, Globe } from "lucide-react";
 import Image from "next/image";
 
 const roles = [
@@ -20,17 +20,23 @@ const roles = [
   { id: "KASIR_TOKO_C", label: "Kasir NHS GDM", icon: Store },
 ];
 
-const LOGO_URL = "https://res.cloudinary.com/dqujkgwah/image/upload/v1775115570/nibras_house-removebg-preview_gwdzut.png";
+const DEFAULT_LOGO = "https://res.cloudinary.com/dqujkgwah/image/upload/v1775115570/nibras_house-removebg-preview_gwdzut.png";
 
 export default function OwnerSettingsPage() {
   const db = useFirestore();
   const [isSaving, setIsSaving] = useState<string | null>(null);
+  const [isSavingLogo, setIsSavingLogo] = useState(false);
 
-  // Ambil data Master Kredensial (Dokumen berawalan ROLE_)
+  // Ambil data Master Kredensial
   const usersQuery = useMemoFirebase(() => collection(db, "users"), [db]);
   const { data: usersData } = useCollection<any>(usersQuery);
   
+  // Ambil data Setting Brand (Logo Struk)
+  const brandRef = useMemoFirebase(() => doc(db, "settings", "brand"), [db]);
+  const { data: brandData } = useDoc<any>(brandRef);
+
   const [localUsers, setLocalUsers] = useState<Record<string, any>>({});
+  const [receiptLogoUrl, setReceiptLogoUrl] = useState("");
 
   useEffect(() => {
     if (usersData) {
@@ -46,6 +52,12 @@ export default function OwnerSettingsPage() {
       setLocalUsers(usersMap);
     }
   }, [usersData]);
+
+  useEffect(() => {
+    if (brandData?.receiptLogoUrl) {
+      setReceiptLogoUrl(brandData.receiptLogoUrl);
+    }
+  }, [brandData]);
 
   const handleUpdateUser = async (roleId: string) => {
     const userData = localUsers[roleId];
@@ -69,7 +81,6 @@ export default function OwnerSettingsPage() {
         updatedAt: new Date().toISOString()
       };
 
-      // Kunci data ke Firestore Master menggunakan pola non-blocking
       setDocumentNonBlocking(userRef, payload, { merge: true });
 
       const displayLabel = roles.find(r => r.id === roleId)?.label || roleId;
@@ -81,6 +92,22 @@ export default function OwnerSettingsPage() {
       toast({ title: "Gagal Menyimpan", description: "Terjadi kesalahan sistem.", variant: "destructive" });
     } finally {
       setIsSaving(null);
+    }
+  };
+
+  const handleSaveLogo = () => {
+    if (!receiptLogoUrl) {
+      toast({ title: "Gagal", description: "URL Logo tidak boleh kosong.", variant: "destructive" });
+      return;
+    }
+    setIsSavingLogo(true);
+    try {
+      setDocumentNonBlocking(brandRef!, { receiptLogoUrl: receiptLogoUrl.trim() }, { merge: true });
+      toast({ title: "Berhasil", description: "Logo struk telah diperbarui di sistem." });
+    } catch (err) {
+      toast({ title: "Gagal", variant: "destructive" });
+    } finally {
+      setTimeout(() => setIsSavingLogo(false), 500);
     }
   };
 
@@ -160,33 +187,87 @@ export default function OwnerSettingsPage() {
           </CardContent>
         </Card>
 
-        {/* Logo Toko Terkunci (Cloudinary) */}
-        <Card className="max-w-2xl border-none soft-shadow overflow-hidden rounded-3xl">
-          <CardHeader className="bg-primary/5 pb-6">
+        {/* Logo Struk Configuration */}
+        <Card className="border-none soft-shadow overflow-hidden rounded-3xl">
+          <CardHeader className="bg-primary/5 border-b">
             <CardTitle className="text-lg font-black flex items-center gap-2 uppercase text-primary">
-              <Shirt className="h-5 w-5" /> Logo Aktif (Cloudinary)
+              <Shirt className="h-5 w-5" /> Pengaturan Logo Struk
             </CardTitle>
-            <CardDescription>Logo ini digunakan secara sistem di seluruh operasional toko.</CardDescription>
+            <CardDescription>Logo ini akan muncul pada hasil cetak struk belanja 58mm/80mm.</CardDescription>
           </CardHeader>
           <CardContent className="p-8">
-            <div className="flex flex-col sm:flex-row items-center gap-8">
-              <div className="relative w-48 h-48 rounded-[2.5rem] bg-white border-2 border-primary/10 flex items-center justify-center overflow-hidden shadow-sm p-4">
+            <div className="flex flex-col lg:flex-row gap-12 items-start">
+              <div className="flex-1 w-full space-y-6">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Link Logo Struk (Cloudinary)</Label>
+                  <div className="relative">
+                    <Globe className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <Input 
+                      placeholder="https://res.cloudinary.com/..." 
+                      className="pl-12 h-14 rounded-2xl bg-white border-2 border-slate-100 font-medium"
+                      value={receiptLogoUrl}
+                      onChange={(e) => setReceiptLogoUrl(e.target.value)}
+                    />
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mt-2 italic px-1">
+                    * Pastikan link bersifat publik dan memiliki background transparan atau putih.
+                  </p>
+                </div>
+                
+                <Button 
+                  className="w-full h-14 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-primary/20"
+                  onClick={handleSaveLogo}
+                  disabled={isSavingLogo}
+                >
+                  {isSavingLogo ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="h-5 w-5 mr-2" /> SIMPAN LOGO STRUK</>}
+                </Button>
+              </div>
+
+              <div className="w-full lg:w-72 flex flex-col items-center gap-4">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Preview Struk</p>
+                <div className="relative w-48 h-48 rounded-[2rem] bg-white border-2 border-dashed border-slate-200 flex items-center justify-center overflow-hidden p-6 shadow-inner">
+                  {receiptLogoUrl ? (
+                    <img 
+                      src={receiptLogoUrl} 
+                      alt="Preview Logo Struk" 
+                      className="max-w-full max-h-full object-contain"
+                      onError={() => setReceiptLogoUrl("")}
+                    />
+                  ) : (
+                    <div className="text-center space-y-2 opacity-20">
+                      <Shirt className="h-12 w-12 mx-auto" />
+                      <p className="text-[9px] font-bold uppercase">No Image</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Logo App (Terkunci) */}
+        <Card className="max-w-2xl border-none soft-shadow overflow-hidden rounded-3xl opacity-60">
+          <CardHeader className="bg-slate-50 pb-6 border-b">
+            <CardTitle className="text-sm font-black flex items-center gap-2 uppercase text-slate-400">
+              Logo Sistem (Header & Login)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-8">
+            <div className="flex items-center gap-8">
+              <div className="relative w-24 h-24 rounded-2xl bg-white border flex items-center justify-center overflow-hidden p-2">
                 <Image 
-                  src={LOGO_URL} 
-                  alt="Logo Nibras House" 
-                  width={160} 
-                  height={160} 
+                  src={DEFAULT_LOGO} 
+                  alt="Default App Logo" 
+                  width={80} 
+                  height={80} 
                   className="object-contain" 
                 />
               </div>
-              <div className="flex-1 space-y-4">
-                <h4 className="font-black text-sm uppercase text-slate-800">Status: Aktif</h4>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Sistem branding saat ini dikunci menggunakan URL eksternal Cloudinary untuk stabilitas tampilan di seluruh perangkat.
+              <div className="flex-1 space-y-1">
+                <h4 className="font-black text-xs uppercase text-slate-500">Logo Aplikasi Aktif</h4>
+                <p className="text-[10px] text-muted-foreground leading-relaxed">
+                  Logo sistem untuk antarmuka aplikasi dikunci demi stabilitas UI. Hanya logo struk yang dapat diubah secara dinamis.
                 </p>
-                <Badge variant="outline" className="font-mono text-[8px] bg-slate-50 py-1">
-                  {LOGO_URL.slice(0, 40)}...
-                </Badge>
               </div>
             </div>
           </CardContent>

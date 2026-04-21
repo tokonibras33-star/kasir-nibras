@@ -7,13 +7,11 @@ import { useFirestore, useDoc, useMemoFirebase, useUser } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Printer, ArrowLeft, Download, Loader2, Info, Lock } from 'lucide-react';
+import { Printer, ArrowLeft, Download, Loader2, Info } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { cn } from '@/lib/utils';
-import Image from 'next/image';
 
-const LOGO_URL = 'https://res.cloudinary.com/dqujkgwah/image/upload/v1775115570/nibras_house-removebg-preview_gwdzut.png';
+const DEFAULT_LOGO_URL = 'https://res.cloudinary.com/dqujkgwah/image/upload/v1775115570/nibras_house-removebg-preview_gwdzut.png';
 
 export default function PrintClient() {
   const searchParams = useSearchParams();
@@ -22,22 +20,33 @@ export default function PrintClient() {
   const { user, isUserLoading } = useUser();
 
   const trxId = searchParams.get('id');
-  const storeId = searchParams.get('store') || 'TOKO_A';
-  const type = searchParams.get('type'); // 'return' or null
-  const displayStoreName = storeId === 'TOKO_A' ? 'NHS KWT' : storeId === 'TOKO_B' ? 'IND CO' : 'NHS GDM';
-
-  const mode = searchParams.get('mode');
+  const storeIdParam = searchParams.get('store') || 'TOKO_A';
   const [paperSize, setPaperSize] = useState<'58mm' | '80mm'>('58mm');
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const trxRef = useMemoFirebase(() => (trxId && user ? doc(db, 'stores', storeId, 'transactions', trxId) : null), [db, storeId, trxId, user]);
-  const { data: trx, isLoading: isDocLoading } = useDoc<any>(trxRef);
+  const [headerInfo, setHeaderInfo] = useState({ name: "", address: "", phone: "", cashier: "" });
 
   useEffect(() => {
-    if (trx && mode === 'download') {
-      setTimeout(() => handleDownloadPDF(), 1000);
+    if (typeof window !== 'undefined') {
+      const name = localStorage.getItem(`nh_store_name_${storeIdParam}`);
+      const address = localStorage.getItem(`nh_store_address_${storeIdParam}`);
+      const phone = localStorage.getItem(`nh_store_phone_${storeIdParam}`);
+      const cashier = localStorage.getItem("nibras_house_cashier_name");
+      
+      setHeaderInfo({ 
+        name: name || "", 
+        address: address || "", 
+        phone: phone || "",
+        cashier: cashier || ""
+      });
     }
-  }, [trx, mode]);
+  }, [storeIdParam]);
+
+  const trxRef = useMemoFirebase(() => (trxId && user ? doc(db, 'stores', storeIdParam, 'transactions', trxId) : null), [db, storeIdParam, trxId, user]);
+  const { data: trx, isLoading: isDocLoading } = useDoc<any>(trxRef);
+
+  const brandRef = useMemoFirebase(() => doc(db, "settings", "brand"), [db]);
+  const { data: brandData } = useDoc<any>(brandRef);
 
   const handleDownloadPDF = async () => {
     if (!trx) return;
@@ -47,197 +56,129 @@ export default function PrintClient() {
       const { jsPDF } = await import('jspdf');
       const element = document.getElementById('print-area');
       if (!element) throw new Error('Print area not found');
-
       const canvas = await html2canvas(element, { scale: 3, useCORS: true, backgroundColor: '#ffffff' });
       const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: paperSize === '58mm' ? [58, 200] : [80, 200],
-      });
-
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: paperSize === '58mm' ? [58, 200] : [80, 200] });
       const imgProps = pdf.getImageProperties(imgData);
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`${type === 'return' ? 'retur' : 'struk'}-${trx.id}.pdf`);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsGenerating(false);
-    }
+      pdf.save(`struk-${trx.id}.pdf`);
+    } catch (err) { console.error(err); } finally { setIsGenerating(false); }
   };
 
-  if (isUserLoading) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-4">
-        <Loader2 className="animate-spin h-10 w-10 text-primary" />
-        <p className="text-xs font-black uppercase tracking-widest text-muted-foreground animate-pulse">Menghubungkan Sesi...</p>
-      </div>
-    );
-  }
+  if (isUserLoading || isDocLoading) return <div className="min-h-screen flex flex-col items-center justify-center gap-4"><Loader2 className="animate-spin h-10 w-10 text-primary" /><p className="text-xs font-black uppercase">Memuat Data Antrean Cetak...</p></div>;
+  if (!user || !trx) return <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center space-y-4"><Info className="h-12 w-12 text-rose-500" /><h1 className="text-xl font-black">Data Transaksi Tidak Ditemukan</h1><Button onClick={() => router.back()}>Kembali</Button></div>;
 
-  if (!user) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center space-y-4 bg-white">
-        <div className="bg-rose-50 p-6 rounded-full">
-          <Lock className="h-12 w-12 text-rose-50" />
-        </div>
-        <h1 className="text-xl font-black uppercase tracking-tight">Akses Terbatas</h1>
-        <p className="text-sm text-muted-foreground max-w-xs">Silakan login kembali di tab utama untuk mengakses struk belanja ini.</p>
-        <Button onClick={() => window.close()} variant="outline" className="rounded-xl px-8">Tutup Tab</Button>
-      </div>
-    );
-  }
+  // CONSOLIDATE IDENTICAL ITEMS BY NAME (Peleburan Item Identik)
+  const consolidatedItems = trx.items?.reduce((acc: any[], item: any) => {
+    const itemName = (item.name || "").toUpperCase();
+    const existing = acc.find(i => i.name.toUpperCase() === itemName);
+    const labelPrice = item.labelPrice || item.price;
+    const qty = item.quantity || 1;
+    const itemDiscTotal = ((item.storeDiscountPercent > 0 ? (labelPrice * item.storeDiscountPercent / 100) : (item.storeDiscountNominal || 0)) * qty);
+    
+    if (existing) { 
+      existing.quantity += qty; 
+      existing.totalNominalDisc += itemDiscTotal; 
+    } else { 
+      acc.push({ ...item, labelPrice, totalNominalDisc: itemDiscTotal }); 
+    }
+    return acc;
+  }, []) || [];
 
-  if (isDocLoading) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-4">
-        <Loader2 className="animate-spin h-10 w-10 text-primary" />
-        <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Mengambil Data Struk...</p>
-      </div>
-    );
-  }
-
-  if (!trx) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center space-y-4">
-        <Info className="h-12 w-12 text-rose-500" />
-        <h1 className="text-xl font-black">Data Struk Tidak Ditemukan</h1>
-        <p className="text-sm text-muted-foreground">ID: {trxId}</p>
-        <Button onClick={() => router.back()}>Kembali</Button>
-      </div>
-    );
-  }
-
-  const isReturn = type === 'return' && trx.returnLog;
-  const itemsToDisplay = isReturn ? trx.returnLog.items : trx.items;
-  const totalQty = itemsToDisplay?.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0) || 0;
-
-  // Rincian Potongan
-  const discToko = trx.storeDiscount || 0;
-  const discTambahan = (trx.additionalManualDiscount || 0) + (trx.voucherDiscount || 0);
+  const totalQty = consolidatedItems.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0) || 0;
+  const logoToUse = brandData?.receiptLogoUrl || DEFAULT_LOGO_URL;
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col md:flex-row print:bg-white print:p-0">
       <aside className="w-full md:w-[350px] bg-white border-r p-6 space-y-8 print:hidden shrink-0">
-        <div className="flex items-center justify-between">
-          <Button variant="ghost" size="sm" onClick={() => router.back()}>
-            <ArrowLeft className="h-4 w-4 mr-2" /> Kembali
-          </Button>
-          <Badge variant="secondary" className="font-black text-[10px]">PRINT CENTER</Badge>
-        </div>
+        <div className="flex items-center justify-between"><Button variant="ghost" size="sm" onClick={() => router.back()}><ArrowLeft className="h-4 w-4 mr-2" /> Kembali</Button><Badge variant="secondary" className="font-black text-[10px]">PRINT CENTER</Badge></div>
         <div className="space-y-6">
           <div className="space-y-3">
-            <Label className="text-[10px] font-black uppercase tracking-widest text-primary">Ukuran Kertas</Label>
+            <Label className="text-[10px] font-black uppercase tracking-widest text-primary">Pilih Ukuran Kertas</Label>
             <RadioGroup value={paperSize} onValueChange={(v: any) => setPaperSize(v)} className="grid grid-cols-2 gap-3">
-              <div className="relative">
-                <RadioGroupItem value="58mm" id="p-58" className="sr-only peer" />
-                <Label htmlFor="p-58" className="flex items-center justify-center h-12 rounded-2xl border-2 peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 cursor-pointer font-black text-sm transition-all">58mm</Label>
-              </div>
-              <div className="relative">
-                <RadioGroupItem value="80mm" id="p-80" className="sr-only peer" />
-                <Label htmlFor="p-80" className="flex items-center justify-center h-12 rounded-2xl border-2 peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 cursor-pointer font-black text-sm transition-all">80mm</Label>
-              </div>
+              <div className="relative"><RadioGroupItem value="58mm" id="p-58" className="sr-only peer" /><Label htmlFor="p-58" className="flex items-center justify-center h-12 rounded-2xl border-2 peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 cursor-pointer font-black text-sm transition-all">58mm</Label></div>
+              <div className="relative"><RadioGroupItem value="80mm" id="p-80" className="sr-only peer" /><Label htmlFor="p-80" className="flex items-center justify-center h-12 rounded-2xl border-2 peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 cursor-pointer font-black text-sm transition-all">80mm</Label></div>
             </RadioGroup>
           </div>
-
-          <div className={cn('p-5 rounded-[2rem] border-2 space-y-1', isReturn ? 'bg-rose-50 border-rose-100' : trx.status === 'DP' ? 'bg-orange-50 border-orange-100' : 'bg-emerald-50 border-emerald-100')}>
-            <p className={cn('text-[9px] font-black uppercase', isReturn ? 'text-rose-600' : trx.status === 'DP' ? 'text-orange-600' : 'text-emerald-600')}>
-              {isReturn ? 'Status Dokumen' : 'Status Pembayaran'}
-            </p>
-            <p className="text-xl font-black uppercase">{isReturn ? 'Bukti Retur Barang' : trx.status === 'DP' ? 'Belum Lunas (DP)' : 'Lunas / Selesai'}</p>
-          </div>
-
-          <Button className={cn('w-full h-20 rounded-[2.5rem] font-black text-lg shadow-2xl', isReturn ? 'bg-rose-600 hover:bg-rose-700' : 'bg-primary')} onClick={() => window.print()}>
-            <Printer className="h-6 w-6 mr-3" /> CETAK STRUK
-          </Button>
-          <Button variant="outline" className="w-full h-14 rounded-2xl font-black text-xs" onClick={handleDownloadPDF} disabled={isGenerating}>
-            {isGenerating ? <Loader2 className="animate-spin h-5 w-5 mr-3" /> : <Download className="h-5 w-5 mr-3" />} SIMPAN SEBAGAI PDF
-          </Button>
+          <Button className="w-full h-20 rounded-[2.5rem] font-black text-lg shadow-2xl bg-primary" onClick={() => window.print()}><Printer className="h-6 w-6 mr-3" /> CETAK STRUK</Button>
+          <Button variant="outline" className="w-full h-14 rounded-2xl font-black text-xs" onClick={handleDownloadPDF} disabled={isGenerating}>{isGenerating ? <Loader2 className="animate-spin h-5 w-5 mr-3" /> : <Download className="h-5 w-5 mr-3" />} SIMPAN PDF</Button>
         </div>
       </aside>
 
       <main className="flex-1 flex items-center justify-center p-4 md:p-12 overflow-y-auto print:p-0 print:m-0">
-        <div id="print-area" className="bg-white shadow-2xl print:shadow-none transition-all duration-300 overflow-hidden" style={{ width: paperSize, minHeight: paperSize === '58mm' ? '100mm' : '120mm', padding: '5mm', fontFamily: 'monospace', color: '#000', fontSize: '10px', lineHeight: '1.2' }}>
-          <div className="text-center mb-6 space-y-2">
+        <div id="print-area" className="bg-white shadow-2xl print:shadow-none transition-all duration-300" style={{ width: paperSize, minHeight: '100mm', padding: '5mm', fontFamily: 'monospace', color: '#000', fontSize: '10px', lineHeight: '1.2' }}>
+          {/* Header Area */}
+          <div className="text-center mb-6 space-y-1">
             <div className="flex justify-center mb-2">
-              <Image src={LOGO_URL} alt="Logo Nibras" width={60} height={60} className="object-contain" />
+              <img src={logoToUse} alt="Logo" className="h-14 w-auto object-contain mx-auto" />
             </div>
-            <h2 className="text-sm font-black uppercase">{isReturn ? 'STRUK RETUR BARANG' : 'NIBRAS HOUSE'}</h2>
-            <p className="text-[9px] font-bold uppercase opacity-80">Cabang {displayStoreName}</p>
+            {/* Baris 1: Nama Toko */}
+            {headerInfo.name && <h2 className="text-sm font-black uppercase leading-tight">{headerInfo.name}</h2>}
+            {/* Baris 2: Alamat (No Telepon) */}
+            {headerInfo.address && (
+              <p className="text-[9px] font-bold uppercase opacity-80">
+                {headerInfo.address} {headerInfo.phone && `(Tlp. ${headerInfo.phone})`}
+              </p>
+            )}
           </div>
 
           <div className="border-y border-dashed border-black/30 py-3 my-3 space-y-1 text-[9px]">
             <div className="flex justify-between"><span>NO STRUK:</span><span>{trx.id}</span></div>
-            <div className="flex justify-between"><span>TANGGAL:</span><span>{isReturn ? trx.returnLog.returnedAt : trx.date?.toDate().toLocaleString('id-ID')}</span></div>
-            <div className="flex justify-between"><span>KASIR:</span><span>{isReturn ? trx.returnLog.returnedBy?.toUpperCase() : trx.cashier?.toUpperCase()}</span></div>
-            <div className="pt-1 border-t border-dashed border-black/10 mt-1">
-              <div className="flex justify-between text-[8px] opacity-70"><span>KATEGORI:</span><span className="uppercase font-black">{trx.customerType || 'UMUM'}</span></div>
-              <div className="flex justify-between font-bold"><span>CUSTOMER:</span><span className="uppercase">{trx.customerName || 'UMUM'}</span></div>
-            </div>
+            <div className="flex justify-between"><span>TANGGAL:</span><span>{trx.date?.toDate().toLocaleString('id-ID')}</span></div>
+            <div className="flex justify-between"><span>KASIR:</span><span>{(headerInfo.cashier || trx.cashier || "").toUpperCase()}</span></div>
+            <div className="pt-1 border-t border-dashed border-black/10 mt-1"><div className="flex justify-between font-bold"><span>CUSTOMER:</span><span className="uppercase">{trx.customerName || "UMUM"}</span></div></div>
           </div>
 
-          <table className="w-full mb-4 text-[10px]">
-            <thead>
-              <tr className="border-b border-black/10 text-[8px] uppercase">
-                <th className="text-left py-1">Barang</th>
-                <th className="text-right py-1">Subtotal</th>
-              </tr>
-            </thead>
-            <tbody>
-              {itemsToDisplay?.map((item: any, i: number) => (
-                <tr key={i} className="align-top border-b border-black/5 last:border-none">
-                  <td className="py-1.5 pr-2">
-                    <div className="font-bold uppercase leading-tight">{item.name}</div>
-                    <div className="text-[8px] opacity-70 italic">{item.color} | {item.size} ({item.quantity}x @{item.labelPrice?.toLocaleString('id-ID')})</div>
-                  </td>
-                  <td className="py-1.5 text-right font-bold whitespace-nowrap">Rp{(item.labelPrice * item.quantity).toLocaleString('id-ID')}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="space-y-4 mb-4">
+            {consolidatedItems.map((item, i) => {
+              const labelPrice = item.labelPrice || item.price;
+              const totalDisc = item.totalNominalDisc || 0;
+              const totalLabelPrice = labelPrice * item.quantity;
+              const effectiveDiscPct = totalLabelPrice > 0 ? Math.round((totalDisc / totalLabelPrice) * 100) : 0;
+              
+              return (
+                <div key={i} className="space-y-1 border-b border-dashed border-black/5 pb-2 last:border-none">
+                  {/* Baris 1: Nama Barang (Kiri) & Harga Label (Kanan) */}
+                  <div className="flex justify-between items-start gap-4">
+                    <p className="font-black uppercase leading-tight text-[10px] flex-1">{item.name}</p>
+                    <p className="font-black text-[10px] whitespace-nowrap text-right">Rp{labelPrice.toLocaleString('id-ID')}</p>
+                  </div>
+                  {/* Baris 2: item | ukuran | 2x @label (%disc per item | total nominal diskon) */}
+                  <p className="text-[9px] opacity-90 italic">
+                    {item.series || item.category} | {item.size} | {item.quantity}x @Rp{labelPrice.toLocaleString('id-ID')} 
+                    {totalDisc > 0 && ` (disc ${effectiveDiscPct}% | Rp${totalDisc.toLocaleString('id-ID')})`}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
 
           <div className="border-t border-dashed border-black/30 pt-3 space-y-1.5">
             <div className="flex justify-between text-[9px]"><span>JUMLAH QTY</span><span>{totalQty} PCS</span></div>
             <div className="flex justify-between text-[9px] font-bold"><span>SUBTOTAL (HARGA LABEL)</span><span>Rp{trx.subtotalLabel?.toLocaleString('id-ID')}</span></div>
+            <div className="flex justify-between text-[9px] font-bold text-rose-600"><span>TOTAL POTONGAN</span><span>-Rp{trx.totalDiscount?.toLocaleString('id-ID')}</span></div>
+            <div className="border-t border-black/10 pt-1 flex justify-between text-[11px] font-black uppercase"><span>TOTAL TAGIHAN</span><span>Rp{trx.total?.toLocaleString('id-ID')}</span></div>
             
-            {!isReturn && (
-              <>
-                <div className="pt-2"></div>
-                {discToko > 0 && <div className="flex justify-between text-[9px]"><span>DISC TOKO</span><span>-Rp{discToko.toLocaleString('id-ID')}</span></div>}
-                {discTambahan > 0 && <div className="flex justify-between text-[9px]"><span>DISC TAMBAHAN</span><span>-Rp{discTambahan.toLocaleString('id-ID')}</span></div>}
-                <div className="border-t border-black/10 pt-1 flex justify-between text-[9px] font-bold"><span>TOTAL POTONGAN</span><span>-Rp{trx.totalDiscount?.toLocaleString('id-ID')}</span></div>
-                <div className="border-t border-black/10 pt-1 flex justify-between text-[10px] font-black uppercase"><span>TOTAL TAGIHAN</span><span>Rp{trx.total?.toLocaleString('id-ID')}</span></div>
-
-                {trx.paymentMethod?.includes("CASH") && trx.cashReceived > 0 && (
-                  <div className="pt-3 space-y-1 border-t border-dashed border-black/20 mt-2">
-                    <div className="flex justify-between text-[9px] font-bold"><span>DIBAYAR CASH</span><span>Rp{trx.cashReceived.toLocaleString('id-ID')}</span></div>
-                    <div className="flex justify-between text-[9px] font-black text-primary"><span>KEMBALIAN</span><span>Rp{trx.cashChange.toLocaleString('id-ID')}</span></div>
-                  </div>
-                )}
-
-                {trx.status === 'DP' && (
-                  <div className="pt-3 space-y-1 border-t border-dashed border-black/20 mt-2">
-                    <div className="flex justify-between text-[9px] font-bold"><span>TOTAL SUDAH DIBAYAR</span><span>Rp{trx.paidAmount?.toLocaleString('id-ID')}</span></div>
-                    <div className="flex justify-between text-[9px] font-black text-orange-600"><span>KEKURANGAN PELUNASAN</span><span>Rp{trx.remainingAmount?.toLocaleString('id-ID')}</span></div>
-                  </div>
-                )}
-              </>
+            {trx.paymentMethod?.includes("CASH") && trx.cashReceived > 0 && (
+              <div className="pt-2 space-y-1 border-t border-dashed border-black/20 mt-2">
+                <div className="flex justify-between text-[9px]"><span>DIBAYAR CASH</span><span>Rp{trx.cashReceived.toLocaleString('id-ID')}</span></div>
+                <div className="flex justify-between text-[9px] font-black"><span>KEMBALIAN</span><span>Rp{trx.cashChange.toLocaleString('id-ID')}</span></div>
+              </div>
             )}
-
-            {isReturn && (
-              <div className="bg-black text-white p-1 flex justify-between text-[10px] font-black">
-                <span>TOTAL REFUND</span><span>Rp{trx.returnLog.totalRefund.toLocaleString('id-ID')}</span>
+            
+            {trx.status === 'DP' && (
+              <div className="pt-2 space-y-1 border-t border-dashed border-black/20 mt-2">
+                <div className="flex justify-between text-[9px] font-bold"><span>TOTAL SUDAH DIBAYAR</span><span>Rp{trx.paidAmount?.toLocaleString('id-ID')}</span></div>
+                <div className="flex justify-between text-[9px] font-black text-rose-600"><span>SISA PELUNASAN</span><span>Rp{trx.remainingAmount?.toLocaleString('id-ID')}</span></div>
               </div>
             )}
           </div>
 
           <div className="text-center mt-10 space-y-1 text-[8px] opacity-60">
             <p className="font-bold text-[9px]">*** TERIMA KASIH ***</p>
-            {trx.status === 'DP' && !isReturn && <div className="font-bold text-black border border-black p-2 my-2 leading-tight uppercase">BARANG DAPAT DIAMBIL<br/>SETELAH PELUNASAN SISA TAGIHAN</div>}
-            <p>BARANG YANG SUDAH DIBELI TIDAK DAPAT DITUKAR / DIKEMBALIKAN</p>
+            <p>BARANG YANG SUDAH DIBELI TIDAK DAPAT DITUKAR/DIKEMBALIKAN</p>
           </div>
         </div>
       </main>

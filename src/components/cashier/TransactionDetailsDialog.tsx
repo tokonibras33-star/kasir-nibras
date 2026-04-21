@@ -19,7 +19,7 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { Package, X } from "lucide-react";
+import { Package, X, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface TransactionDetailsDialogProps {
@@ -78,7 +78,7 @@ export function TransactionDetailsDialog({ trx, onClose }: TransactionDetailsDia
                   <TableRow className="text-[9px] font-black uppercase border-none hover:bg-transparent">
                     <TableHead className="pl-6">Produk</TableHead>
                     <TableHead className="text-center">Qty</TableHead>
-                    <TableHead className="text-right pr-6">Subtotal</TableHead>
+                    <TableHead className="text-right pr-4">Subtotal</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -91,7 +91,7 @@ export function TransactionDetailsDialog({ trx, onClose }: TransactionDetailsDia
                     const totalItemDisc = (discPct > 0 ? (labelPrice * discPct / 100) : discNom) * qty;
 
                     return (
-                      <TableRow key={i} className="border-b last:border-none hover:bg-slate-50/50 transition-colors">
+                      <TableRow key={i} className="border-b last:border-none hover:bg-slate-50/50 transition-colors text-xs">
                         <TableCell className="pl-6 py-3">
                           <p className="font-black text-[11px] uppercase leading-tight text-slate-800">{item.name}</p>
                           <p className="text-[9px] text-muted-foreground uppercase font-bold mt-0.5">
@@ -103,8 +103,8 @@ export function TransactionDetailsDialog({ trx, onClose }: TransactionDetailsDia
                             </p>
                           )}
                         </TableCell>
-                        <TableCell className="text-center font-black text-xs text-slate-800">{qty}</TableCell>
-                        <TableCell className="text-right pr-6 font-black text-xs text-slate-800">
+                        <TableCell className="text-center font-black text-slate-800">{qty}</TableCell>
+                        <TableCell className="text-right pr-4 font-black text-slate-800">
                           Rp {subtotalBeforeDisc.toLocaleString('id-ID')}
                         </TableCell>
                       </TableRow>
@@ -115,43 +115,46 @@ export function TransactionDetailsDialog({ trx, onClose }: TransactionDetailsDia
             </Card>
           </div>
 
-          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-2.5">
-            <div className="flex justify-between text-[11px] font-bold text-slate-400">
-              <span>SUBTOTAL (HARGA LABEL)</span>
-              <span>Rp {(trx.subtotalLabel || 0).toLocaleString('id-ID')}</span>
+          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-4">
+            <div className="flex justify-between items-center text-xs font-black uppercase tracking-wider text-slate-800 border-b pb-3">
+              <span>Total Tagihan</span>
+              <span className="text-lg">Rp {(trx.total || 0).toLocaleString('id-ID')}</span>
             </div>
             
-            <div className="flex justify-between text-[11px] font-bold text-rose-500">
-              <span>DISKON TOKO</span>
-              <span>-Rp {(trx.storeDiscount || 0).toLocaleString('id-ID')}</span>
-            </div>
-            
-            <div className="flex justify-between text-[11px] font-bold text-rose-500">
-              <span>DISKON TAMBAHAN</span>
-              <span>-Rp {((trx.additionalManualDiscount || 0) + (trx.voucherDiscount || 0)).toLocaleString('id-ID')}</span>
-            </div>
-
-            <div className="pt-1.5 mt-1.5 border-t border-dashed flex justify-between text-[11px] font-black text-rose-600 uppercase tracking-tight">
-              <span>Total Seluruh Potongan</span>
-              <span>-Rp {(trx.totalDiscount || 0).toLocaleString('id-ID')}</span>
-            </div>
-
-            <div className="pt-3 mt-3 border-t-2 border-primary/10 flex justify-between items-center">
-              <span className="text-xs font-black uppercase text-slate-800 tracking-wider">Total Tagihan</span>
-              <span className="text-xl font-black text-primary tracking-tighter">Rp {trx.total.toLocaleString('id-ID')}</span>
-            </div>
-            
-            <div className="flex justify-between text-xs font-black text-emerald-600 pt-1">
-              <span className="uppercase text-[9px] tracking-widest">Sudah Dibayar</span>
-              <span>Rp {trx.paidAmount.toLocaleString('id-ID')}</span>
-            </div>
-            
-            {trx.status === 'DP' && (
-              <div className="flex justify-between text-xs font-black text-orange-600 border-t border-orange-100 pt-2 mt-1">
-                <span className="uppercase text-[9px] tracking-widest">Sisa Pelunasan</span>
-                <span>Rp {trx.remainingAmount.toLocaleString('id-ID')}</span>
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 mb-2">
+                <Clock className="h-3.5 w-3.5 text-primary" />
+                <span className="text-[9px] font-black uppercase tracking-widest text-primary">Sudah dibayar :</span>
               </div>
-            )}
+              
+              <div className="space-y-2 border-l-2 border-primary/20 pl-4 ml-1.5">
+                {trx.paymentHistory?.length > 0 ? trx.paymentHistory.map((pay: any, idx: number) => (
+                  <div key={idx} className="flex justify-between items-center text-[10px]">
+                    <span className="font-bold text-slate-500 uppercase">
+                      Pembayaran ke {pay.index} | {pay.date} | {pay.time}
+                    </span>
+                    <span className="font-black text-slate-800">Rp {pay.amount.toLocaleString('id-ID')}</span>
+                  </div>
+                )) : (
+                  <div className="flex justify-between items-center text-[10px]">
+                    <span className="font-bold text-slate-500 uppercase">Sudah Dibayar</span>
+                    <span className="font-black text-slate-800">Rp {(trx.paidAmount || 0).toLocaleString('id-ID')}</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="pt-3 mt-2 border-t border-dashed flex justify-between items-center text-xs font-black">
+                <span className="uppercase text-[9px] tracking-widest text-emerald-600">Total dibayarkan</span>
+                <span className="text-emerald-700">Rp {(trx.paidAmount || 0).toLocaleString('id-ID')}</span>
+              </div>
+              
+              {trx.status === 'DP' && (
+                <div className="flex justify-between items-center text-xs font-black text-orange-600">
+                  <span className="uppercase text-[9px] tracking-widest">Sisa Pelunasan</span>
+                  <span className="text-lg">Rp {(trx.remainingAmount || 0).toLocaleString('id-ID')}</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
         <DialogFooter className="p-6 bg-white border-t shrink-0">
