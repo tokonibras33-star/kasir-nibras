@@ -5,7 +5,7 @@ import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Search, Download, FileSpreadsheet, FileText, Calendar, Filter, Store, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
+import { Search, Download, FileSpreadsheet, FileText, Calendar, Filter, Store, TrendingUp, TrendingDown, DollarSign, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -27,6 +27,8 @@ const CATEGORY_DATABASE = [
   'Accesories', 'Atasan', 'Blouse', 'Bros', 'Celana', 'Ciput', 'Dompet', 'DRESS', 'GAMIS', 'GAMIS ANAK', 'Jilbab Instan', 'Jilbab Segi_4', 'Jilbab Segi_5', 'Jilbab Segi_6', 'Jilbab Segi_7', 'KOKO', 'KOKO ANAK', 'MIDI DRESS', 'Mukena', 'Mukena Anak', 'Oneset', 'Pashmina', 'Sandal', 'Sarung', 'Tas', 'Tunik'
 ];
 
+const CUSTOMER_TYPES = ["UMUM", "MEMBER", "AGEN", "ONLINE"];
+
 export default function SalesReportPage() {
   const db = useFirestore();
   const [filterMode, setFilterMode] = useState<"daily" | "monthly">("daily");
@@ -35,6 +37,7 @@ export default function SalesReportPage() {
   const [storeFilter, setStoreFilter] = useState<string>("ALL");
   const [brandFilter, setBrandFilter] = useState<string>("ALL");
   const [categoryFilter, setCategoryFilter] = useState<string>("ALL");
+  const [customerTypeFilter, setCustomerTypeFilter] = useState<string>("ALL");
   const [searchTerm, setSearchTerm] = useState("");
   const [brandSearch, setBrandSearch] = useState("");
   const [categorySearch, setCategorySearch] = useState("");
@@ -91,6 +94,7 @@ export default function SalesReportPage() {
           trxId: trx.id,
           storeName: trx.storeName,
           customer: trx.customerName || "UMUM",
+          customerType: trx.customerType || "UMUM",
           itemName: item.name,
           brand: item.brand || '-',
           category: item.category || '-',
@@ -114,12 +118,23 @@ export default function SalesReportPage() {
     if (categoryFilter !== "ALL") {
       items = items.filter(i => i.category === categoryFilter);
     }
+    if (customerTypeFilter !== "ALL") {
+      items = items.filter(i => (i.customerType || "").toUpperCase() === customerTypeFilter);
+    }
 
-    return items.filter(i => 
-      i.itemName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      i.trxId.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [allTransactions, searchTerm, brandFilter, categoryFilter]);
+    const tokens = searchTerm.toLowerCase().split(/\s+/).filter(t => t.length > 0);
+    if (tokens.length > 0) {
+      items = items.filter(i => 
+        tokens.every(t => 
+          i.itemName.toLowerCase().includes(t) || 
+          i.trxId.toLowerCase().includes(t) ||
+          i.customer.toLowerCase().includes(t)
+        )
+      );
+    }
+
+    return items;
+  }, [allTransactions, searchTerm, brandFilter, categoryFilter, customerTypeFilter]);
 
   const totals = useMemo(() => {
     return flattenedItems.reduce((acc, i) => {
@@ -132,9 +147,9 @@ export default function SalesReportPage() {
 
   const handleExportExcel = () => {
     if (flattenedItems.length === 0) return;
-    const headers = ["Tanggal", "No Transaksi", "Cabang", "Customer", "Nama Barang", "Merk", "Kategori", "Size", "Warna", "Qty", "Harga Satuan", "Diskon Jual (%) ", "Total", "Harga Beli", "Margin", "Metode Bayar"];
+    const headers = ["Tanggal", "No Transaksi", "Cabang", "Customer", "Tipe", "Nama Barang", "Merk", "Kategori", "Size", "Warna", "Qty", "Harga Satuan", "Diskon Jual (%) ", "Total", "Harga Beli", "Margin", "Metode Bayar"];
     const data = flattenedItems.map(i => [
-      i.date, i.trxId, i.storeName, i.customer, i.itemName, i.brand, i.category, i.size, i.color, i.qty, i.sellPrice, i.discount, i.total, i.buyPrice, i.margin, i.payment
+      i.date, i.trxId, i.storeName, i.customer, i.customerType, i.itemName, i.brand, i.category, i.size, i.color, i.qty, i.sellPrice, i.discount, i.total, i.buyPrice, i.margin, i.payment
     ]);
     const ws = XLSX.utils.aoa_to_sheet([headers, ...data]);
     const wb = XLSX.utils.book_new();
@@ -153,15 +168,16 @@ export default function SalesReportPage() {
     const tableData = flattenedItems.map(i => [
       i.date, i.trxId, i.itemName, i.brand, i.category, i.size, i.qty, 
       `Rp ${i.sellPrice.toLocaleString('id-ID')}`,
-      `${i.discount}%`,
+      `${i.discount.toFixed(1)}%`,
       `Rp ${i.total.toLocaleString('id-ID')}`, 
       i.payment,
       `Rp ${i.buyPrice.toLocaleString('id-ID')}`,
-      `Rp ${i.margin.toLocaleString('id-ID')}`
+      `Rp ${i.margin.toLocaleString('id-ID')}`,
+      `${i.customer} (${i.customerType})`
     ]);
 
     (doc as any).autoTable({
-      head: [['Tanggal', 'No Trx', 'Nama Barang', 'Merk', 'Kategori', 'Size', 'Qty', 'H. Jual', 'Diskon','Total', 'Bayar', 'H. Beli', 'Margin']],
+      head: [['Tanggal', 'No Trx', 'Nama Barang', 'Merk', 'Kategori', 'Size', 'Qty', 'H. Jual', 'Diskon','Total', 'Bayar', 'H. Beli', 'Margin', 'Customer']],
       body: tableData,
       startY: 25,
       theme: 'grid',
@@ -190,88 +206,94 @@ export default function SalesReportPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-6 gap-4 bg-white p-5 rounded-3xl soft-shadow border">
-        <div className="grid grid-cols-2 lg:contents gap-4 lg:col-span-2">
-            <div className="space-y-2">
-              <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Jenis Laporan</Label>
-              <div className="flex bg-slate-100 p-1 rounded-xl">
-                <button onClick={() => setFilterMode("daily")} className={cn("flex-1 py-2 text-[9px] md:text-[10px] font-black rounded-lg transition-all", filterMode === "daily" ? "bg-white text-primary shadow-sm" : "text-slate-500")}>HARIAN</button>
-                <button onClick={() => setFilterMode("monthly")} className={cn("flex-1 py-2 text-[9px] md:text-[10px] font-black rounded-lg transition-all", filterMode === "monthly" ? "bg-white text-primary shadow-sm" : "text-slate-500")}>BULANAN</button>
-              </div>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 bg-white p-5 rounded-3xl soft-shadow border">
+        {/* Periode */}
+        <div className="lg:col-span-3 grid grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Jenis Laporan</Label>
+            <div className="flex bg-slate-100 p-1 rounded-xl">
+              <button onClick={() => setFilterMode("daily")} className={cn("flex-1 py-2 text-[9px] md:text-[10px] font-black rounded-lg transition-all", filterMode === "daily" ? "bg-white text-primary shadow-sm" : "text-slate-500")}>HARIAN</button>
+              <button onClick={() => setFilterMode("monthly")} className={cn("flex-1 py-2 text-[9px] md:text-[10px] font-black rounded-lg transition-all", filterMode === "monthly" ? "bg-white text-primary shadow-sm" : "text-slate-500")}>BULANAN</button>
             </div>
-
-            <div className="space-y-2">
-              <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Pilih Waktu</Label>
-              {filterMode === "daily" ? (
-                <Input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} className="h-11 rounded-xl bg-slate-50 border-none font-bold text-xs" />
-              ) : (
-                <Input type="month" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="h-11 rounded-xl bg-slate-50 border-none font-bold text-xs" />
-              )}
-            </div>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Waktu</Label>
+            {filterMode === "daily" ? (
+              <Input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} className="h-11 rounded-xl bg-slate-50 border-none font-bold text-xs" />
+            ) : (
+              <Input type="month" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="h-11 rounded-xl bg-slate-50 border-none font-bold text-xs" />
+            )}
+          </div>
         </div>
 
-        <div className="grid grid-cols-3 lg:contents gap-2 lg:col-span-3">
-            <div className="space-y-2">
-              <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Merek</Label>
-              <Select value={brandFilter} onValueChange={setBrandFilter}>
-                <SelectTrigger className="h-11 rounded-xl bg-slate-50 border-none font-bold text-[9px] md:text-sm"><SelectValue /></SelectTrigger>
-                <SelectContent className="rounded-xl max-h-96">
-                    <div className="p-2 sticky top-0 bg-white">
-                      <Input
-                        placeholder="Cari Merek..."
-                        value={brandSearch}
-                        onChange={(e) => setBrandSearch(e.target.value)}
-                        onMouseDown={(e) => e.stopPropagation()}
-                        className="h-9"
-                      />
-                    </div>
-                  <SelectItem value="ALL">SEMUA MEREK</SelectItem>
-                  {BRAND_DATABASE.filter(brand => brand.toLowerCase().includes(brandSearch.toLowerCase())).map(brand => <SelectItem key={brand} value={brand}>{brand}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
+        {/* Brand & Kategori & Tipe Pelanggan */}
+        <div className="lg:col-span-6 grid grid-cols-3 gap-2">
+          <div className="space-y-2">
+            <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Merek</Label>
+            <Select value={brandFilter} onValueChange={setBrandFilter}>
+              <SelectTrigger className="h-11 rounded-xl bg-slate-50 border-none font-bold text-[9px] md:text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl max-h-96">
+                <div className="p-2 sticky top-0 bg-white">
+                  <Input placeholder="Cari Merek..." value={brandSearch} onChange={(e) => setBrandSearch(e.target.value)} onMouseDown={(e) => e.stopPropagation()} className="h-9" />
+                </div>
+                <SelectItem value="ALL">SEMUA MEREK</SelectItem>
+                {BRAND_DATABASE.filter(brand => brand.toLowerCase().includes(brandSearch.toLowerCase())).map(brand => <SelectItem key={brand} value={brand}>{brand}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
 
-            <div className="space-y-2">
-              <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Kategori</Label>
-              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="h-11 rounded-xl bg-slate-50 border-none font-bold text-[9px] md:text-sm"><SelectValue /></SelectTrigger>
-                <SelectContent className="rounded-xl max-h-96">
-                    <div className="p-2 sticky top-0 bg-white">
-                      <Input
-                        placeholder="Cari Kategori..."
-                        value={categorySearch}
-                        onChange={(e) => setCategorySearch(e.target.value)}
-                        onMouseDown={(e) => e.stopPropagation()}
-                        className="h-9"
-                      />
-                    </div>
-                  <SelectItem value="ALL">SEMUA KATEGORI</SelectItem>
-                  {CATEGORY_DATABASE.filter(cat => cat.toLowerCase().includes(categorySearch.toLowerCase())).map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-2">
+            <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Kategori</Label>
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="h-11 rounded-xl bg-slate-50 border-none font-bold text-[9px] md:text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl max-h-96">
+                <div className="p-2 sticky top-0 bg-white">
+                  <Input placeholder="Cari Kategori..." value={categorySearch} onChange={(e) => setCategorySearch(e.target.value)} onMouseDown={(e) => e.stopPropagation()} className="h-9" />
+                </div>
+                <SelectItem value="ALL">SEMUA KATEGORI</SelectItem>
+                {CATEGORY_DATABASE.filter(cat => cat.toLowerCase().includes(categorySearch.toLowerCase())).map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
 
-            <div className="space-y-2">
-              <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Cabang</Label>
-              <Select value={storeFilter} onValueChange={setStoreFilter}>
-                <SelectTrigger className="h-11 rounded-xl bg-slate-50 border-none font-bold text-[9px] md:text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="rounded-xl">
-                  <SelectItem value="ALL">SEMUA</SelectItem>
-                  <SelectItem value="TOKO_A">NHS KWT</SelectItem>
-                  <SelectItem value="TOKO_B">IND CO</SelectItem>
-                  <SelectItem value="TOKO_C">NHS GDM</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-2">
+            <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Tipe Pelanggan</Label>
+            <Select value={customerTypeFilter} onValueChange={setCustomerTypeFilter}>
+              <SelectTrigger className="h-11 rounded-xl bg-slate-50 border-none font-bold text-[9px] md:text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl">
+                <SelectItem value="ALL">SEMUA TIPE</SelectItem>
+                {CUSTOMER_TYPES.map(type => <SelectItem key={type} value={type}>{type}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
-        <div className="space-y-2 lg:col-span-1">
-          <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Cari Transaksi</Label>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="ID/Barang..." className="pl-10 h-11 rounded-xl bg-slate-50 border-none text-xs" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+        {/* Cabang & Search */}
+        <div className="lg:col-span-3 grid grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Cabang</Label>
+            <Select value={storeFilter} onValueChange={setStoreFilter}>
+              <SelectTrigger className="h-11 rounded-xl bg-slate-50 border-none font-bold text-[9px] md:text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent className="rounded-xl">
+                <SelectItem value="ALL">SEMUA</SelectItem>
+                <SelectItem value="TOKO_A">NHS KWT</SelectItem>
+                <SelectItem value="TOKO_B">IND CO</SelectItem>
+                <SelectItem value="TOKO_C">NHS GDM</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Cari Global</Label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="ID/Barang/Nama..." className="pl-10 h-11 rounded-xl bg-slate-50 border-none text-xs" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+            </div>
           </div>
         </div>
       </div>
@@ -279,19 +301,19 @@ export default function SalesReportPage() {
       <div className="grid grid-cols-3 md:grid-cols-3 gap-2 md:gap-4">
         <Card className="border-none soft-shadow bg-primary text-white rounded-xl md:rounded-[2rem]">
           <CardHeader className="p-2 md:p-6">
-            <p className="text-[7px] md:text-[10px] font-black uppercase opacity-70 tracking-widest mb-0.5 md:mb-1">Omzet</p>
+            <p className="text-[7px] md:text-[10px] font-black uppercase opacity-70 tracking-widest mb-0.5 md:mb-1">Omzet Penjualan</p>
             <CardTitle className="text-[10px] md:text-2xl font-black">Rp {totals.total.toLocaleString('id-ID')}</CardTitle>
           </CardHeader>
         </Card>
         <Card className="border-none soft-shadow bg-emerald-600 text-white rounded-xl md:rounded-[2rem]">
           <CardHeader className="p-2 md:p-6">
-            <p className="text-[7px] md:text-[10px] font-black uppercase opacity-70 tracking-widest mb-0.5 md:mb-1">Margin</p>
+            <p className="text-[7px] md:text-[10px] font-black uppercase opacity-70 tracking-widest mb-0.5 md:mb-1">Laba Kotor (Margin)</p>
             <CardTitle className="text-[10px] md:text-2xl font-black">Rp {totals.margin.toLocaleString('id-ID')}</CardTitle>
           </CardHeader>
         </Card>
         <Card className="border-none soft-shadow bg-blue-600 text-white rounded-xl md:rounded-[2rem]">
           <CardHeader className="p-2 md:p-6">
-            <p className="text-[7px] md:text-[10px] font-black uppercase opacity-70 tracking-widest mb-0.5 md:mb-1">Item</p>
+            <p className="text-[7px] md:text-[10px] font-black uppercase opacity-70 tracking-widest mb-0.5 md:mb-1">Item Terjual</p>
             <CardTitle className="text-[10px] md:text-2xl font-black">{totals.qty} PCS</CardTitle>
           </CardHeader>
         </Card>
@@ -305,7 +327,7 @@ export default function SalesReportPage() {
                 <TableRow className="text-[10px] font-black uppercase">
                   <TableHead className="pl-6">Tanggal</TableHead>
                   <TableHead>No Trx</TableHead>
-                  <TableHead>Nama Barang</TableHead>
+                  <TableHead className="min-w-[300px]">Nama Barang</TableHead>
                   <TableHead>Merk</TableHead>
                   <TableHead>Kategori</TableHead>
                   <TableHead className="text-center">Size</TableHead>
@@ -315,7 +337,8 @@ export default function SalesReportPage() {
                   <TableHead className="text-right">Total</TableHead>
                   <TableHead>Metode</TableHead>
                   <TableHead className="text-right">Harga Beli</TableHead>
-                  <TableHead className="text-right pr-6">Margin</TableHead>
+                  <TableHead className="text-right">Margin</TableHead>
+                  <TableHead className="pr-6">Customer &amp; Tipe</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -323,9 +346,8 @@ export default function SalesReportPage() {
                   <TableRow key={idx} className="hover:bg-muted/30 border-b border-muted/50 text-[11px]">
                     <TableCell className="pl-6 whitespace-nowrap">{item.date}</TableCell>
                     <TableCell className="font-mono font-bold text-primary">{item.trxId}</TableCell>
-                    <TableCell>
+                    <TableCell className="min-w-[300px]">
                       <p className="font-bold uppercase leading-tight">{item.itemName}</p>
-                      <p className="text-[9px] text-muted-foreground">{item.storeName} | {item.color}</p>
                     </TableCell>
                     <TableCell>{item.brand}</TableCell>
                     <TableCell>{item.category}</TableCell>
@@ -335,7 +357,7 @@ export default function SalesReportPage() {
                     <TableCell className="text-right text-destructive">
                       {item.discount > 0 && (
                         <div className="flex flex-col items-end">
-                          <span className="font-bold">{item.discount.toFixed(2)}%</span>
+                          <span className="font-bold">{item.discount.toFixed(1)}%</span>
                           <span className="text-[9px]">-Rp {item.discountNominal.toLocaleString('id-ID')}</span>
                         </div>
                       )}
@@ -343,11 +365,17 @@ export default function SalesReportPage() {
                     <TableCell className="text-right font-bold">Rp {item.total.toLocaleString('id-ID')}</TableCell>
                     <TableCell><Badge variant="outline" className="text-[9px] font-black border-none bg-slate-100">{item.payment}</Badge></TableCell>
                     <TableCell className="text-right opacity-60">Rp {item.buyPrice.toLocaleString('id-ID')}</TableCell>
-                    <TableCell className="text-right pr-6 font-black text-emerald-600">Rp {item.margin.toLocaleString('id-ID')}</TableCell>
+                    <TableCell className="text-right font-black text-emerald-600">Rp {item.margin.toLocaleString('id-ID')}</TableCell>
+                    <TableCell className="pr-6">
+                      <div className="flex flex-col">
+                        <p className="font-bold uppercase leading-tight text-slate-800">{item.customer}</p>
+                        <p className="text-[9px] text-muted-foreground uppercase font-black">{item.customerType}</p>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 )) : (
                   <TableRow>
-                    <TableCell colSpan={13} className="h-48 text-center text-muted-foreground italic">Tidak ada data penjualan pada periode ini.</TableCell>
+                    <TableCell colSpan={14} className="h-48 text-center text-muted-foreground italic">Tidak ada data penjualan pada periode ini.</TableCell>
                   </TableRow>
                 )}
               </TableBody>
@@ -360,7 +388,8 @@ export default function SalesReportPage() {
                     <TableCell className="text-right text-primary text-sm">Rp {totals.total.toLocaleString('id-ID')}</TableCell>
                     <TableCell />
                     <TableCell />
-                    <TableCell className="text-right pr-6 text-emerald-700 text-sm">Rp {totals.margin.toLocaleString('id-ID')}</TableCell>
+                    <TableCell className="text-right text-emerald-700 text-sm">Rp {totals.margin.toLocaleString('id-ID')}</TableCell>
+                    <TableCell className="pr-6" />
                   </TableRow>
                 </TableFooter>
               )}
