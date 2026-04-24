@@ -438,11 +438,80 @@ export default function CashierPage() {
   const handleWhatsAppReceipt = (trx: any) => {
     if (!trx?.customerPhone) return toast({ title: "Gagal", description: "Nomor WhatsApp tidak ada.", variant: "destructive" });
     let phone = trx.customerPhone.toString().replace(/\D/g, ''); if (phone.startsWith('0')) phone = '62' + phone.substring(1);
+    
+    // Header Info
     const storeNameHeader = customStoreName || `NIBRAS HOUSE ${displayStoreName}`;
+    const storeAddress = customStoreAddress || "";
+    const storePhone = customStorePhone || "";
     const dateStr = trx.date?.toDate ? format(trx.date.toDate(), "dd/MM/yyyy HH:mm") : format(new Date(), "dd/MM/yyyy HH:mm");
-    let msg = `*STRUK PEMBELIAN*\n🛍️ ${storeNameHeader}\n----------------------------\n📅 Tgl: ${dateStr}\n👤 Konsumen: ${trx.customerName || "UMUM"}\n----------------------------\n\n`;
-    trx.items.forEach((i: any) => { msg += `*${i.name}*\n  ${i.quantity}x @Rp${(i.labelPrice || i.price).toLocaleString()}\n`; });
-    msg += `\n*TOTAL TAGIHAN: Rp${trx.total.toLocaleString()}*\n----------------------------\n*** TERIMA KASIH ***`;
+    const cName = cashierName || trx.cashier || "";
+
+    // Consolidate Items (Same as Print)
+    const consolidatedItems = trx.items?.reduce((acc: any[], item: any) => {
+      const itemName = (item.name || "").toUpperCase();
+      const existing = acc.find(i => i.name.toUpperCase() === itemName && i.variantId === item.variantId);
+      const labelPrice = item.labelPrice || item.price || 0;
+      const qty = item.quantity || 1;
+      const itemDiscTotal = ((item.storeDiscountPercent > 0 ? (labelPrice * item.storeDiscountPercent / 100) : (item.storeDiscountNominal || 0)) * qty);
+      
+      if (existing) { 
+        existing.quantity += qty; 
+        existing.totalNominalDisc += itemDiscTotal; 
+      } else { 
+        acc.push({ ...item, labelPrice, totalNominalDisc: itemDiscTotal }); 
+      }
+      return acc;
+    }, []) || [];
+
+    const totalQty = consolidatedItems.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0) || 0;
+
+    // Build Message
+    let msg = `*STRUK PEMBELIAN*\n`;
+    msg += `*${storeNameHeader.toUpperCase()}*\n`;
+    if (storeAddress) msg += `${storeAddress.toUpperCase()}\n`;
+    if (storePhone) msg += `Tlp: ${storePhone}\n`;
+    msg += `----------------------------\n`;
+    msg += `NO STRUK : ${trx.id}\n`;
+    msg += `TANGGAL  : ${dateStr}\n`;
+    msg += `KASIR    : ${cName.toUpperCase()}\n`;
+    msg += `CUSTOMER : ${(trx.customerName || "UMUM").toUpperCase()}\n`;
+    msg += `----------------------------\n\n`;
+
+    consolidatedItems.forEach((item: any) => {
+      const lPrice = item.labelPrice || item.price || 0;
+      const totalLabelPriceForItem = lPrice * item.quantity;
+      const totalDiscForItem = item.totalNominalDisc || 0;
+      const effectiveDiscPct = totalLabelPriceForItem > 0 ? Math.round((totalDiscForItem / totalLabelPriceForItem) * 100) : 0;
+
+      msg += `*${item.name.toUpperCase()}*\n`;
+      msg += `  ${item.quantity}x @Rp${lPrice.toLocaleString('id-ID')}\n`;
+      if (totalDiscForItem > 0) {
+        msg += `  (Disc ${effectiveDiscPct}% | -Rp${totalDiscForItem.toLocaleString('id-ID')})\n`;
+      }
+    });
+
+    msg += `\n----------------------------\n`;
+    msg += `JUMLAH QTY : ${totalQty} PCS\n`;
+    msg += `SUBTOTAL   : Rp${(trx.subtotalLabel || 0).toLocaleString('id-ID')}\n`;
+    msg += `POTONGAN   : -Rp${(trx.totalDiscount || 0).toLocaleString('id-ID')}\n`;
+    msg += `GRAND TOTAL: *Rp${(trx.total || 0).toLocaleString('id-ID')}*\n`;
+    
+    if (trx.paymentMethod?.includes("CASH") && trx.cashReceived > 0) {
+      msg += `----------------------------\n`;
+      msg += `DIBAYAR    : Rp${trx.cashReceived.toLocaleString('id-ID')}\n`;
+      msg += `KEMBALIAN  : Rp${trx.cashChange.toLocaleString('id-ID')}\n`;
+    }
+
+    if (trx.status === 'DP') {
+      msg += `----------------------------\n`;
+      msg += `SUDAH BAYAR : Rp${(trx.paidAmount || 0).toLocaleString('id-ID')}\n`;
+      msg += `SISA TAGIHAN: *Rp${(trx.remainingAmount || 0).toLocaleString('id-ID')}*\n`;
+    }
+
+    msg += `----------------------------\n`;
+    msg += `*** TERIMA KASIH ***\n`;
+    msg += `_BARANG YANG SUDAH DIBELI TIDAK DAPAT DITUKAR/DIKEMBALIKAN_`;
+
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
   };
 
