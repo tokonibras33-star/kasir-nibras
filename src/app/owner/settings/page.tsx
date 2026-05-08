@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { useFirestore, useCollection, useMemoFirebase, setDocumentNonBlocking, useDoc } from "@/firebase";
 import { collection, doc } from "firebase/firestore";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, User, Key, Mail, ShieldCheck, Store, Shirt, Save, Globe } from "lucide-react";
+import { Loader2, User, Key, Mail, ShieldCheck, Store, Shirt, Save, Globe, CreditCard, Image as ImageIcon } from "lucide-react";
 import Image from "next/image";
 
 const roles = [
@@ -21,11 +21,13 @@ const roles = [
 ];
 
 const DEFAULT_LOGO = "https://res.cloudinary.com/dqujkgwah/image/upload/v1775115570/nibras_house-removebg-preview_gwdzut.png";
+const DEFAULT_CARD_BG = "https://res.cloudinary.com/dgsxujjb1/image/upload/v1778132431/KartuMember_IndahFashion_1_lun0a1.png";
 
 export default function OwnerSettingsPage() {
   const db = useFirestore();
   const [isSaving, setIsSaving] = useState<string | null>(null);
   const [isSavingLogo, setIsSavingLogo] = useState(false);
+  const [isSavingCard, setIsSavingCard] = useState(false);
 
   // Ambil data Master Kredensial
   const usersQuery = useMemoFirebase(() => collection(db, "users"), [db]);
@@ -35,8 +37,13 @@ export default function OwnerSettingsPage() {
   const brandRef = useMemoFirebase(() => doc(db, "settings", "brand"), [db]);
   const { data: brandData } = useDoc<any>(brandRef);
 
+  // Ambil data Setting Kartu
+  const cardRef = useMemoFirebase(() => doc(db, "settings", "memberCard"), [db]);
+  const { data: cardSettings } = useDoc<any>(cardRef);
+
   const [localUsers, setLocalUsers] = useState<Record<string, any>>({});
   const [receiptLogoUrl, setReceiptLogoUrl] = useState("");
+  const [cardBackgroundUrl, setCardBackgroundUrl] = useState("");
 
   useEffect(() => {
     if (usersData) {
@@ -58,6 +65,14 @@ export default function OwnerSettingsPage() {
       setReceiptLogoUrl(brandData.receiptLogoUrl);
     }
   }, [brandData]);
+
+  useEffect(() => {
+    if (cardSettings?.backgroundUrl) {
+      setCardBackgroundUrl(cardSettings.backgroundUrl);
+    } else {
+      setCardBackgroundUrl(DEFAULT_CARD_BG);
+    }
+  }, [cardSettings]);
 
   const handleUpdateUser = async (roleId: string) => {
     const userData = localUsers[roleId];
@@ -108,6 +123,22 @@ export default function OwnerSettingsPage() {
       toast({ title: "Gagal", variant: "destructive" });
     } finally {
       setTimeout(() => setIsSavingLogo(false), 500);
+    }
+  };
+
+  const handleSaveCardBg = () => {
+    if (!cardBackgroundUrl) {
+      toast({ title: "Gagal", description: "URL Background tidak boleh kosong.", variant: "destructive" });
+      return;
+    }
+    setIsSavingCard(true);
+    try {
+      setDocumentNonBlocking(cardRef!, { backgroundUrl: cardBackgroundUrl.trim() }, { merge: true });
+      toast({ title: "Berhasil", description: "Desain latar kartu telah diperbarui." });
+    } catch (err) {
+      toast({ title: "Gagal", variant: "destructive" });
+    } finally {
+      setTimeout(() => setIsSavingCard(false), 500);
     }
   };
 
@@ -183,6 +214,64 @@ export default function OwnerSettingsPage() {
                   </div>
                 );
               })}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Kartu Cetak Member */}
+        <Card className="border-none soft-shadow overflow-hidden rounded-3xl">
+          <CardHeader className="bg-primary/5 border-b">
+            <CardTitle className="text-lg font-black flex items-center gap-2 uppercase text-primary">
+              <CreditCard className="h-5 w-5" /> Desain Kartu Member
+            </CardTitle>
+            <CardDescription>Atur desain latar belakang kartu member fisik Indah Fashion.</CardDescription>
+          </CardHeader>
+          <CardContent className="p-8">
+            <div className="flex flex-col lg:flex-row gap-12 items-start">
+              <div className="flex-1 w-full space-y-6">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Link Background Kartu (Cloudinary)</Label>
+                  <div className="relative">
+                    <ImageIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <Input 
+                      placeholder="https://res.cloudinary.com/..." 
+                      className="pl-12 h-14 rounded-2xl bg-white border-2 border-slate-100 font-medium"
+                      value={cardBackgroundUrl}
+                      onChange={(e) => setCardBackgroundUrl(e.target.value)}
+                    />
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mt-2 italic px-1">
+                    * Gunakan gambar dengan rasio kartu ID-1 (sekitar 1011x569 pixel).
+                  </p>
+                </div>
+                
+                <Button 
+                  className="w-full h-14 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-primary/20"
+                  onClick={handleSaveCardBg}
+                  disabled={isSavingCard}
+                >
+                  {isSavingCard ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="h-5 w-5 mr-2" /> SIMPAN DESAIN KARTU</>}
+                </Button>
+              </div>
+
+              <div className="w-full lg:w-96 flex flex-col items-center gap-4">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Pratinjau Background</p>
+                <div className="relative w-full aspect-[1.58/1] rounded-[1.5rem] bg-white border-2 border-dashed border-slate-200 flex items-center justify-center overflow-hidden shadow-inner">
+                  {cardBackgroundUrl ? (
+                    <img 
+                      src={cardBackgroundUrl} 
+                      alt="Preview Card Background" 
+                      className="w-full h-full object-cover"
+                      onError={() => setCardBackgroundUrl(DEFAULT_CARD_BG)}
+                    />
+                  ) : (
+                    <div className="text-center space-y-2 opacity-20">
+                      <ImageIcon className="h-12 w-12 mx-auto" />
+                      <p className="text-[9px] font-bold uppercase">No Background</p>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>

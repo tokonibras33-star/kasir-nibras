@@ -206,7 +206,7 @@ export default function StockTokoAPage() {
 
       <Card className="soft-shadow border-none overflow-hidden">
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
+          <div className="w-full overflow-x-auto">
             <Table>
               <TableHeader className="bg-muted/50">
                 <TableRow>

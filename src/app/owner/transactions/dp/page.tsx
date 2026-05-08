@@ -181,7 +181,7 @@ export default function DPHistoryPage() {
 
       <Card className="border-none soft-shadow rounded-[2rem] overflow-hidden">
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
+          <div className="w-full overflow-x-auto">
             <Table>
               <TableHeader className="bg-orange-50/50">
                 <TableRow className="border-none">

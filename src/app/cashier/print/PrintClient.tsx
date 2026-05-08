@@ -56,12 +56,9 @@ export default function PrintClient() {
       const { jsPDF } = await import('jspdf');
       const element = document.getElementById('print-area');
       if (!element) throw new Error('Print area not found');
-      const canvas = await html2canvas(element, { scale: 3, useCORS: true, backgroundColor: '#ffffff' });
+      const canvas = await html2canvas(element, { scale: 3, useCORS: true, backgroundColor: '#ffffff', height: element.scrollHeight, windowHeight: element.scrollHeight });
       const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: paperSize === '58mm' ? [58, 200] : [80, 200] });
-      const imgProps = pdf.getImageProperties(imgData);
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      const pdfWidth = paperSize === '58mm' ? 58 : 80, pdfHeight = (canvas.height * pdfWidth) / canvas.width, pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [pdfWidth, pdfHeight] });
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
       pdf.save(`struk-${trx.id}.pdf`);
     } catch (err) { console.error(err); } finally { setIsGenerating(false); }
@@ -107,9 +104,9 @@ export default function PrintClient() {
         </div>
       </aside>
 
-      <main className="flex-1 flex items-center justify-center p-4 md:p-12 overflow-y-auto print:p-0 print:m-0">
-        <div id="print-area" className="bg-white shadow-2xl print:shadow-none transition-all duration-300" style={{ width: paperSize, minHeight: '100mm', padding: '5mm', fontFamily: 'monospace', color: '#000', fontSize: '10px', lineHeight: '1.2' }}>
-          <div className="text-center mb-6 space-y-1">
+      <main className="flex-1 flex justify-center p-4 md:p-12 overflow-y-auto print:p-0 print:m-0">
+      <div id="print-area" className="bg-white print:shadow-none" style={{ width: paperSize, padding: '2mm', fontFamily: 'monospace', color: '#000', fontSize: '10px', lineHeight: '1.2', height: 'fit-content', minHeight: 'auto', display: 'inline-block' }}>
+          <div className="text-center mb-3 space-y-1">
             <div className="flex justify-center mb-2">
               <img src={logoToUse} alt="Logo" className="h-14 w-auto object-contain mx-auto" />
             </div>
@@ -128,7 +125,7 @@ export default function PrintClient() {
             <div className="pt-1 border-t border-dashed border-black/10 mt-1"><div className="flex justify-between font-bold"><span>CUSTOMER:</span><span className="uppercase">{trx.customerName || "UMUM"}</span></div></div>
           </div>
 
-          <div className="space-y-4 mb-4">
+          <div className="space-y-2 mb-2">
             {consolidatedItems.map((item, i) => {
               const labelPrice = item.labelPrice || item.price;
               const totalDisc = item.totalNominalDisc || 0;
@@ -171,14 +168,15 @@ export default function PrintClient() {
             )}
           </div>
 
-          <div className="text-center mt-10 space-y-1 text-[8px] opacity-60">
+          <div className="text-center mt-2   space-y-1 text-[8px] opacity-60">
             <p className="font-bold text-[9px]">*** TERIMA KASIH ***</p>
             <p>BARANG YANG SUDAH DIBELI TIDAK DAPAT DITUKAR/DIKEMBALIKAN</p>
           </div>
+
+          <div style={{ height: '3mm' }} />
         </div>
       </main>
-      <style dangerouslySetInnerHTML={{ __html: `@media print { body { background: white !important; margin: 0 !important; } aside { display: none !important; } main { padding: 0 !important; margin: 0 !important; } #print-area { box-shadow: none !important; width: ${paperSize} !important; margin: 0 auto; padding: 2mm !important; } @page { margin: 0; } }` }} />
-    </div>
+      <style dangerouslySetInnerHTML={{ __html: `@media print { html, body { margin: 0 !important; padding: 0 !important; height: auto !important; } body { background: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; } aside { display: none !important; } main { padding: 0 !important; margin: 0 !important; } #print-area { width: ${paperSize} !important; margin: 0 auto !important; padding: 2mm !important; height: auto !important; min-height: auto !important; page-break-after: avoid !important; break-after: avoid !important; overflow: hidden !important; } @page { size: auto; margin: 0; } }` }} />
+      </div>
   );
 }
-

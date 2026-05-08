@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from "react";
@@ -37,7 +36,8 @@ import {
   setDocumentNonBlocking, 
   updateDocumentNonBlocking,
   useCollection,
-  useMemoFirebase
+  useMemoFirebase,
+  useUser
 } from "@/firebase";
 import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { toast } from "@/hooks/use-toast";
@@ -66,6 +66,7 @@ export function StockManagementDialog({
   setStockViewingStoreId
 }: StockManagementDialogProps) {
   const db = useFirestore();
+  const { user } = useUser();
   const [stockSearch, setStockSearch] = useState("");
   const [isMutationRequestOpen, setIsMutationRequestOpen] = useState(false);
   const [selectedVariantForMutation, setSelectedVariantForMutation] = useState<any>(null);
@@ -73,7 +74,12 @@ export function StockManagementDialog({
   const [isProcessing, setIsProcessing] = useState(false);
 
   // Mutasi Saya (Pengajuan yang dibuat toko ini)
-  const myRequestsQuery = useMemoFirebase(() => collection(db, "mutationRequests"), [db]);
+  // Only query when dialog is open and user is authenticated
+  const myRequestsQuery = useMemoFirebase(() => {
+    if (!open || !user) return null;
+    return collection(db, "mutationRequests");
+  }, [db, open, user]);
+  
   const { data: allRequests } = useCollection<any>(myRequestsQuery);
   
   const statusPengajuan = (allRequests || []).filter(r => r.targetStore === storeId);

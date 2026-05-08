@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useMemo } from "react";
@@ -18,7 +17,8 @@ import {
   ArrowDownToLine,
   BarChart3,
   Calculator,
-  Banknote
+  Banknote,
+  ShieldCheck
 } from "lucide-react";
 import { 
   BarChart, 
@@ -32,7 +32,7 @@ import {
   AreaChart,
   Area
 } from "recharts";
-import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+import { useFirestore, useCollection, useMemoFirebase, useUser } from "@/firebase";
 import { collection, query, where, Timestamp } from "firebase/firestore";
 import { format, startOfToday, endOfToday, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -49,6 +49,7 @@ const COLORS = ['#1F7A63', '#3b82f6', '#10b981', '#f59e0b'];
 
 export default function EnhancedAdminDashboard() {
   const db = useFirestore();
+  const { user: authUser } = useUser();
   
   // 1. Global States
   const [storeFilter, setStoreFilter] = useState("ALL");
@@ -87,34 +88,58 @@ export default function EnhancedAdminDashboard() {
     return { start, end };
   }, [dateInterval]);
 
-  // 3. Data Fetching (Properly Memoized)
-  const qA = useMemoFirebase(() => query(
-    collection(db, "stores", "TOKO_A", "transactions"),
-    where("date", ">=", Timestamp.fromDate(prevInterval.start)),
-    where("date", "<=", Timestamp.fromDate(dateInterval.end))
-  ), [db, dateInterval, prevInterval]);
+  // 3. Data Fetching (Properly Memoized and Auth-Guarded)
+  const qA = useMemoFirebase(() => {
+    if (!authUser) return null;
+    return query(
+      collection(db, "stores", "TOKO_A", "transactions"),
+      where("date", ">=", Timestamp.fromDate(prevInterval.start)),
+      where("date", "<=", Timestamp.fromDate(dateInterval.end))
+    );
+  }, [db, dateInterval, prevInterval, authUser]);
 
-  const qB = useMemoFirebase(() => query(
-    collection(db, "stores", "TOKO_B", "transactions"),
-    where("date", ">=", Timestamp.fromDate(prevInterval.start)),
-    where("date", "<=", Timestamp.fromDate(dateInterval.end))
-  ), [db, dateInterval, prevInterval]);
+  const qB = useMemoFirebase(() => {
+    if (!authUser) return null;
+    return query(
+      collection(db, "stores", "TOKO_B", "transactions"),
+      where("date", ">=", Timestamp.fromDate(prevInterval.start)),
+      where("date", "<=", Timestamp.fromDate(dateInterval.end))
+    );
+  }, [db, dateInterval, prevInterval, authUser]);
 
-  const qC = useMemoFirebase(() => query(
-    collection(db, "stores", "TOKO_C", "transactions"),
-    where("date", ">=", Timestamp.fromDate(prevInterval.start)),
-    where("date", "<=", Timestamp.fromDate(dateInterval.end))
-  ), [db, dateInterval, prevInterval]);
+  const qC = useMemoFirebase(() => {
+    if (!authUser) return null;
+    return query(
+      collection(db, "stores", "TOKO_C", "transactions"),
+      where("date", ">=", Timestamp.fromDate(prevInterval.start)),
+      where("date", "<=", Timestamp.fromDate(dateInterval.end))
+    );
+  }, [db, dateInterval, prevInterval, authUser]);
 
   const { data: trxA } = useCollection<any>(qA);
   const { data: trxB } = useCollection<any>(qB);
   const { data: trxC } = useCollection<any>(qC);
 
   // Operational Data
-  const logsAQuery = useMemoFirebase(() => collection(db, "stores", "TOKO_A", "cashLogs"), [db]);
-  const logsBQuery = useMemoFirebase(() => collection(db, "stores", "TOKO_B", "cashLogs"), [db]);
-  const logsCQuery = useMemoFirebase(() => collection(db, "stores", "TOKO_C", "cashLogs"), [db]);
-  const ownerLogsQuery = useMemoFirebase(() => collection(db, "ownerExpenses"), [db]);
+  const logsAQuery = useMemoFirebase(() => {
+    if (!authUser) return null;
+    return collection(db, "stores", "TOKO_A", "cashLogs");
+  }, [db, authUser]);
+
+  const logsBQuery = useMemoFirebase(() => {
+    if (!authUser) return null;
+    return collection(db, "stores", "TOKO_B", "cashLogs");
+  }, [db, authUser]);
+
+  const logsCQuery = useMemoFirebase(() => {
+    if (!authUser) return null;
+    return collection(db, "stores", "TOKO_C", "cashLogs");
+  }, [db, authUser]);
+
+  const ownerLogsQuery = useMemoFirebase(() => {
+    if (!authUser) return null;
+    return collection(db, "ownerExpenses");
+  }, [db, authUser]);
 
   const { data: logsA } = useCollection<any>(logsAQuery);
   const { data: logsB } = useCollection<any>(logsBQuery);
@@ -122,10 +147,25 @@ export default function EnhancedAdminDashboard() {
   const { data: logsOwner } = useCollection<any>(ownerLogsQuery);
 
   // Stock Data
-  const stockAQuery = useMemoFirebase(() => collection(db, "stores", "TOKO_A", "stock"), [db]);
-  const stockBQuery = useMemoFirebase(() => collection(db, "stores", "TOKO_B", "stock"), [db]);
-  const stockCQuery = useMemoFirebase(() => collection(db, "stores", "TOKO_C", "stock"), [db]);
-  const stockEntriesQuery = useMemoFirebase(() => collection(db, "stockEntries"), [db]);
+  const stockAQuery = useMemoFirebase(() => {
+    if (!authUser) return null;
+    return collection(db, "stores", "TOKO_A", "stock");
+  }, [db, authUser]);
+
+  const stockBQuery = useMemoFirebase(() => {
+    if (!authUser) return null;
+    return collection(db, "stores", "TOKO_B", "stock");
+  }, [db, authUser]);
+
+  const stockCQuery = useMemoFirebase(() => {
+    if (!authUser) return null;
+    return collection(db, "stores", "TOKO_C", "stock");
+  }, [db, authUser]);
+
+  const stockEntriesQuery = useMemoFirebase(() => {
+    if (!authUser) return null;
+    return collection(db, "stockEntries");
+  }, [db, authUser]);
 
   const { data: stockA } = useCollection<any>(stockAQuery);
   const { data: stockB } = useCollection<any>(stockBQuery);
@@ -264,9 +304,9 @@ export default function EnhancedAdminDashboard() {
   // 6. Stock Status Logic
   const stockSummary = useMemo(() => {
     if (storeFilter === "ALL") {
-      const countA = (stockA || []).reduce((s, p) => s + (p.variants?.reduce((v: number, i: any) => v + (i.stock || 0), 0) || 0), 0);
-      const countB = (stockB || []).reduce((s, p) => s + (p.variants?.reduce((v: number, i: any) => v + (i.stock || 0), 0) || 0), 0);
-      const countC = (stockC || []).reduce((s, p) => s + (p.variants?.reduce((v: number, i: any) => v + (i.stock || 0), 0) || 0), 0);
+      const countA = (stockA || []).reduce((s, p) => s + (p.variants?.reduce((vAcc: number, i: any) => vAcc + (i.stock || 0), 0) || 0), 0);
+      const countB = (stockB || []).reduce((s, p) => s + (p.variants?.reduce((vAcc: number, i: any) => vAcc + (i.stock || 0), 0) || 0), 0);
+      const countC = (stockC || []).reduce((s, p) => s + (p.variants?.reduce((vAcc: number, i: any) => vAcc + (i.stock || 0), 0) || 0), 0);
       return [
         { name: "NHS KWT", qty: countA, color: "#1F7A63" },
         { name: "IND CO", qty: countB, color: "#3b82f6" },

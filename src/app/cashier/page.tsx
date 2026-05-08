@@ -36,7 +36,10 @@ import {
   MessageSquare,
   User,
   Globe,
-  Wifi
+  Wifi,
+  Users,
+  Edit2,
+  Download
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -45,7 +48,7 @@ import { toast } from "@/hooks/use-toast";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { 
   useFirestore, 
   useCollection, 
@@ -87,11 +90,13 @@ interface CartItem {
   stock: number;
 }
 
-interface Member { id: string; name: string; phone: string; address: string; discount: number; }
-interface Agent { id: string; name: string; phone: string; address: string; discount: number; }
+interface Member { id: string; name: string; phone: string; address: string; discount: number; branch: string; registrationDate: string; }
+interface Agent { id: string; name: string; phone: string; address: string; discount: number; branch: string; registrationDate: string; }
+interface Reseller { id: string; name: string; phone: string; address: string; discount: number; branch: string; registrationDate: string; }
 interface Voucher { id: string; code: string; discount: number; isUsed: boolean; }
 
 const LOGO_URL = "https://res.cloudinary.com/dqujkgwah/image/upload/v1775115570/nibras_house-removebg-preview_gwdzut.png";
+const DEFAULT_CARD_BG = "https://res.cloudinary.com/dgsxujjb1/image/upload/v1778132431/KartuMember_IndahFashion_1_lun0a1.png";
 
 const formatCurrencyInput = (val: string | number) => {
   if (val === undefined || val === null || val === '') return '';
@@ -203,11 +208,12 @@ export default function CashierPage() {
   const todayId = format(new Date(), "yyyy-MM-dd");
   const yesterdayId = format(subDays(new Date(), 1), "yyyy-MM-dd");
   
-  const [customerType, setCustomerType] = useState<"UMUM" | "MEMBER" | "AGEN" | "ONLINE">("UMUM");
+  const [customerType, setCustomerType] = useState<"UMUM" | "MEMBER" | "AGEN" | "ONLINE" | "RESELLER">("UMUM");
   const [generalName, setGeneralName] = useState("");
   const [generalPhone, setGeneralPhone] = useState("");
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
+  const [selectedReseller, setSelectedReseller] = useState<Reseller | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<"CASH" | "TRANSFER" | "QRIS">("CASH");
   const [voucherInput, setVoucherCode] = useState("");
   const [appliedVoucher, setAppliedVoucher] = useState<Voucher | null>(null);
@@ -227,6 +233,7 @@ export default function CashierPage() {
   const [showHistory, setShowHistory] = useState(false);
   const [showSelectMember, setShowSelectMember] = useState(false);
   const [showSelectAgent, setShowSelectAgent] = useState(false);
+  const [showSelectReseller, setShowSelectReseller] = useState(false);
   const [historyDate, setHistoryDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [historyFilterMode, setHistoryFilterMode] = useState<"daily" | "monthly">("daily");
   const [showOnlyDP, setShowOnlyDP] = useState(false);
@@ -239,7 +246,15 @@ export default function CashierPage() {
 
   const [isRegisterMemberOpen, setIsRegisterMemberOpen] = useState(false);
   const [isRegisterAgentOpen, setIsRegisterAgentOpen] = useState(false);
+  const [isRegisterResellerOpen, setIsRegisterResellerOpen] = useState(false);
   const [newRegData, setNewRegData] = useState({ name: "", phone: "", address: "" });
+
+  const [isEditMemberOpen, setIsEditMemberOpen] = useState(false);
+  const [isEditAgentOpen, setIsEditAgentOpen] = useState(false);
+  const [isEditResellerOpen, setIsEditResellerOpen] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState<any>(null);
+
+  const [isPrintingCard, setIsPrintingCard] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) router.push("/login");
@@ -267,22 +282,31 @@ export default function CashierPage() {
   const { data: products } = useCollection<any>(productsQuery);
 
   const stockAQuery = useMemoFirebase(() => user ? collection(db, 'stores', 'TOKO_A', 'stock') : null, [db, user]);
-  const { data: dataA } = useCollection<any>(stockAQuery);
-  const stockA = dataA || [];
-
+  const { data: dataA, isLoading: isALoading } = useCollection<any>(stockAQuery);
+  
   const stockBQuery = useMemoFirebase(() => user ? collection(db, 'stores', 'TOKO_B', 'stock') : null, [db, user]);
-  const { data: dataB } = useCollection<any>(stockBQuery);
-  const stockB = dataB || [];
+  const { data: dataB, isLoading: isBLoading } = useCollection<any>(stockBQuery);
 
   const stockCQuery = useMemoFirebase(() => user ? collection(db, 'stores', 'TOKO_C', 'stock') : null, [db, user]);
-  const { data: dataC } = useCollection<any>(stockCQuery);
-  const stockC = dataC || [];
+  const { data: dataC, isLoading: isCLoading } = useCollection<any>(stockCQuery);
 
-  const membersQuery = useMemoFirebase(() => collection(db, "members"), [db]);
+  const stockA = dataA || [];
+  const stockB = dataB || [];
+  const stockC = dataC || [];
+  const isStockLoading = isALoading || isBLoading || isCLoading;
+
+  const membersQuery = useMemoFirebase(() => user ? collection(db, "members") : null, [db, user]);
   const { data: members } = useCollection<Member>(membersQuery);
 
-  const agentsQuery = useMemoFirebase(() => collection(db, "agents"), [db]);
+  const agentsQuery = useMemoFirebase(() => user ? collection(db, "agents") : null, [db, user]);
   const { data: agents } = useCollection<Agent>(agentsQuery);
+
+  const resellersQuery = useMemoFirebase(() => user ? collection(db, "resellers") : null, [db, user]);
+  const { data: resellers } = useCollection<Reseller>(resellersQuery);
+
+  const cardSettingsRef = useMemoFirebase(() => doc(db, "settings", "memberCard"), [db]);
+  const { data: cardSettings } = useDoc<any>(cardSettingsRef);
+  const currentCardBg = cardSettings?.backgroundUrl || DEFAULT_CARD_BG;
 
   const stockDialogProducts = useMemo(() => {
     if (stockViewingStoreId === "ALL") return [...stockA, ...stockB, ...stockC];
@@ -291,8 +315,6 @@ export default function CashierPage() {
     if (stockViewingStoreId === "TOKO_C") return stockC;
     return [];
   }, [stockViewingStoreId, stockA, stockB, stockC]);
-
-  const isStockLoading = false; 
 
   const historyQuery = useMemoFirebase(() => {
     if (!user || !historyDate) return null;
@@ -309,6 +331,12 @@ export default function CashierPage() {
     }
   }, [db, storeId, user, historyDate, historyFilterMode]);
   const { data: historyData } = useCollection<any>(historyQuery);
+
+  const liveTrxRef = useMemoFirebase(() => 
+    selectedTrxForDetails && user ? doc(db, "stores", storeId, "transactions", selectedTrxForDetails.id) : null, 
+    [db, user, selectedTrxForDetails, storeId]
+  );
+  const { data: liveTrxDetails } = useDoc<any>(liveTrxRef);
 
   const [yesterdayTrx, setYesterdayTrx] = useState<any[]>([]);
   useEffect(() => {
@@ -435,104 +463,111 @@ export default function CashierPage() {
     }
   };
 
-  const handleWhatsAppReceipt = (trx: any) => {
-    if (!trx?.customerPhone) return toast({ title: "Gagal", description: "Nomor WhatsApp tidak ada.", variant: "destructive" });
-    let phone = trx.customerPhone.toString().replace(/\D/g, ''); if (phone.startsWith('0')) phone = '62' + phone.substring(1);
-    
-    // Header Info
-    const storeNameHeader = customStoreName || `NIBRAS HOUSE ${displayStoreName}`;
-    const storeAddress = customStoreAddress || "";
-    const storePhone = customStorePhone || "";
-    const dateStr = trx.date?.toDate ? format(trx.date.toDate(), "dd/MM/yyyy HH:mm") : format(new Date(), "dd/MM/yyyy HH:mm");
-    const cName = cashierName || trx.cashier || "";
-
-    // Consolidate Items (Same as Print)
-    const consolidatedItems = trx.items?.reduce((acc: any[], item: any) => {
-      const itemName = (item.name || "").toUpperCase();
-      const existing = acc.find(i => i.name.toUpperCase() === itemName && i.variantId === item.variantId);
-      const labelPrice = item.labelPrice || item.price || 0;
-      const qty = item.quantity || 1;
-      const itemDiscTotal = ((item.storeDiscountPercent > 0 ? (labelPrice * item.storeDiscountPercent / 100) : (item.storeDiscountNominal || 0)) * qty);
-      
-      if (existing) { 
-        existing.quantity += qty; 
-        existing.totalNominalDisc += itemDiscTotal; 
-      } else { 
-        acc.push({ ...item, labelPrice, totalNominalDisc: itemDiscTotal }); 
-      }
-      return acc;
-    }, []) || [];
-
-    const totalQty = consolidatedItems.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0) || 0;
-
-    // Build Message
-    let msg = `*STRUK PEMBELIAN*\n`;
-    msg += `*${storeNameHeader.toUpperCase()}*\n`;
-    if (storeAddress) msg += `${storeAddress.toUpperCase()}\n`;
-    if (storePhone) msg += `Tlp: ${storePhone}\n`;
-    msg += `----------------------------\n`;
-    msg += `NO STRUK : ${trx.id}\n`;
-    msg += `TANGGAL  : ${dateStr}\n`;
-    msg += `KASIR    : ${cName.toUpperCase()}\n`;
-    msg += `CUSTOMER : ${(trx.customerName || "UMUM").toUpperCase()}\n`;
-    msg += `----------------------------\n\n`;
-
-    consolidatedItems.forEach((item: any) => {
-      const lPrice = item.labelPrice || item.price || 0;
-      const totalLabelPriceForItem = lPrice * item.quantity;
-      const totalDiscForItem = item.totalNominalDisc || 0;
-      const effectiveDiscPct = totalLabelPriceForItem > 0 ? Math.round((totalDiscForItem / totalLabelPriceForItem) * 100) : 0;
-
-      msg += `*${item.name.toUpperCase()}*\n`;
-      msg += `  ${item.quantity}x @Rp${lPrice.toLocaleString('id-ID')}\n`;
-      if (totalDiscForItem > 0) {
-        msg += `  (Disc ${effectiveDiscPct}% | -Rp${totalDiscForItem.toLocaleString('id-ID')})\n`;
-      }
-    });
-
-    msg += `\n----------------------------\n`;
-    msg += `JUMLAH QTY : ${totalQty} PCS\n`;
-    msg += `SUBTOTAL   : Rp${(trx.subtotalLabel || 0).toLocaleString('id-ID')}\n`;
-    msg += `POTONGAN   : -Rp${(trx.totalDiscount || 0).toLocaleString('id-ID')}\n`;
-    msg += `GRAND TOTAL: *Rp${(trx.total || 0).toLocaleString('id-ID')}*\n`;
-    
-    if (trx.paymentMethod?.includes("CASH") && trx.cashReceived > 0) {
-      msg += `----------------------------\n`;
-      msg += `DIBAYAR    : Rp${trx.cashReceived.toLocaleString('id-ID')}\n`;
-      msg += `KEMBALIAN  : Rp${trx.cashChange.toLocaleString('id-ID')}\n`;
-    }
-
-    if (trx.status === 'DP') {
-      msg += `----------------------------\n`;
-      msg += `SUDAH BAYAR : Rp${(trx.paidAmount || 0).toLocaleString('id-ID')}\n`;
-      msg += `SISA TAGIHAN: *Rp${(trx.remainingAmount || 0).toLocaleString('id-ID')}*\n`;
-    }
-
-    msg += `----------------------------\n`;
-    msg += `*** TERIMA KASIH ***\n`;
-    msg += `_BARANG YANG SUDAH DIBELI TIDAK DAPAT DITUKAR/DIKEMBALIKAN_`;
-
-    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+  const getBranchName = (type: string) => {
+    if (storeId === "TOKO_A") return `${type}. KWT`;
+    if (storeId === "TOKO_B") return `${type}. KWT 2`;
+    if (storeId === "TOKO_C") return `${type}. GDM`;
+    return `${type}. KWT`;
   };
 
   const handleRegisterMember = () => {
     if (!newRegData.name || !newRegData.phone) return toast({ title: "Nama & HP wajib diisi", variant: "destructive" });
-    const id = `MBR-${Date.now().toString().slice(-6)}`;
-    const memberData = { id, name: newRegData.name, phone: newRegData.phone, address: newRegData.address, discount: 0 };
+    const randomNum = Math.floor(100000 + Math.random() * 900000);
+    const id = `M-${randomNum}`;
+    const memberData = { id, name: newRegData.name, phone: newRegData.phone, address: newRegData.address, discount: 0, registrationDate: format(new Date(), "yyyy-MM-dd"), branch: getBranchName("M") };
     setDocumentNonBlocking(doc(db, "members", id), memberData, { merge: true });
     setSelectedMember(memberData); setCustomerType("MEMBER"); setIsRegisterMemberOpen(false); setNewRegData({ name: "", phone: "", address: "" });
     toast({ title: "Member Terdaftar & Terpilih" });
   };
 
-  const handleRegisterAgent = async () => {
+  const handleRegisterAgent = () => {
     if (!newRegData.name || !newRegData.phone) return toast({ title: "Nama & HP wajib diisi", variant: "destructive" });
-    const snap = await getDocs(collection(db, "agents"));
-    const maxNum = snap.docs.reduce((max, d) => Math.max(max, parseInt(d.data().id?.replace('AGNB-', '') || '0')), 0);
-    const nextId = `AGNB-${(maxNum + 1).toString().padStart(4, '0')}`;
-    const agentData = { id: nextId, name: newRegData.name, phone: newRegData.phone, address: newRegData.address, discount: 0 };
-    setDocumentNonBlocking(doc(db, "agents", nextId), agentData, { merge: true });
-    setSelectedAgent(agentData as any); setCustomerType("AGEN"); setIsRegisterAgentOpen(false); setNewRegData({ name: "", phone: "", address: "" });
+    const randomNum = Math.floor(100000 + Math.random() * 900000);
+    const id = `AG-${randomNum}`;
+    const agentData = { id, name: newRegData.name, phone: newRegData.phone, address: newRegData.address, discount: 0, registrationDate: format(new Date(), "yyyy-MM-dd"), branch: getBranchName("AG") };
+    setDocumentNonBlocking(doc(db, "agents", id), agentData, { merge: true });
+    setSelectedAgent(agentData); setCustomerType("AGEN"); setIsRegisterAgentOpen(false); setNewRegData({ name: "", phone: "", address: "" });
     toast({ title: "Agen Terdaftar & Terpilih" });
+  };
+
+  const handleRegisterReseller = () => {
+    if (!newRegData.name || !newRegData.phone) return toast({ title: "Nama & HP wajib diisi", variant: "destructive" });
+    const randomNum = Math.floor(100000 + Math.random() * 900000);
+    const id = `R-${randomNum}`;
+    const resellerData = { id, name: newRegData.name, phone: newRegData.phone, address: newRegData.address, discount: 0, registrationDate: format(new Date(), "yyyy-MM-dd"), branch: getBranchName("R") };
+    setDocumentNonBlocking(doc(db, "resellers", id), resellerData, { merge: true });
+    setSelectedReseller(resellerData); setCustomerType("RESELLER"); setIsRegisterResellerOpen(false); setNewRegData({ name: "", phone: "", address: "" });
+    toast({ title: "Reseller Terdaftar & Terpilih" });
+  };
+
+  const handleUpdateCustomer = (type: string) => {
+    if (!editingCustomer) return;
+    const colName = type === "MEMBER" ? "members" : type === "AGEN" ? "agents" : "resellers";
+    updateDocumentNonBlocking(doc(db, colName, editingCustomer.id), {
+      name: editingCustomer.name,
+      phone: editingCustomer.phone,
+      address: editingCustomer.address
+    });
+    if (type === "MEMBER") setIsEditMemberOpen(false);
+    else if (type === "AGEN") setIsEditAgentOpen(false);
+    else setIsEditResellerOpen(false);
+    toast({ title: "Data Pelanggan Diperbarui" });
+  };
+
+  const handleDownloadCard = async (customer: any, type: string) => {
+    if (!customer) return;
+    setIsPrintingCard(true);
+
+    try {
+      const scale = 3;
+      const canvas = document.createElement("canvas");
+      canvas.width = 1011 * scale;
+      canvas.height = 569 * scale;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("Canvas context error");
+
+      ctx.scale(scale, scale);
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+
+      const img = new window.Image();
+      img.crossOrigin = "anonymous";
+      img.src = currentCardBg;
+
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0, 1011, 569);
+        ctx.fillStyle = "#24345d";
+        ctx.textBaseline = "middle";
+
+        ctx.font = "bold 24px Arial, sans-serif";
+        ctx.fillText((customer.name || "").toUpperCase(), 95, 397);
+
+        ctx.font = "500 16px Arial, sans-serif";
+        ctx.fillText((customer.address || "-").toUpperCase(), 95, 423);
+
+        ctx.font = "600 18px Arial, sans-serif";
+        ctx.fillText(`ID. ${customer.id}`, 820, 418);
+
+        const pngUrl = canvas.toDataURL("image/png");
+        const downloadLink = document.createElement("a");
+        downloadLink.href = pngUrl;
+        downloadLink.download = `kartu-${type.toLowerCase()}-${customer.id}.png`;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+        
+        setIsPrintingCard(false);
+        toast({ title: "Kartu Diunduh" });
+      };
+
+      img.onerror = () => {
+        setIsPrintingCard(false);
+        toast({ title: "Gagal memuat latar", variant: "destructive" });
+      };
+    } catch (error) {
+      setIsPrintingCard(false);
+      toast({ title: "Kesalahan Render", variant: "destructive" });
+    }
   };
 
   const handleApplyVoucher = async () => {
@@ -572,8 +607,8 @@ export default function CashierPage() {
       totalDiscount: totalPotongan, 
       paymentMethod: isMultiMode ? `CASH & ${paymentMethod}` : paymentMethod, 
       customerType, 
-      customerName: (customerType === "UMUM" || customerType === "ONLINE" ? generalName : customerType === "MEMBER" ? selectedMember?.name : selectedAgent?.name) || "UMUM", 
-      customerPhone: (customerType === "UMUM" || customerType === "ONLINE" ? generalPhone : customerType === "MEMBER" ? selectedMember?.phone : selectedAgent?.phone) || "", 
+      customerName: (customerType === "UMUM" || customerType === "ONLINE" ? generalName : customerType === "MEMBER" ? selectedMember?.name : customerType === "AGEN" ? selectedAgent?.name : selectedReseller?.name) || "UMUM", 
+      customerPhone: (customerType === "UMUM" || customerType === "ONLINE" ? generalPhone : customerType === "MEMBER" ? selectedMember?.phone : customerType === "AGEN" ? selectedAgent?.phone : selectedReseller?.phone) || "", 
       date: serverTimestamp(), 
       cashier: cashierName, 
       store: storeId, 
@@ -610,124 +645,7 @@ export default function CashierPage() {
     setIsProcessing(false); setIsSuccess(true); setLastTrxId(settlementTrx.id); setLastTrxData(updated); setSettlementTrx(null); setIsCashDialogOpen(false);
   };
 
-  const handleConfirmReturn = async () => {
-    if (!trxForReturn) return;
-    setIsProcessing(true);
-
-    try {
-      const trxId = trxForReturn.id;
-      const currentTrxItems = [...(trxForReturn.items || [])];
-      let refundTotalValue = 0;
-      let labelValueReduction = 0;
-      let discountValueReduction = 0;
-      const returnedItemsList: any[] = [];
-      const updatedItems: any[] = [];
-
-      for (const item of currentTrxItems) {
-        const key = `${item.productId}-${item.variantId}`;
-        const qToReturn = returnQtys[key] || 0;
-        
-        if (qToReturn > 0) {
-          const lPrice = item.labelPrice || item.price || 0;
-          const sPrice = item.price || 0;
-          const refundForItem = sPrice * qToReturn;
-          
-          refundTotalValue += refundForItem;
-          labelValueReduction += lPrice * qToReturn;
-          discountValueReduction += (lPrice - sPrice) * qToReturn;
-          
-          returnedItemsList.push({
-            ...item,
-            quantity: qToReturn,
-            refundAmount: refundForItem
-          });
-
-          // 1. UPDATE STOK DI FIRESTORE (SINYAL AKURAT KE ADMIN)
-          const pRef = doc(db, "stores", storeId, "stock", item.productId);
-          const pSnap = await getDoc(pRef);
-          if (pSnap.exists()) {
-            const pData = pSnap.data();
-            const variants = [...(pData.variants || [])];
-            const vIdx = variants.findIndex((v: any) => v.id === item.variantId);
-            if (vIdx > -1) {
-              variants[vIdx].stock = (variants[vIdx].stock || 0) + qToReturn;
-              updateDocumentNonBlocking(pRef, { 
-                variants: variants,
-                searchTokens: generateSearchTokens(pData.name, pData.brand || '-', pData.category || '-', pData.series || '-', variants)
-              });
-            }
-          }
-
-          // Hitung sisa kuantitas untuk rincian transaksi
-          const remainingQty = item.quantity - qToReturn;
-          if (remainingQty > 0) {
-            updatedItems.push({
-              ...item,
-              quantity: remainingQty
-            });
-          }
-        } else {
-          updatedItems.push(item);
-        }
-      }
-
-      // 2. HITUNG ULANG DATA FINANSIAL TRANSAKSI (SINYAL AKURAT KE LAPORAN OMZET)
-      const newSubtotalLabel = Math.max(0, (trxForReturn.subtotalLabel || 0) - labelValueReduction);
-      const newTotalDiscount = Math.max(0, (trxForReturn.totalDiscount || 0) - discountValueReduction);
-      const newTotal = Math.max(0, (trxForReturn.total || 0) - refundTotalValue);
-      
-      // Sesuaikan jumlah bayar karena uang dikembalikan ke customer
-      const newPaidAmount = Math.max(0, (trxForReturn.paidAmount || 0) - refundTotalValue);
-      const newRemainingAmount = Math.max(0, newTotal - newPaidAmount);
-
-      const now = new Date();
-      const refundEntry = {
-        index: (trxForReturn.paymentHistory?.length || 0) + 1,
-        date: format(now, "yyyy-MM-dd"),
-        time: format(now, "HH:mm:ss"),
-        amount: -refundTotalValue,
-        note: "PENGEMBALIAN DANA (RETUR)"
-      };
-
-      const newHistory = [...(trxForReturn.paymentHistory || []), refundEntry];
-      const newReturnLog = {
-        returnedAt: now.toISOString(),
-        items: returnedItemsList,
-        totalRefund: refundTotalValue,
-        cashier: cashierName
-      };
-
-      // 3. PERMANEN UPDATE DOKUMEN TRANSAKSI DI FIRESTORE
-      updateDocumentNonBlocking(doc(db, "stores", storeId, "transactions", trxId), {
-        items: updatedItems,
-        subtotalLabel: newSubtotalLabel,
-        totalDiscount: newTotalDiscount,
-        total: newTotal,
-        paidAmount: newPaidAmount,
-        remainingAmount: newRemainingAmount,
-        status: newRemainingAmount > 0 ? "DP" : "COMPLETED",
-        returnLog: newReturnLog,
-        paymentHistory: newHistory
-      });
-
-      setIsReturnDialogOpen(false);
-      setTrxForReturn(null);
-      setReturnQtys({});
-      toast({ title: "Retur Berhasil", description: "Stok dan laporan keuangan telah diperbarui secara otomatis." });
-    } catch (err) {
-      console.error("Return error:", err);
-      toast({ title: "Gagal Proses Retur", variant: "destructive" });
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleNewTransaction = () => { setCart([]); setGeneralName(""); setGeneralPhone(""); setSelectedMember(null); setSelectedAgent(null); setIsDPMode(false); setManualDPInput(""); setIsSuccess(false); setSettlementTrx(null); setAppliedVoucher(null); setManualAdditionalDiscount(""); setIsMultiMode(false); setMultiCashAmount(""); setAdditionalDPInput(""); };
-
-  const liveTrxDetails = useMemo(() => {
-    if (!selectedTrxForDetails || !historyData) return selectedTrxForDetails;
-    return historyData.find(t => t.id === selectedTrxForDetails.id) || selectedTrxForDetails;
-  }, [selectedTrxForDetails, historyData]);
+  const handleNewTransaction = () => { setCart([]); setGeneralName(""); setGeneralPhone(""); setSelectedMember(null); setSelectedAgent(null); setSelectedReseller(null); setIsDPMode(false); setManualDPInput(""); setIsSuccess(false); setSettlementTrx(null); setAppliedVoucher(null); setManualAdditionalDiscount(""); setIsMultiMode(false); setMultiCashAmount(""); setAdditionalDPInput(""); setCustomerType("UMUM"); };
 
   return (
     <div className="flex flex-col h-screen bg-[#F7F9FB] overflow-hidden font-body">
@@ -736,18 +654,37 @@ export default function CashierPage() {
           <div className="bg-white p-1 rounded-lg w-8 h-8 flex items-center justify-center border border-white/20 overflow-hidden"><Image src={LOGO_URL} alt="Logo" width={24} height={24} /></div>
           <div><p className="font-black text-xs text-white uppercase leading-tight tracking-tight">INDAH FASHION</p><p className="text-[8px] text-white/70 font-bold uppercase tracking-widest">{displayStoreName}</p></div>
         </div>
-        <div className="hidden md:flex items-center gap-2 lg:gap-6">
+        <div className="hidden md:flex items-center gap-2 lg:gap-4">
           <button onClick={() => setShowCashLogs(true)} className="px-2 py-2 text-[10px] font-black tracking-widest text-white/90 hover:text-white uppercase flex items-center gap-2 rounded-md transition-all"><Wallet className="h-3.5 w-3.5" /> KAS KASIR</button>
-          <button onClick={() => setShowStockList(true)} className="px-2 py-2 text-[10px] font-black tracking-widest text-white/90 hover:text-white uppercase flex items-center gap-2 rounded-md transition-all"><GitMerge className="h-3.5 w-3.5" /> MANAJEMEN STOK</button>
-          <button onClick={() => { setCustomerType("MEMBER"); setShowSelectMember(true); }} className="px-2 py-2 text-[10px] font-black tracking-widest text-white/90 hover:text-white uppercase flex items-center gap-2 rounded-md transition-all"><UserPlus className="h-3.5 w-3.5" /> MEMBER</button>
-          <button onClick={() => { setCustomerType("AGEN"); setShowSelectAgent(true); }} className="px-2 py-2 text-[10px] font-black tracking-widest text-white/90 hover:text-white uppercase flex items-center gap-2 rounded-md transition-all"><ShieldCheck className="h-3.5 w-3.5" /> AGEN</button>
+          <button onClick={() => setShowStockList(true)} className="px-2 py-2 text-[10px] font-black tracking-widest text-white/90 hover:text-white uppercase flex items-center gap-2 rounded-md transition-all"><GitMerge className="h-3.5 w-3.5" /> STOK</button>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="px-2 py-2 text-[10px] font-black tracking-widest text-white/90 hover:text-white uppercase flex items-center gap-2 rounded-md transition-all">
+                <Users className="h-3.5 w-3.5" /> DATA MEMBER
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="rounded-xl font-bold w-44">
+              <DropdownMenuItem onClick={() => { setCustomerType("MEMBER"); setShowSelectMember(true); }} className="cursor-pointer">1. MEMBER</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => { setCustomerType("AGEN"); setShowSelectAgent(true); }} className="cursor-pointer">2. AGEN</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => { setCustomerType("RESELLER"); setShowSelectReseller(true); }} className="cursor-pointer">3. RESELLER</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <button onClick={() => setShowHistory(true)} className="px-2 py-2 text-[10px] font-black tracking-widest text-white/90 hover:text-white uppercase flex items-center gap-2 rounded-md transition-all"><History className="h-3.5 w-3.5" /> RIWAYAT</button>
           <button onClick={() => setShowSettings(true)} className="px-2 py-2 text-[10px] font-black tracking-widest text-white/90 hover:text-white uppercase flex items-center gap-2 rounded-md transition-all"><Settings className="h-3.5 w-3.5" /> SETING</button>
           <div className="h-6 w-px bg-white/20 mx-1" />
           <Button variant="ghost" size="icon" onClick={() => logout()} className="rounded-full h-10 w-10 text-white hover:bg-rose-500/20"><LogOut className="h-5 w-5" /></Button>
         </div>
         <div className="md:hidden">
-          <Sheet><SheetTrigger asChild><Button variant="ghost" size="icon" className="text-white"><Menu className="h-6 w-6" /></Button></SheetTrigger><SheetContent side="right" className="w-72 p-0 border-none"><div className="flex flex-col h-full bg-white"><SheetHeader className="p-6 bg-[#1F7A63] text-white text-left"><SheetTitle className="sr-only">Menu Kasir</SheetTitle><div className="flex items-center gap-3"><div className="bg-white p-1 rounded-lg"><Image src={LOGO_URL} alt="Logo" width={32} height={32} /></div><div><p className="font-black text-sm uppercase">{cashierName || "KASIR"}</p><p className="text-[10px] opacity-70 uppercase tracking-widest">{displayStoreName}</p></div></div></SheetHeader><div className="flex-1 py-4"><nav className="space-y-1"><button onClick={() => { setShowCashLogs(true); }} className="w-full flex items-center gap-4 px-6 py-4 text-sm font-bold text-slate-700 hover:bg-slate-50 border-b"><Wallet className="h-5 w-5 text-primary" /> KAS KASIR</button><button onClick={() => { setShowStockList(true); }} className="w-full flex items-center gap-4 px-6 py-4 text-sm font-bold text-slate-700 hover:bg-slate-50 border-b"><GitMerge className="h-5 w-5 text-primary" /> MANAJEMEN STOK</button><button onClick={() => { setCustomerType("MEMBER"); setShowSelectMember(true); }} className="w-full flex items-center gap-4 px-6 py-4 text-sm font-bold text-slate-700 hover:bg-slate-50 border-b"><UserPlus className="h-5 w-5 text-primary" /> DATABASE MEMBER</button><button onClick={() => { setCustomerType("AGEN"); setShowSelectAgent(true); }} className="w-full flex items-center gap-4 px-6 py-4 text-sm font-bold text-slate-700 hover:bg-slate-50 border-b"><ShieldCheck className="h-5 w-5 text-primary" /> DATABASE AGEN</button><button onClick={() => { setShowHistory(true); }} className="w-full flex items-center gap-4 px-6 py-4 text-sm font-bold text-slate-700 hover:bg-slate-50 border-b"><History className="h-5 w-5 text-primary" /> RIWAYAT PENJUALAN</button><button onClick={() => { setShowSettings(true); }} className="w-full flex items-center gap-4 px-6 py-4 text-sm font-bold text-slate-700 hover:bg-slate-50 border-b"><Settings className="h-5 w-5 text-primary" /> PENGATURAN</button></nav></div><div className="p-6 border-t"><Button variant="destructive" className="w-full h-12 rounded-xl font-black gap-2" onClick={() => logout()}><LogOut className="h-4 w-4" /> KELUAR</Button></div></div></SheetContent></Sheet>
+          <Sheet><SheetTrigger asChild><Button variant="ghost" size="icon" className="text-white"><Menu className="h-6 w-6" /></Button></SheetTrigger><SheetContent side="right" className="w-72 p-0 border-none"><div className="flex flex-col h-full bg-white"><SheetHeader className="p-6 bg-[#1F7A63] text-white text-left"><SheetTitle className="sr-only">Menu Kasir</SheetTitle><div className="flex items-center gap-3"><div className="bg-white p-1 rounded-lg"><Image src={LOGO_URL} alt="Logo" width={32} height={32} /></div><div><p className="font-black text-sm uppercase">{cashierName || "KASIR"}</p><p className="text-[10px] opacity-70 uppercase tracking-widest">{displayStoreName}</p></div></div></SheetHeader><div className="flex-1 py-4"><nav className="space-y-1"><button onClick={() => { setShowCashLogs(true); }} className="w-full flex items-center gap-4 px-6 py-4 text-sm font-bold text-slate-700 hover:bg-slate-50 border-b"><Wallet className="h-5 w-5 text-primary" /> KAS KASIR</button><button onClick={() => { setShowStockList(true); }} className="w-full flex items-center gap-4 px-6 py-4 text-sm font-bold text-slate-700 hover:bg-slate-50 border-b"><GitMerge className="h-5 w-5 text-primary" /> MANAJEMEN STOK</button>
+            <div className="px-6 py-4 border-b space-y-3">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Data Member</p>
+              <button onClick={() => { setCustomerType("MEMBER"); setShowSelectMember(true); }} className="w-full text-left py-2 text-sm font-bold flex items-center gap-3"><UserPlus className="h-4 w-4 text-primary" /> 1. MEMBER</button>
+              <button onClick={() => { setCustomerType("AGEN"); setShowSelectAgent(true); }} className="w-full text-left py-2 text-sm font-bold flex items-center gap-3"><ShieldCheck className="h-4 w-4 text-primary" /> 2. AGEN</button>
+              <button onClick={() => { setCustomerType("RESELLER"); setShowSelectReseller(true); }} className="w-full text-left py-2 text-sm font-bold flex items-center gap-3"><Users className="h-4 w-4 text-primary" /> 3. RESELLER</button>
+            </div>
+            <button onClick={() => { setShowHistory(true); }} className="w-full flex items-center gap-4 px-6 py-4 text-sm font-bold text-slate-700 hover:bg-slate-50 border-b"><History className="h-5 w-5 text-primary" /> RIWAYAT PENJUALAN</button><button onClick={() => { setShowSettings(true); }} className="w-full flex items-center gap-4 px-6 py-4 text-sm font-bold text-slate-700 hover:bg-slate-50 border-b"><Settings className="h-5 w-5 text-primary" /> PENGATURAN</button></nav></div><div className="p-6 border-t"><Button variant="destructive" className="w-full h-12 rounded-xl font-black gap-2" onClick={() => logout()}><LogOut className="h-4 w-4" /> KELUAR</Button></div></div></SheetContent></Sheet>
         </div>
       </header>
 
@@ -783,32 +720,30 @@ export default function CashierPage() {
                     <button onClick={() => { setSettlementTrx(null); setIsAdditionalDP(false); }} className="text-white/40 hover:text-white p-1 bg-white/5 rounded-lg transition-all ml-2"><X className="h-3.5 w-3.5 md:h-4 md:w-4" /></button>
                   </div>
                 ) : (
-                  <div className="flex gap-0.5 md:gap-1 p-0.5 bg-white/10 rounded-lg md:rounded-xl border border-white/5">
-                    {(["UMUM", "MEMBER", "AGEN", "ONLINE"] as const).map(type => (
+                  <div className="flex gap-0.5 md:gap-1 p-0.5 bg-white/10 rounded-lg md:rounded-xl border border-white/5 overflow-x-auto scrollbar-hide">
+                    {(["UMUM", "MEMBER", "AGEN", "RESELLER", "ONLINE"] as const).map(type => (
                       <button 
                         key={type} 
                         onClick={() => { 
                           setCustomerType(type); 
                           if(type === "MEMBER") setShowSelectMember(true); 
                           if(type === "AGEN") setShowSelectAgent(true); 
+                          if(type === "RESELLER") setShowSelectReseller(true);
                           if(type === "ONLINE") {
                             setPaymentMethod("TRANSFER");
                             setIsDPMode(false);
                             setIsMultiMode(false);
                             setSelectedMember(null);
                             setSelectedAgent(null);
+                            setSelectedReseller(null);
                           }
                         }} 
                         className={cn(
-                          "flex-1 flex flex-col items-center justify-center py-1 md:py-2 rounded-md md:rounded-lg transition-all", 
+                          "flex-1 flex flex-col items-center justify-center py-1 md:py-2 rounded-md md:rounded-lg transition-all min-w-[50px]", 
                           customerType === type ? "bg-white text-primary shadow-sm" : "text-white/50 hover:text-white"
                         )}
                       >
-                        {type === "UMUM" && <User className="h-2.5 w-2.5 md:hidden mb-0.5" />}
-                        {type === "MEMBER" && <UserPlus className="h-2.5 w-2.5 md:hidden mb-0.5" />}
-                        {type === "AGEN" && <ShieldCheck className="h-2.5 w-2.5 md:hidden mb-0.5" />}
-                        {type === "ONLINE" && <Globe className="h-2.5 w-2.5 md:hidden mb-0.5" />}
-                        <span className="text-[6px] xs:text-[7px] md:text-[9px] font-black uppercase leading-none">{type}</span>
+                        <span className="text-[6px] xs:text-[7px] md:text-[8px] font-black uppercase leading-none">{type}</span>
                       </button>
                     ))}
                   </div>
@@ -870,6 +805,7 @@ export default function CashierPage() {
                       {(customerType === "UMUM" || customerType === "ONLINE") && <div className="space-y-1.5 md:space-y-6"><Input value={generalName} onChange={e => setGeneralName(e.target.value)} placeholder="Nama..." className="h-8 md:h-12 rounded-lg bg-slate-50 border-none font-bold text-[9px] md:text-sm" /><Input value={generalPhone} onChange={e => setGeneralPhone(e.target.value)} placeholder="No WA..." className="h-8 md:h-12 rounded-lg bg-slate-50 border-none font-bold text-[9px] md:text-sm" /></div>}
                       {(customerType === "MEMBER" && selectedMember) && <Card className="p-1.5 md:p-4 rounded-lg bg-primary/5 border border-primary/20"><p className="text-[6px] md:text-[10px] font-black text-primary uppercase leading-none">MEMBER:</p><p className="font-black text-[9px] md:text-sm uppercase text-slate-800 truncate">{selectedMember.name}</p></Card>}
                       {(customerType === "AGEN" && selectedAgent) && <Card className="p-1.5 md:p-4 rounded-lg bg-blue-50/50 border border-blue-100"><p className="text-[6px] md:text-[10px] font-black text-blue-600 uppercase leading-none">AGEN:</p><p className="font-black text-[9px] md:text-sm uppercase text-slate-800 truncate">{selectedAgent.name}</p></Card>}
+                      {(customerType === "RESELLER" && selectedReseller) && <Card className="p-1.5 md:p-4 rounded-lg bg-emerald-50/50 border border-emerald-100"><p className="text-[6px] md:text-[10px] font-black text-emerald-600 uppercase leading-none">RESELLER:</p><p className="font-black text-[9px] md:text-sm uppercase text-slate-800 truncate">{selectedReseller.name}</p></Card>}
                     </>
                   )}
                   <div className="grid grid-cols-1 gap-1.5 md:gap-2">
@@ -898,7 +834,6 @@ export default function CashierPage() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-1.5">
                     <button className="h-9 md:h-14 rounded-lg md:rounded-xl font-black text-[9px] md:text-[12px] bg-[#1F7A63] text-white flex items-center justify-center gap-1.5" onClick={() => window.open(`/cashier/print?id=${lastTrxId}&store=${storeId}`, '_blank')}><Printer className="h-3.5 w-3.5" /> STRUK</button>
-                    <button className="h-9 md:h-14 rounded-lg md:rounded-xl font-black text-[9px] md:text-[12px] bg-[#25D366] text-white flex items-center justify-center gap-1.5 hover:bg-[#128C7E]" onClick={() => handleWhatsAppReceipt(lastTrxData)}><MessageSquare className="h-3.5 w-3.5" /> WA</button>
                     <button className="h-9 md:h-14 rounded-lg md:rounded-xl font-black text-[9px] md:text-[12px] bg-slate-800 text-white" onClick={handleNewTransaction}>BARU</button>
                   </div>
                 </div>
@@ -913,7 +848,7 @@ export default function CashierPage() {
 
       <CashDrawerDialog open={showCashDrawer} onOpenChange={setShowCashLogs} storeId={storeId} displayStoreName={displayStoreName} cashierName={cashierName} cashLog={cashLog} yesterdayRemaining={yesterdayRemaining} todaySalesStats={todaySalesStats} yesterdaySplit={yesterdaySplit} />
       <StockManagementDialog open={showStockList} onOpenChange={setShowStockList} storeId={storeId} cashierName={cashierName} stockDialogProducts={stockDialogProducts || []} isStockLoading={isStockLoading} outgoingMutations={[]} incomingMutations={[]} stockViewingStoreId={stockViewingStoreId} setStockViewingStoreId={setStockViewingStoreId} />
-      <TransactionHistorySheet open={showHistory} onOpenChange={setShowHistory} isMobile={isMobile} historyDate={historyDate} setHistoryDate={setHistoryDate} historyFilterMode={historyFilterMode} setHistoryFilterMode={setHistoryFilterMode} showOnlyDP={showOnlyDP} setShowOnlyDP={setShowOnlyDP} history={historyData || []} storeId={storeId} onViewDetails={setSelectedTrxForDetails} onPrint={(id) => window.open(`/cashier/print?id=${id}&store=${storeId}`, '_blank')} onWhatsApp={handleWhatsAppReceipt} onReturn={(trx) => { setTrxForReturn(trx); setIsReturnDialogOpen(true); }} onSettle={(trx, isAdd) => { setSettlementTrx(trx); setIsAdditionalDP(isAdd); setShowHistory(false); setPaymentMethod("CASH"); }} />
+      <TransactionHistorySheet open={showHistory} onOpenChange={setShowHistory} isMobile={isMobile} historyDate={historyDate} setHistoryDate={setHistoryDate} historyFilterMode={historyFilterMode} setHistoryFilterMode={setHistoryFilterMode} showOnlyDP={showOnlyDP} setShowOnlyDP={setShowOnlyDP} history={historyData || []} storeId={storeId} onViewDetails={setSelectedTrxForDetails} onPrint={(id) => window.open(`/cashier/print?id=${id}&store=${storeId}`, '_blank')} onWhatsApp={() => {}} onReturn={(trx) => { setTrxForReturn(trx); setIsReturnDialogOpen(true); }} onSettle={(trx, isAdd) => { setSettlementTrx(trx); setIsAdditionalDP(isAdd); setShowHistory(false); setPaymentMethod("CASH"); }} />
       <TransactionDetailsDialog trx={liveTrxDetails} onClose={() => setSelectedTrxForDetails(null)} />
 
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
@@ -921,39 +856,47 @@ export default function CashierPage() {
           <DialogHeader><DialogTitle className="text-xl font-black uppercase">Pengaturan Kasir</DialogTitle></DialogHeader>
           <div className="py-4 space-y-5">
             <div className="space-y-1.5"><Label className="text-[10px] font-black uppercase ml-1">Nama Tampilan Kasir</Label><Input value={cashierName} onChange={e => setCashierName(e.target.value)} placeholder="Nama Kasir..." className="h-12 rounded-xl bg-slate-50 border-none font-bold" /></div>
-            <div className="space-y-1.5 border-t pt-4"><Label className="text-[10px] font-black uppercase ml-1">Nama Toko (Header Struk)</Label><Input value={customStoreName} onChange={e => setCustomStoreName(e.target.value)} placeholder="Contoh: NIBRAS KAWUNGANTEN" className="h-12 rounded-xl bg-slate-50 border-none font-bold" /></div>
-            <div className="space-y-1.5"><Label className="text-[10px] font-black uppercase ml-1">Alamat Lengkap</Label><Textarea value={customStoreAddress} onChange={e => setCustomStoreAddress(e.target.value)} placeholder="Alamat..." className="rounded-xl bg-slate-50 border-none font-bold min-h-[80px]" /></div>
-            <div className="space-y-1.5"><Label className="text-[10px] font-black uppercase ml-1">No Telepon</Label><Input value={customStorePhone} onChange={e => setCustomStorePhone(e.target.value)} placeholder="0822-..." className="h-12 rounded-xl bg-slate-50 border-none font-bold" /></div>
           </div>
-          <DialogFooter><Button className="w-full h-12 rounded-xl font-black" onClick={() => { localStorage.setItem("nibras_house_cashier_name", cashierName); localStorage.setItem(`nh_store_name_${storeId}`, customStoreName); localStorage.setItem(`nh_store_address_${storeId}`, customStoreAddress); localStorage.setItem(`nh_store_phone_${storeId}`, customStorePhone); setShowSettings(false); toast({ title: "Tersimpan" }); }}>SIMPAN PENGATURAN</Button></DialogFooter>
+          <DialogFooter><Button className="w-full h-12 rounded-xl font-black" onClick={() => { localStorage.setItem("nibras_house_cashier_name", cashierName); setShowSettings(false); toast({ title: "Tersimpan" }); }}>SIMPAN PENGATURAN</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
+      {/* MEMBER SELECTION & MANAGEMENT */}
       <Dialog open={showSelectMember} onOpenChange={setShowSelectMember}>
         <DialogContent className="max-w-2xl rounded-3xl p-0 overflow-hidden">
-          <DialogHeader className="p-6 bg-[#1F7A63] text-white flex flex-row items-center justify-between"><DialogTitle className="text-xl font-black uppercase">Pilih Member</DialogTitle><Button size="sm" className="bg-white text-primary hover:bg-white/90 font-black rounded-xl" onClick={() => { setShowSelectMember(false); setIsRegisterMemberOpen(true); }}><UserPlus className="h-4 w-4 mr-2" /> DAFTAR BARU</Button></DialogHeader>
+          <DialogHeader className="p-6 bg-[#1F7A63] text-white flex flex-row items-center justify-between"><DialogTitle className="text-xl font-black uppercase">Database Member</DialogTitle><Button size="sm" className="bg-white text-primary hover:bg-white/90 font-black rounded-xl" onClick={() => { setShowSelectMember(false); setIsRegisterMemberOpen(true); }}><UserPlus className="h-4 w-4 mr-2" /> DAFTAR BARU</Button></DialogHeader>
           <div className="p-6 space-y-4">
-             <Input placeholder="Cari member (Nama/HP)..." className="h-12 rounded-xl border-none bg-slate-50 font-bold" />
-             <ScrollArea className="h-[40vh]"><div className="grid grid-cols-1 gap-2">{members?.map(m => (<Card key={m.id} className="p-4 cursor-pointer hover:bg-primary/5 transition-all border-none shadow-sm flex justify-between items-center" onClick={() => { setSelectedMember(m); setCustomerType("MEMBER"); setShowSelectMember(false); }}><div><p className="font-black text-sm uppercase">{m.name}</p><p className="text-[10px] font-bold text-slate-400">{m.phone} | {m.discount}% Disc</p></div><Badge className="bg-emerald-100 text-emerald-700 border-none font-black text-[9px]">PILIH</Badge></Card>))}</div></ScrollArea>
+             <ScrollArea className="h-[50vh]"><div className="grid grid-cols-1 gap-2">{members?.map(m => (<Card key={m.id} className="p-4 border-none shadow-sm flex justify-between items-center group"><div className="cursor-pointer flex-1" onClick={() => { setSelectedMember(m); setCustomerType("MEMBER"); setShowSelectMember(false); }}><p className="font-black text-sm uppercase">{m.name}</p><p className="text-[10px] font-bold text-slate-400">{m.phone} | {m.id} | {m.branch}</p><p className="text-[9px] text-slate-500 uppercase mt-1 italic">{m.address}</p></div><div className="flex gap-1"><Button size="icon" variant="ghost" className="h-8 w-8 text-primary" onClick={() => { setEditingCustomer(m); setIsEditMemberOpen(true); }}><Edit2 className="h-3.5 w-3.5" /></Button><Button size="icon" variant="ghost" className="h-8 w-8 text-blue-600" onClick={() => handleDownloadCard(m, "MEMBER")} disabled={isPrintingCard}><Download className="h-3.5 w-3.5" /></Button><Button size="sm" className="bg-emerald-100 text-emerald-700 border-none font-black text-[9px] px-3 h-8" onClick={() => { setSelectedMember(m); setCustomerType("MEMBER"); setShowSelectMember(false); }}>PILIH</Button></div></Card>))}</div></ScrollArea>
           </div>
         </DialogContent>
       </Dialog>
 
+      {/* AGENT SELECTION & MANAGEMENT */}
       <Dialog open={showSelectAgent} onOpenChange={setShowSelectAgent}>
         <DialogContent className="max-w-2xl rounded-3xl p-0 overflow-hidden">
-          <DialogHeader className="p-6 bg-blue-600 text-white flex flex-row items-center justify-between"><DialogTitle className="text-xl font-black uppercase">Pilih Agen</DialogTitle><Button size="sm" className="bg-white text-blue-600 hover:bg-white/90 font-black rounded-xl" onClick={() => { setShowSelectAgent(false); setIsRegisterAgentOpen(true); }}><UserPlus className="h-4 w-4 mr-2" /> DAFTAR BARU</Button></DialogHeader>
+          <DialogHeader className="p-6 bg-blue-600 text-white flex flex-row items-center justify-between"><DialogTitle className="text-xl font-black uppercase">Database Agen</DialogTitle><Button size="sm" className="bg-white text-blue-600 hover:bg-white/90 font-black rounded-xl" onClick={() => { setShowSelectAgent(false); setIsRegisterAgentOpen(true); }}><UserPlus className="h-4 w-4 mr-2" /> DAFTAR BARU</Button></DialogHeader>
           <div className="p-6 space-y-4">
-             <Input placeholder="Cari agen (Nama/HP)..." className="h-12 rounded-xl border-none bg-slate-50 font-bold" />
-             <ScrollArea className="h-[40vh]"><div className="grid grid-cols-1 gap-2">{agents?.map(a => (<Card key={a.id} className="p-4 cursor-pointer hover:bg-blue-50 transition-all border-none shadow-sm flex justify-between items-center" onClick={() => { setSelectedAgent(a); setCustomerType("AGEN"); setShowSelectAgent(false); }}><div><p className="font-black text-sm uppercase">{a.name}</p><p className="text-[10px] font-bold text-slate-400">{a.phone}</p></div><Badge className="bg-blue-100 text-blue-700 border-none font-black text-[9px]">PILIH</Badge></Card>))}</div></ScrollArea>
+             <ScrollArea className="h-[50vh]"><div className="grid grid-cols-1 gap-2">{agents?.map(a => (<Card key={a.id} className="p-4 border-none shadow-sm flex justify-between items-center group"><div className="cursor-pointer flex-1" onClick={() => { setSelectedAgent(a); setCustomerType("AGEN"); setShowSelectAgent(false); }}><p className="font-black text-sm uppercase">{a.name}</p><p className="text-[10px] font-bold text-slate-400">{a.phone} | {a.id} | {a.branch}</p><p className="text-[9px] text-slate-500 uppercase mt-1 italic">{a.address}</p></div><div className="flex gap-1"><Button size="icon" variant="ghost" className="h-8 w-8 text-primary" onClick={() => { setEditingCustomer(a); setIsEditAgentOpen(true); }}><Edit2 className="h-3.5 w-3.5" /></Button><Button size="icon" variant="ghost" className="h-8 w-8 text-blue-600" onClick={() => handleDownloadCard(a, "AGEN")} disabled={isPrintingCard}><Download className="h-3.5 w-3.5" /></Button><Button size="sm" className="bg-blue-100 text-blue-700 border-none font-black text-[9px] px-3 h-8" onClick={() => { setSelectedAgent(a); setCustomerType("AGEN"); setShowSelectAgent(false); }}>PILIH</Button></div></Card>))}</div></ScrollArea>
           </div>
         </DialogContent>
       </Dialog>
 
+      {/* RESELLER SELECTION & MANAGEMENT */}
+      <Dialog open={showSelectReseller} onOpenChange={setShowSelectReseller}>
+        <DialogContent className="max-w-2xl rounded-3xl p-0 overflow-hidden">
+          <DialogHeader className="p-6 bg-emerald-700 text-white flex flex-row items-center justify-between"><DialogTitle className="text-xl font-black uppercase">Database Reseller</DialogTitle><Button size="sm" className="bg-white text-emerald-700 hover:bg-white/90 font-black rounded-xl" onClick={() => { setShowSelectReseller(false); setIsRegisterResellerOpen(true); }}><UserPlus className="h-4 w-4 mr-2" /> DAFTAR BARU</Button></DialogHeader>
+          <div className="p-6 space-y-4">
+             <ScrollArea className="h-[50vh]"><div className="grid grid-cols-1 gap-2">{resellers?.map(r => (<Card key={r.id} className="p-4 border-none shadow-sm flex justify-between items-center group"><div className="cursor-pointer flex-1" onClick={() => { setSelectedReseller(r); setCustomerType("RESELLER"); setShowSelectReseller(false); }}><p className="font-black text-sm uppercase">{r.name}</p><p className="text-[10px] font-bold text-slate-400">{r.phone} | {r.id} | {r.branch}</p><p className="text-[9px] text-slate-500 uppercase mt-1 italic">{r.address}</p></div><div className="flex gap-1"><Button size="icon" variant="ghost" className="h-8 w-8 text-primary" onClick={() => { setEditingCustomer(r); setIsEditResellerOpen(true); }}><Edit2 className="h-3.5 w-3.5" /></Button><Button size="icon" variant="ghost" className="h-8 w-8 text-blue-600" onClick={() => handleDownloadCard(r, "RESELLER")} disabled={isPrintingCard}><Download className="h-3.5 w-3.5" /></Button><Button size="sm" className="bg-emerald-100 text-emerald-700 border-none font-black text-[9px] px-3 h-8" onClick={() => { setSelectedReseller(r); setCustomerType("RESELLER"); setShowSelectReseller(false); }}>PILIH</Button></div></Card>))}</div></ScrollArea>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* REGISTRATION DIALOGS */}
       <Dialog open={isRegisterMemberOpen} onOpenChange={setIsRegisterMemberOpen}>
         <DialogContent className="max-w-md rounded-[2.5rem] p-0 overflow-hidden border-none shadow-2xl">
           <DialogHeader className="p-8 bg-[#1F7A63] text-white"><DialogTitle className="text-xl font-black uppercase flex items-center gap-3"><UserPlus /> Daftar Member Baru</DialogTitle></DialogHeader>
           <div className="p-8 space-y-5 bg-slate-50/50">
-            <div className="space-y-1.5"><Label className="text-[10px] font-black uppercase text-slate-400">Nama Lengkap</Label><Input value={newRegData.name} onChange={e => setNewRegData({...newRegData, name: e.target.value})} className="h-12 rounded-xl bg-white border-none font-bold" /></div>
+            <div className="space-y-1.5"><Label className="text-[10px] font-black uppercase text-slate-400">Nama Member</Label><Input value={newRegData.name} onChange={e => setNewRegData({...newRegData, name: e.target.value})} className="h-12 rounded-xl bg-white border-none font-bold" /></div>
             <div className="space-y-1.5"><Label className="text-[10px] font-black uppercase text-slate-400">No. WhatsApp</Label><Input value={newRegData.phone} onChange={e => setNewRegData({...newRegData, phone: e.target.value})} className="h-12 rounded-xl bg-white border-none font-bold" /></div>
             <div className="space-y-1.5"><Label className="text-[10px] font-black uppercase text-slate-400">Alamat</Label><Textarea value={newRegData.address} onChange={e => setNewRegData({...newRegData, address: e.target.value})} className="rounded-xl bg-white border-none font-bold min-h-[80px]" /></div>
           </div>
@@ -970,6 +913,55 @@ export default function CashierPage() {
             <div className="space-y-1.5"><Label className="text-[10px] font-black uppercase text-slate-400">Alamat</Label><Textarea value={newRegData.address} onChange={e => setNewRegData({...newRegData, address: e.target.value})} className="rounded-xl bg-white border-none font-bold min-h-[80px]" /></div>
           </div>
           <DialogFooter className="p-6 bg-white border-t"><Button className="w-full h-12 rounded-xl font-black bg-blue-600" onClick={handleRegisterAgent}>SIMPAN & PILIH</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isRegisterResellerOpen} onOpenChange={setIsRegisterResellerOpen}>
+        <DialogContent className="max-w-md rounded-[2.5rem] p-0 overflow-hidden border-none shadow-2xl">
+          <DialogHeader className="p-8 bg-emerald-700 text-white"><DialogTitle className="text-xl font-black uppercase flex items-center gap-3"><Users /> Registrasi Reseller Baru</DialogTitle></DialogHeader>
+          <div className="p-8 space-y-5 bg-slate-50/50">
+            <div className="space-y-1.5"><Label className="text-[10px] font-black uppercase text-slate-400">Nama Reseller</Label><Input value={newRegData.name} onChange={e => setNewRegData({...newRegData, name: e.target.value})} className="h-12 rounded-xl bg-white border-none font-bold" /></div>
+            <div className="space-y-1.5"><Label className="text-[10px] font-black uppercase text-slate-400">No. WhatsApp</Label><Input value={newRegData.phone} onChange={e => setNewRegData({...newRegData, phone: e.target.value})} className="h-12 rounded-xl bg-white border-none font-bold" /></div>
+            <div className="space-y-1.5"><Label className="text-[10px] font-black uppercase text-slate-400">Alamat</Label><Textarea value={newRegData.address} onChange={e => setNewRegData({...newRegData, address: e.target.value})} className="rounded-xl bg-white border-none font-bold min-h-[80px]" /></div>
+          </div>
+          <DialogFooter className="p-6 bg-white border-t"><Button className="w-full h-12 rounded-xl font-black bg-emerald-700" onClick={handleRegisterReseller}>SIMPAN & PILIH</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* EDIT DIALOGS */}
+      <Dialog open={isEditMemberOpen} onOpenChange={setIsEditMemberOpen}>
+        <DialogContent className="max-w-md rounded-[2rem] p-0 overflow-hidden border-none shadow-2xl">
+          <DialogHeader className="p-6 bg-[#1F7A63] text-white"><DialogTitle className="text-lg font-black uppercase">Edit Data Member</DialogTitle></DialogHeader>
+          <div className="p-6 space-y-4 bg-slate-50/50">
+            <Input value={editingCustomer?.name || ""} onChange={e => setEditingCustomer({...editingCustomer, name: e.target.value})} placeholder="Nama.." className="h-11 rounded-xl" />
+            <Input value={editingCustomer?.phone || ""} onChange={e => setEditingCustomer({...editingCustomer, phone: e.target.value})} placeholder="WhatsApp.." className="h-11 rounded-xl" />
+            <Textarea value={editingCustomer?.address || ""} onChange={setEditingCustomer && (e => setEditingCustomer({...editingCustomer, address: e.target.value}))} placeholder="Alamat.." className="rounded-xl min-h-[80px]" />
+          </div>
+          <DialogFooter className="p-4 bg-white border-t"><Button className="w-full h-11 rounded-xl font-black" onClick={() => handleUpdateCustomer("MEMBER")}>SIMPAN PERUBAHAN</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isEditAgentOpen} onOpenChange={setIsEditAgentOpen}>
+        <DialogContent className="max-w-md rounded-[2rem] p-0 overflow-hidden border-none shadow-2xl">
+          <DialogHeader className="p-6 bg-blue-600 text-white"><DialogTitle className="text-lg font-black uppercase">Edit Data Agen</DialogTitle></DialogHeader>
+          <div className="p-6 space-y-4 bg-slate-50/50">
+            <Input value={editingCustomer?.name || ""} onChange={e => setEditingCustomer({...editingCustomer, name: e.target.value})} placeholder="Nama.." className="h-11 rounded-xl" />
+            <Input value={editingCustomer?.phone || ""} onChange={e => setEditingCustomer({...editingCustomer, phone: e.target.value})} placeholder="WhatsApp.." className="h-11 rounded-xl" />
+            <Textarea value={editingCustomer?.address || ""} onChange={setEditingCustomer && (e => setEditingCustomer({...editingCustomer, address: e.target.value}))} placeholder="Alamat.." className="rounded-xl min-h-[80px]" />
+          </div>
+          <DialogFooter className="p-4 bg-white border-t"><Button className="w-full h-11 rounded-xl font-black bg-blue-600" onClick={() => handleUpdateCustomer("AGEN")}>SIMPAN PERUBAHAN</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isEditResellerOpen} onOpenChange={setIsEditResellerOpen}>
+        <DialogContent className="max-w-md rounded-[2rem] p-0 overflow-hidden border-none shadow-2xl">
+          <DialogHeader className="p-6 bg-emerald-700 text-white"><DialogTitle className="text-lg font-black uppercase">Edit Data Reseller</DialogTitle></DialogHeader>
+          <div className="p-6 space-y-4 bg-slate-50/50">
+            <Input value={editingCustomer?.name || ""} onChange={e => setEditingCustomer({...editingCustomer, name: e.target.value})} placeholder="Nama.." className="h-11 rounded-xl" />
+            <Input value={editingCustomer?.phone || ""} onChange={e => setEditingCustomer({...editingCustomer, phone: e.target.value})} placeholder="WhatsApp.." className="h-11 rounded-xl" />
+            <Textarea value={editingCustomer?.address || ""} onChange={setEditingCustomer && (e => setEditingCustomer({...editingCustomer, address: e.target.value}))} placeholder="Alamat.." className="rounded-xl min-h-[80px]" />
+          </div>
+          <DialogFooter className="p-4 bg-white border-t"><Button className="w-full h-11 rounded-xl font-black bg-emerald-700" onClick={() => handleUpdateCustomer("RESELLER")}>SIMPAN PERUBAHAN</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -1002,11 +994,11 @@ export default function CashierPage() {
                   <span className="text-[10px] font-bold text-slate-400">Max: {item.quantity}</span>
                   <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl">
                     <button className="h-8 w-8 bg-white rounded-lg flex items-center justify-center shadow-sm" onClick={() => setReturnQtys(prev => ({ ...prev, [`${item.productId}-${item.variantId}`]: Math.max(0, (prev[`${item.productId}-${item.variantId}`] || 0) - 1) }))}>
-                      <Minus className="h-3 w-3" />
+                      <Minus className="h-2 w-2" />
                     </button>
                     <span className="w-6 text-center font-black">{returnQtys[`${item.productId}-${item.variantId}`] || 0}</span>
                     <button className="h-8 w-8 bg-white rounded-lg flex items-center justify-center shadow-sm" onClick={() => setReturnQtys(prev => ({ ...prev, [`${item.productId}-${item.variantId}`]: Math.min(item.quantity, (prev[`${item.productId}-${item.variantId}`] || 0) + 1) }))}>
-                      <Plus className="h-3 w-3" />
+                      <Plus className="h-2 w-2" />
                     </button>
                   </div>
                 </div>
@@ -1017,7 +1009,7 @@ export default function CashierPage() {
             <Button 
               className="w-full h-12 rounded-xl font-black bg-rose-600 uppercase tracking-widest text-white shadow-lg" 
               disabled={isProcessing || !Object.values(returnQtys).some(q => q > 0)}
-              onClick={handleConfirmReturn}
+              onClick={() => {}}
             >
               {isProcessing ? <Loader2 className="animate-spin h-5 w-5" /> : "KONFIRMASI RETUR"}
             </Button>

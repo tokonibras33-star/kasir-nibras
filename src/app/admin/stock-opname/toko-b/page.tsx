@@ -167,7 +167,7 @@ export default function StockOpnameTokoB() {
 
       <Card className="soft-shadow border-none overflow-hidden rounded-3xl">
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
+          <div className="w-full overflow-x-auto">
             <Table>
               <TableHeader className="bg-muted/50 border-none">
                 <TableRow className="text-[10px] font-black uppercase">

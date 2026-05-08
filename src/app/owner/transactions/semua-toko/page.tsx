@@ -208,7 +208,7 @@ export default function TransactionsAllStoresPage() {
 
       <Card className="soft-shadow border-none rounded-3xl overflow-hidden">
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
+          <div className="w-full overflow-x-auto">
             <Table>
               <TableHeader className="bg-muted/50"><TableRow className="text-[10px] font-black uppercase"><TableHead className="pl-6">ID TRX</TableHead><TableHead>Cabang</TableHead><TableHead className="hidden md:table-cell">Waktu</TableHead><TableHead>Customer</TableHead><TableHead className="text-right">Total</TableHead><TableHead className="text-center">Status</TableHead><TableHead className="text-right pr-6">Aksi</TableHead></TableRow></TableHeader>
               <TableBody>

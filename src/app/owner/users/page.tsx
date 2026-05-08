@@ -57,7 +57,7 @@ export default function UserManagementPage() {
 
       <Card className="soft-shadow border-none rounded-3xl overflow-hidden">
         <CardHeader className="pb-4 border-b bg-muted/20">
-          <div className="relative max-w-sm">
+          <div className="relative w-full sm:max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input 
               placeholder="Cari email atau role..." 
@@ -68,7 +68,7 @@ export default function UserManagementPage() {
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
+          <div className="w-full overflow-x-auto">
             <Table>
               <TableHeader className="bg-muted/50 border-none">
                 <TableRow>

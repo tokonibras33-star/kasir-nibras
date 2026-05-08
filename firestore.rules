@@ -11,9 +11,6 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // IZIN SPESIFIK UNTUK KOLEKSI UTAMA
-    // Memastikan akses lancar untuk fitur baru seperti mutasi dan database pelanggan
-    
     match /mutationRequests/{reqId} {
       allow read, write: if isSignedIn();
     }
@@ -23,6 +20,10 @@ service cloud.firestore {
     }
 
     match /agents/{agentId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /resellers/{resellerId} {
       allow read, write: if isSignedIn();
     }
 
@@ -42,7 +43,6 @@ service cloud.firestore {
       allow read, write: if isSignedIn();
     }
 
-    // IZIN UNTUK STRUKTUR TOKO (SUB-COLLECTIONS)
     match /stores/{storeId} {
       allow read, write: if isSignedIn();
       match /{allSubcollections=**} {
@@ -50,7 +50,6 @@ service cloud.firestore {
       }
     }
 
-    // IZIN GLOBAL UNTUK PENGGUNA TEROTENTIKASI (FALLBACK)
     match /{document=**} {
       allow read, write: if isSignedIn();
     }

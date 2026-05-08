@@ -565,7 +565,7 @@ export default function OperationalExpensesPage() {
       {/* Edit Expense Dialog */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent className="max-w-md rounded-[2.5rem] p-0 overflow-hidden border-none shadow-2xl">
-          <DialogHeader className="p-8 bg-primary text-white shrink-0">
+          <DialogHeader className="p-4 md:p-8 bg-primary text-white shrink-0">
             <div className="flex justify-between items-center">
               <DialogTitle className="text-xl font-black uppercase flex items-center gap-3">
                 <Edit2 className="h-5 w-5" /> Edit Pengeluaran

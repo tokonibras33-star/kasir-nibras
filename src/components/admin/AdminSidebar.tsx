@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from "next/link";
@@ -109,8 +110,24 @@ const navItems: NavItem[] = [
     allowedRoles: ["ADMIN", "OWNER"],
     subItems: [
       { label: "Database Member", href: "/admin/members" },
-      { label: "Kupon Diskon", href: "/admin/coupons" },
       { label: "Agen Diskon", href: "/admin/agents" },
+      { label: "Reseller Diskon", href: "/admin/resellers" },
+      { label: "Kupon Diskon", href: "/admin/coupons" },
+    ]
+  },
+  { 
+    label: "Laporan", 
+    icon: BarChart3, 
+    href: "/owner/reports",
+    isExpandable: true,
+    stateKey: "reports_owner",
+    allowedRoles: ["OWNER"],
+    subItems: [
+      { label: "Laporan Penjualan", href: "/owner/reports/sales" },
+      { label: "Laporan Pembelian", href: "/owner/reports/purchases" },
+      { label: "Laporan Pengeluaran", href: "/owner/reports/expenses" },
+      { label: "Laporan Arus Kas", href: "/owner/reports/cash-flow" },
+      { label: "Perbandingan Keuangan", href: "/owner/reports/financial-comparison" },
     ]
   },
   { 
@@ -118,14 +135,11 @@ const navItems: NavItem[] = [
     icon: BarChart3, 
     href: "/admin/reports",
     isExpandable: true,
-    stateKey: "reports",
-    allowedRoles: ["ADMIN", "OWNER"],
+    stateKey: "reports_admin",
+    allowedRoles: ["ADMIN"],
     subItems: [
       { label: "Laporan Penjualan", href: "/admin/reports/sales" },
       { label: "Laporan Pembelian", href: "/admin/reports/purchases" },
-      { label: "Laporan Pengeluaran", href: "/admin/reports/expenses" },
-      { label: "Laporan Arus Kas", href: "/admin/reports/cash-flow" },
-      { label: "Perbandingan Keuangan", href: "/admin/reports/financial-comparison" },
     ]
   },
   { label: "Seting", icon: Settings, href: "/owner/settings", allowedRoles: ["OWNER"] },
@@ -145,8 +159,9 @@ export function AdminSidebar({ onNavItemClick }: AdminSidebarProps) {
     opname: pathname.startsWith("/admin/stock-opname"),
     transaksi: pathname.startsWith("/owner/transactions"),
     kaskasir: pathname.startsWith("/owner/cash-reports") || pathname.startsWith("/owner/expenses"),
-    discounts: pathname.startsWith("/admin/members") || pathname.startsWith("/admin/coupons") || pathname.startsWith("/admin/agents"),
-    reports: pathname.startsWith("/admin/reports")
+    discounts: pathname.startsWith("/admin/members") || pathname.startsWith("/admin/coupons") || pathname.startsWith("/admin/agents") || pathname.startsWith("/admin/resellers"),
+    reports_owner: pathname.startsWith("/owner/reports"),
+    reports_admin: pathname.startsWith("/admin/reports")
   });
 
   return (

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useMemo } from "react";
@@ -18,7 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
-import { useFirestore, useCollection, useMemoFirebase, setDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase";
+import { useFirestore, useCollection, useMemoFirebase, setDocumentNonBlocking, deleteDocumentNonBlocking, useUser } from "@/firebase";
 import { collection, doc, serverTimestamp } from "firebase/firestore";
 
 interface Coupon {
@@ -32,11 +31,16 @@ interface Coupon {
 
 export default function CouponsManagementPage() {
   const db = useFirestore();
+  const { user } = useUser();
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [formData, setFormData] = useState({ code: "", discount: "" });
 
-  const couponsQuery = useMemoFirebase(() => collection(db, "coupons"), [db]);
+  const couponsQuery = useMemoFirebase(() => {
+    if (!user) return null;
+    return collection(db, "coupons");
+  }, [db, user]);
+  
   const { data: couponsData } = useCollection<Coupon>(couponsQuery);
   const coupons = couponsData || [];
 
@@ -124,7 +128,7 @@ export default function CouponsManagementPage() {
 
       <Card className="soft-shadow border-none">
         <CardHeader className="pb-4 border-b bg-muted/20">
-          <div className="relative max-w-sm">
+          <div className="relative w-full sm:max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input 
               placeholder="Cari kode kupon..." 

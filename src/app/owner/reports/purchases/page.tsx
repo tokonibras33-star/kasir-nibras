@@ -8,7 +8,7 @@ import { Search, Download, FileSpreadsheet, FileText, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useFirestore, useCollection, useMemoFirebase, useUser } from "@/firebase";
+import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection } from "firebase/firestore";
 import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
@@ -26,7 +26,6 @@ const formatCurrency = (val: number) => new Intl.NumberFormat('id-ID', { style: 
 
 export default function PurchaseReportPage() {
   const db = useFirestore();
-  const { user } = useUser();
   const [searchTerm, setSearchTerm] = useState('');
   const [storeFilter, setStoreFilter] = useState<string>('ALL');
   const [brandFilter, setBrandFilter] = useState<string>('ALL');
@@ -35,7 +34,8 @@ export default function PurchaseReportPage() {
   const [selectedDate, setSelectedDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
   const [selectedMonth, setSelectedMonth] = useState<string>(format(new Date(), 'yyyy-MM'));
 
-  const entriesQuery = useMemoFirebase(() => user ? collection(db, 'stockEntries') : null, [db, user]);
+  // Ambil data dari Riwayat Input (Stock Entries) agar data tetap sesuai input awal (belanjaan)
+  const entriesQuery = useMemoFirebase(() => collection(db, 'stockEntries'), [db]);
   const { data: entriesData } = useCollection<any>(entriesQuery);
 
   const detailedStockList = useMemo(() => {
@@ -43,6 +43,8 @@ export default function PurchaseReportPage() {
     
     (entriesData || []).forEach(entry => {
         (entry.items || []).forEach((item: any) => {
+            // Ambil data item dari riwayat input
+            // 'stock' di dalam item riwayat input adalah jumlah yang di-input saat itu
             if (storeFilter === 'ALL' || item.targetStore === storeFilter) {
                 allItems.push({
                     ...item,
@@ -55,6 +57,7 @@ export default function PurchaseReportPage() {
     });
 
     const grouped = allItems.reduce((acc, item) => {
+        // Grouping berdasarkan kriteria unik batch pembelian
         const key = `${item.productName}-${item.invoiceDate || 'noinvdate'}-${item.invoiceNo || 'noinv'}-${item.color}-${item.size}-${item.labelPrice}-${item.buyDiscount}`;
         
         if (!acc[key]) {
@@ -67,6 +70,7 @@ export default function PurchaseReportPage() {
             };
         }
         
+        // Tambahkan qty ke kolom toko masing-masing
         acc[key][`qty_${item.storeId}`] = (acc[key][`qty_${item.storeId}`] || 0) + item.stock;
         acc[key].totalQty += item.stock;
         return acc;
@@ -74,15 +78,18 @@ export default function PurchaseReportPage() {
 
     let list = Object.values(grouped).filter((item: any) => item.totalQty > 0);
 
+    // Filter Periode
     if (filterMode === 'daily') {
         list = list.filter((item: any) => item.invoiceDate === selectedDate);
     } else if (filterMode === 'monthly') {
         list = list.filter((item: any) => item.invoiceDate && item.invoiceDate.startsWith(selectedMonth));
     }
 
+    // Filter Brand & Kategori
     if (brandFilter !== 'ALL') list = list.filter((item: any) => item.brand === brandFilter);
     if (categoryFilter !== 'ALL') list = list.filter((item: any) => item.category === categoryFilter);
 
+    // Search logic
     const tokens = searchTerm.toLowerCase().split(/\s+/).filter(t => t.length > 0);
     if (tokens.length > 0) {
         list = list.filter((item: any) => {

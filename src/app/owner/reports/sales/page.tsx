@@ -4,12 +4,12 @@ import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Search, Download, FileSpreadsheet, FileText, X } from "lucide-react";
+import { Search, Download, FileSpreadsheet, FileText, Calendar, Filter, Store, TrendingUp, TrendingDown, DollarSign, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { useFirestore, useCollection, useMemoFirebase, useUser } from "@/firebase";
+import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, where, Timestamp, orderBy } from "firebase/firestore";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -30,7 +30,6 @@ const CUSTOMER_TYPES = ["UMUM", "MEMBER", "AGEN", "ONLINE"];
 
 export default function SalesReportPage() {
   const db = useFirestore();
-  const { user } = useUser();
   const [filterMode, setFilterMode] = useState<"daily" | "monthly">("daily");
   const [selectedDate, setSelectedDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [selectedMonth, setSelectedMonth] = useState(format(new Date(), "yyyy-MM"));
@@ -43,7 +42,6 @@ export default function SalesReportPage() {
   const [categorySearch, setCategorySearch] = useState("");
 
   const getQuery = (storeId: string) => {
-    if (!user) return null;
     let q = collection(db, "stores", storeId, "transactions");
     if (filterMode === "daily") {
       const start = new Date(selectedDate);
@@ -59,9 +57,9 @@ export default function SalesReportPage() {
     }
   };
 
-  const qA = useMemoFirebase(() => getQuery("TOKO_A"), [db, user, filterMode, selectedDate, selectedMonth]);
-  const qB = useMemoFirebase(() => getQuery("TOKO_B"), [db, user, filterMode, selectedDate, selectedMonth]);
-  const qC = useMemoFirebase(() => getQuery("TOKO_C"), [db, user, filterMode, selectedDate, selectedMonth]);
+  const qA = useMemoFirebase(() => getQuery("TOKO_A"), [db, filterMode, selectedDate, selectedMonth]);
+  const qB = useMemoFirebase(() => getQuery("TOKO_B"), [db, filterMode, selectedDate, selectedMonth]);
+  const qC = useMemoFirebase(() => getQuery("TOKO_C"), [db, filterMode, selectedDate, selectedMonth]);
 
   const { data: trxKWT } = useCollection<any>(qA);
   const { data: trxIND } = useCollection<any>(qB);

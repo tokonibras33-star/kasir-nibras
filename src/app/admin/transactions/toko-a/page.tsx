@@ -217,7 +217,7 @@ export default function TransactionsTokoAPage() {
       {/* DETAIL DIALOG */}
       <Dialog open={!!selectedTrx} onOpenChange={o => !o && setSelectedTrx(null)}>
         <DialogContent className="max-w-3xl rounded-[2.5rem] p-0 overflow-hidden border-none shadow-2xl">
-          <DialogHeader className="p-8 bg-primary text-white shrink-0">
+          <DialogHeader className="p-4 md:p-8 bg-primary text-white shrink-0">
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-1">Rincian Transaksi</p>

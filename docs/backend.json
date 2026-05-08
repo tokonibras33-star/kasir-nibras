@@ -300,6 +300,45 @@
         "requestedBy": { "type": "string" }
       },
       "required": ["id", "fromStore", "targetStore", "productId", "variantId", "quantity", "status", "requestedAt"]
+    },
+    "Member": {
+      "title": "Member",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "address": { "type": "string" },
+        "registrationDate": { "type": "string" },
+        "branch": { "type": "string" },
+        "discount": { "type": "number" }
+      }
+    },
+    "Agent": {
+      "title": "Agent",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "address": { "type": "string" },
+        "registrationDate": { "type": "string" },
+        "branch": { "type": "string" },
+        "discount": { "type": "number" }
+      }
+    },
+    "Reseller": {
+      "title": "Reseller",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "address": { "type": "string" },
+        "registrationDate": { "type": "string" },
+        "branch": { "type": "string" },
+        "discount": { "type": "number" }
+      }
     }
   },
   "auth": {
@@ -317,148 +356,39 @@
           "schema": {
             "$ref": "#/backend/entities/User"
           },
-          "description": "Stores user profiles. The `userId` corresponds to the `firebaseUid` from Firebase Authentication. Includes denormalized `role` ('ADMIN' or 'CASHIER') and `storeId` (for CASHIERs) which are critical for authorization independence, allowing security rules to directly check `request.auth.uid`'s corresponding user document for permissions without requiring additional `get()` calls.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The Firebase Authentication User ID (UID) of the user."
-            }
-          ]
+          "description": "Stores user profiles."
         }
       },
       {
-        "path": "/stores/{storeId}",
+        "path": "/members/{memberId}",
         "definition": {
-          "entityName": "Store",
+          "entityName": "Member",
           "schema": {
-            "$ref": "#/backend/entities/Store"
+            "$ref": "#/backend/entities/Member"
           },
-          "description": "Defines individual store entities (e.g., 'Toko A', 'Toko B'). Accessible by ADMINs for management, and readable by CASHIERs for their assigned store.",
-          "params": [
-            {
-              "name": "storeId",
-              "description": "Unique identifier for the store."
-            }
-          ]
+          "description": "Stores customer member data."
         }
       },
       {
-        "path": "/products/{productId}",
+        "path": "/agents/{agentId}",
         "definition": {
-          "entityName": "Product",
+          "entityName": "Agent",
           "schema": {
-            "$ref": "#/backend/entities/Product"
+            "$ref": "#/backend/entities/Agent"
           },
-          "description": "Central catalog of all products available across stores. Accessible by ADMINs for management and by CASHIERs for read-only purposes during transactions.",
-          "params": [
-            {
-              "name": "productId",
-              "description": "Unique identifier for the product."
-            }
-          ]
+          "description": "Stores discount agent data."
         }
       },
       {
-        "path": "/stores/{storeId}/stock/{stockId}",
+        "path": "/resellers/{resellerId}",
         "definition": {
-          "entityName": "Stock",
+          "entityName": "Reseller",
           "schema": {
-            "$ref": "#/backend/entities/Stock"
+            "$ref": "#/backend/entities/Reseller"
           },
-          "description": "Represents the current inventory levels for a specific product at a particular store. The `storeId` is denormalized in the path, ensuring that cashiers can only access stock for their assigned store, thus supporting authorization independence and secure QAPs. Includes `productId` and `quantity`.",
-          "params": [
-            {
-              "name": "storeId",
-              "description": "Unique identifier for the store where the stock is located."
-            },
-            {
-              "name": "stockId",
-              "description": "Unique identifier for the stock entry (often a combination of storeId and productId or a unique ID)."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/stores/{storeId}/transactions/{transactionId}",
-        "definition": {
-          "entityName": "Transaction",
-          "schema": {
-            "$ref": "#/backend/entities/Transaction"
-          },
-          "description": "Records details of individual sales transactions, specific to a particular store. The `storeId` is denormalized in the path, and `cashierId` is included in the document, enabling robust authorization for cashiers to manage transactions only within their assigned store. This design supports authorization independence and secure QAPs for transaction listings.",
-          "params": [
-            {
-              "name": "storeId",
-              "description": "Unique identifier for the store where the transaction occurred."
-            },
-            {
-              "name": "transactionId",
-              "description": "Unique identifier for the transaction."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/stores/{storeId}/transactions/{transactionId}/transactionItems/{transactionItemId}",
-        "definition": {
-          "entityName": "TransactionItem",
-          "schema": {
-            "$ref": "#/backend/entities/TransactionItem"
-          },
-          "description": "Represents individual product line items within a specific sales transaction. This is a subcollection, inheriting `storeId` and `transactionId` from the parent paths. Authorization is implicitly tied to the parent transaction document.",
-          "params": [
-            {
-              "name": "storeId",
-              "description": "Unique identifier for the store where the transaction occurred."
-            },
-            {
-              "name": "transactionId",
-              "description": "Unique identifier for the parent transaction."
-            },
-            {
-              "name": "transactionItemId",
-              "description": "Unique identifier for the transaction item."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/stores/{storeId}/stockLogs/{stockLogId}",
-        "definition": {
-          "entityName": "StockLog",
-          "schema": {
-            "$ref": "#/backend/entities/StockLog"
-          },
-          "description": "Immutable historical log of all stock movements and changes, specific to a store. The `storeId` is denormalized in the path, and `userId` is included in the document, supporting auditing and ensuring authorization independence for log entries. Cashiers can only write and read logs for their assigned store.",
-          "params": [
-            {
-              "name": "storeId",
-              "description": "Unique identifier for the store where the stock change occurred."
-            },
-            {
-              "name": "stockLogId",
-              "description": "Unique identifier for the stock log entry."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/mutationRequests/{reqId}",
-        "definition": {
-          "entityName": "MutationRequest",
-          "schema": {
-            "$ref": "#/backend/entities/MutationRequest"
-          },
-          "description": "Manages stock mutation requests between different store branches.",
-          "params": [
-            {
-              "name": "reqId",
-              "description": "Unique identifier for the mutation request."
-            }
-          ]
+          "description": "Stores reseller data."
         }
       }
-    ],
-    "reasoning": "The recommended Firestore structure prioritizes authorization independence, clarity, and secure query access patterns (QAPs) by consistently applying denormalization and structural segregation. \n\nAuthorization Independence is achieved primarily through the `/users/{userId}` collection. Each user document directly stores their `role` (ADMIN or CASHIER) and, for cashiers, their `storeId`. This eliminates the need for security rules to perform expensive `get()` calls to retrieve a user's role or associated store from a separate document or a parent collection. Rules can directly check `request.auth.uid` against the document ID to fetch the user's profile and use the `role` and `storeId` fields contained within that single document. \n\nFor store-specific data such as `Stock`, `Transaction`, and `StockLog`, a hierarchical structure under `/stores/{storeId}/...` is used. This embeds the `storeId` directly into the document path. This design choice is crucial for Authorization Independence and QAPs. For instance, a cashier's access to `stock` is restricted to `/stores/{myStoreId}/stock/{stockId}`. When a cashier attempts to access data, security rules can verify that the `{storeId}` wildcard in the path matches the `storeId` denormalized in their `/users/{userId}` document, all without requiring cross-collection `get()` operations. This ensures atomicity for write operations involving multiple documents (e.g., creating a transaction and updating stock) as rules are evaluated against the current document's path and content, and the authenticated user's directly accessible profile.\n\nSecure Query Access Patterns (QAPs) are robustly supported. Admins have broad access and can query across all top-level collections like `/users`, `/stores`, and `/products`. For data within store-specific subcollections (e.g., `/stores/{storeId}/stock`), an admin could perform queries across all store subcollections if needed (e.g., via a Cloud Function for aggregation or client-side iteration). However, for cashiers, the structure naturally enforces QAPs: a cashier associated with 'Toko A' (via `users/{userId}.storeId`) can only perform `list` queries within the `/stores/tokoAId/stock` or `/stores/tokoAId/transactions` paths. The security rules will automatically prevent them from listing documents in another store's subcollection or performing a top-level collection query that isn't already restricted by `storeId` in the path. This eliminates the need for Firestore rules to act as filters (which is insecure) and ensures that all `list` operations return only the data the user is authorized to see, making the system highly debuggable and secure."
+    ]
   }
 }
