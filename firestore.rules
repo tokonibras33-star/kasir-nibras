@@ -1,0 +1,57 @@
+
+/**
+ * # Firestore Security Rules - Nibras House (Optimized for Multi-Store Operations)
+ */
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    match /mutationRequests/{reqId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /members/{memberId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /agents/{agentId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /resellers/{resellerId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /coupons/{couponId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /stockEntries/{entryId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /users/{userId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /ownerExpenses/{dateId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /stores/{storeId} {
+      allow read, write: if isSignedIn();
+      match /{allSubcollections=**} {
+        allow read, write: if isSignedIn();
+      }
+    }
+
+    match /{document=**} {
+      allow read, write: if isSignedIn();
+    }
+  }
+}

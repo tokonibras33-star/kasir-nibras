@@ -1,0 +1,124 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Nibras House Editorial Hero Palette */
+    --background: 34 18% 95%;
+    --foreground: 20 14% 8%;
+    --card: 0 0% 100%;
+    --card-foreground: 20 14% 8%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 14% 8%;
+    --primary: 335 70% 46%; /* #C82368 Nibras Signature Berry */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 34 15% 90%;
+    --secondary-foreground: 20 14% 12%;
+    --muted: 34 15% 90%;
+    --muted-foreground: 25 8% 45%;
+    --accent: 335 70% 96%;
+    --accent-foreground: 335 70% 40%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 34 12% 86%;
+    --input: 34 12% 86%;
+    --ring: 335 70% 46%;
+    --radius: 1rem;
+    --chart-1: 335 70% 46%;
+    --chart-2: 20 14% 10%;
+    --chart-3: 335 55% 65%;
+    --chart-4: 35 85% 55%;
+    --chart-5: 25 10% 50%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 20 14% 8%;
+    --sidebar-primary: 335 70% 46%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 34 15% 94%;
+    --sidebar-accent-foreground: 20 14% 8%;
+    --sidebar-border: 34 12% 88%;
+    --sidebar-ring: 335 70% 46%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+.soft-shadow {
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.04), 0 2px 10px -2px rgba(0, 0, 0, 0.02);
+}
+
+.card-hover {
+  transition: all 0.2s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.08);
+}
+
+.btn-press:active {
+  transform: scale(0.98);
+}
+
+@keyframes floatSlow {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(0.5deg);
+  }
+}
+
+@keyframes ribbonWave {
+  0%, 100% {
+    transform: translateX(0px) translateY(0px) scale(1);
+  }
+  50% {
+    transform: translateX(-18px) translateY(8px) scale(1.03);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes pulseRing {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.7;
+  }
+  70% {
+    transform: scale(1.15);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.15);
+    opacity: 0;
+  }
+}
+
+.animate-float-slow {
+  animation: floatSlow 6s ease-in-out infinite;
+}
+
+.animate-ribbon-wave {
+  animation: ribbonWave 10s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  background-size: 200% 100%;
+  animation: shimmer 4s linear infinite;
+}

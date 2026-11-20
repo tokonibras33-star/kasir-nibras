@@ -1,0 +1,29 @@
+
+{
+  "placeholderImages": [
+    {
+      "id": "shirt-1",
+      "description": "Casual Linen Shirt",
+      "imageUrl": "https://picsum.photos/seed/clothing1/400/400",
+      "imageHint": "linen shirt"
+    },
+    {
+      "id": "dress-1",
+      "description": "Floral Summer Dress",
+      "imageUrl": "https://picsum.photos/seed/clothing2/400/400",
+      "imageHint": "floral dress"
+    },
+    {
+      "id": "jeans-1",
+      "description": "Classic Blue Jeans",
+      "imageUrl": "https://picsum.photos/seed/clothing3/400/400",
+      "imageHint": "blue jeans"
+    },
+    {
+      "id": "jacket-1",
+      "description": "Modern Denim Jacket",
+      "imageUrl": "https://picsum.photos/seed/clothing4/400/400",
+      "imageHint": "denim jacket"
+    }
+  ]
+}
