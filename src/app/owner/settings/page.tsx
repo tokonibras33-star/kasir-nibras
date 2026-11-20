@@ -20,7 +20,11 @@ const roles = [
   { id: "KASIR_TOKO_C", label: "Kasir NHS GDM", icon: Store },
 ];
 
+<<<<<<< HEAD
 const DEFAULT_LOGO = "/hero/nibras-logo.jpg";
+=======
+const DEFAULT_LOGO = "https://res.cloudinary.com/dqujkgwah/image/upload/v1775115570/nibras_house-removebg-preview_gwdzut.png";
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
 const DEFAULT_CARD_BG = "https://res.cloudinary.com/dgsxujjb1/image/upload/v1778132431/KartuMember_IndahFashion_1_lun0a1.png";
 
 export default function OwnerSettingsPage() {
@@ -143,6 +147,7 @@ export default function OwnerSettingsPage() {
   };
 
   return (
+<<<<<<< HEAD
     <div className="space-y-5 sm:space-y-6 pb-10">
       <div>
         <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-400">System Preferences</p>
@@ -184,11 +189,54 @@ export default function OwnerSettingsPage() {
                             <Input 
                               placeholder="nama@nibrashouse.id" 
                               className="pl-10 h-9 sm:h-10 text-xs sm:text-sm font-bold bg-[#F5F3F0] rounded-full border border-neutral-200/70"
+=======
+    <div className="space-y-8 pb-20">
+      <div>
+        <h1 className="text-3xl font-black font-headline text-primary uppercase">Seting Sistem</h1>
+        <p className="text-muted-foreground text-sm">Kelola akses operasional dan branding Nibras House.</p>
+      </div>
+
+      <div className="space-y-8">
+        {/* Manajemen Akun */}
+        <Card className="border-none soft-shadow overflow-hidden rounded-3xl">
+          <CardHeader className="bg-primary/5 border-b">
+            <CardTitle className="text-lg font-black flex items-center gap-2 uppercase">
+              <ShieldCheck className="h-5 w-5 text-primary" /> Manajemen Akun Staf
+            </CardTitle>
+            <CardDescription>Email dan Password ini adalah akses tunggal bagi setiap staf cabang.</CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="divide-y divide-muted/50">
+              {roles.map((role) => {
+                const userData = localUsers[role.id] || { email: "", passwordHint: "" };
+                return (
+                  <div key={role.id} className="p-6 hover:bg-muted/5">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                      <div className="flex items-center gap-4 shrink-0 min-w-[220px]">
+                        <div className="bg-primary/10 p-3 rounded-2xl">
+                          <role.icon className="h-6 w-6 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-black text-base uppercase tracking-tight">{role.label}</p>
+                          <p className="text-[10px] font-bold text-muted-foreground opacity-60">ID AKSES: {role.id}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Email Login</Label>
+                          <div className="relative">
+                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input 
+                              placeholder="nama@nibrashouse.id" 
+                              className="pl-10 h-12 text-sm font-bold bg-white rounded-xl border-none shadow-sm"
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                               value={userData.email || ""}
                               onChange={e => setLocalUsers({...localUsers, [role.id]: { ...userData, email: e.target.value }})}
                             />
                           </div>
                         </div>
+<<<<<<< HEAD
                         <div className="space-y-1">
                           <Label className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-2">Kata Sandi</Label>
                           <div className="relative">
@@ -197,6 +245,16 @@ export default function OwnerSettingsPage() {
                               type="text"
                               placeholder="••••••••" 
                               className="pl-10 h-9 sm:h-10 text-xs sm:text-sm font-mono bg-[#F5F3F0] rounded-full border border-neutral-200/70"
+=======
+                        <div className="space-y-1.5">
+                          <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Kata Sandi</Label>
+                          <div className="relative">
+                            <Key className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input 
+                              type="text"
+                              placeholder="••••••••" 
+                              className="pl-10 h-12 text-sm font-mono bg-white rounded-xl border-none shadow-sm"
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                               value={userData.passwordHint || ""}
                               onChange={e => setLocalUsers({...localUsers, [role.id]: { ...userData, passwordHint: e.target.value }})}
                             />
@@ -205,11 +263,19 @@ export default function OwnerSettingsPage() {
                       </div>
 
                       <Button 
+<<<<<<< HEAD
                         className="h-9 sm:h-10 px-5 sm:px-6 font-bold text-[11px] sm:text-xs rounded-full shrink-0 bg-neutral-950 hover:bg-neutral-800 text-white"
                         disabled={isSaving === role.id}
                         onClick={() => handleUpdateUser(role.id)}
                       >
                         {isSaving === role.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "KUNCI DATA"}
+=======
+                        className="h-12 px-8 font-black rounded-xl shrink-0 shadow-lg shadow-primary/20"
+                        disabled={isSaving === role.id}
+                        onClick={() => handleUpdateUser(role.id)}
+                      >
+                        {isSaving === role.id ? <Loader2 className="h-5 w-5 animate-spin" /> : "KUNCI DATA"}
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                       </Button>
                     </div>
                   </div>
@@ -220,6 +286,7 @@ export default function OwnerSettingsPage() {
         </Card>
 
         {/* Kartu Cetak Member */}
+<<<<<<< HEAD
         <Card className="border border-neutral-200/70 shadow-sm overflow-hidden rounded-2xl sm:rounded-3xl bg-white">
           <CardHeader className="bg-neutral-950 text-white p-4 sm:p-5">
             <CardTitle className="text-xs sm:text-sm font-bold flex items-center gap-2 uppercase tracking-widest text-neutral-200">
@@ -237,16 +304,40 @@ export default function OwnerSettingsPage() {
                     <Input 
                       placeholder="https://res.cloudinary.com/..." 
                       className="pl-10 h-10 rounded-full bg-[#F5F3F0] border border-neutral-200/70 font-medium text-xs"
+=======
+        <Card className="border-none soft-shadow overflow-hidden rounded-3xl">
+          <CardHeader className="bg-primary/5 border-b">
+            <CardTitle className="text-lg font-black flex items-center gap-2 uppercase text-primary">
+              <CreditCard className="h-5 w-5" /> Desain Kartu Member
+            </CardTitle>
+            <CardDescription>Atur desain latar belakang kartu member fisik Indah Fashion.</CardDescription>
+          </CardHeader>
+          <CardContent className="p-8">
+            <div className="flex flex-col lg:flex-row gap-12 items-start">
+              <div className="flex-1 w-full space-y-6">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Link Background Kartu (Cloudinary)</Label>
+                  <div className="relative">
+                    <ImageIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <Input 
+                      placeholder="https://res.cloudinary.com/..." 
+                      className="pl-12 h-14 rounded-2xl bg-white border-2 border-slate-100 font-medium"
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                       value={cardBackgroundUrl}
                       onChange={(e) => setCardBackgroundUrl(e.target.value)}
                     />
                   </div>
+<<<<<<< HEAD
                   <p className="text-[10px] text-neutral-400 mt-1 italic px-2">
+=======
+                  <p className="text-[10px] text-muted-foreground mt-2 italic px-1">
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                     * Gunakan gambar dengan rasio kartu ID-1 (sekitar 1011x569 pixel).
                   </p>
                 </div>
                 
                 <Button 
+<<<<<<< HEAD
                   className="w-full h-10 rounded-full font-bold text-xs uppercase tracking-widest bg-[#C82368] hover:bg-[#a61c55] text-white"
                   onClick={handleSaveCardBg}
                   disabled={isSavingCard}
@@ -258,6 +349,19 @@ export default function OwnerSettingsPage() {
               <div className="w-full lg:w-80 flex flex-col items-center gap-2">
                 <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-neutral-400">Pratinjau Background</p>
                 <div className="relative w-full aspect-[1.58/1] rounded-2xl bg-[#F5F3F0] border-2 border-dashed border-neutral-200 flex items-center justify-center overflow-hidden shadow-inner">
+=======
+                  className="w-full h-14 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-primary/20"
+                  onClick={handleSaveCardBg}
+                  disabled={isSavingCard}
+                >
+                  {isSavingCard ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="h-5 w-5 mr-2" /> SIMPAN DESAIN KARTU</>}
+                </Button>
+              </div>
+
+              <div className="w-full lg:w-96 flex flex-col items-center gap-4">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Pratinjau Background</p>
+                <div className="relative w-full aspect-[1.58/1] rounded-[1.5rem] bg-white border-2 border-dashed border-slate-200 flex items-center justify-center overflow-hidden shadow-inner">
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                   {cardBackgroundUrl ? (
                     <img 
                       src={cardBackgroundUrl} 
@@ -266,9 +370,15 @@ export default function OwnerSettingsPage() {
                       onError={() => setCardBackgroundUrl(DEFAULT_CARD_BG)}
                     />
                   ) : (
+<<<<<<< HEAD
                     <div className="text-center space-y-2 opacity-25">
                       <ImageIcon className="h-10 w-10 mx-auto" />
                       <p className="text-[10px] font-bold uppercase">No Background</p>
+=======
+                    <div className="text-center space-y-2 opacity-20">
+                      <ImageIcon className="h-12 w-12 mx-auto" />
+                      <p className="text-[9px] font-bold uppercase">No Background</p>
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                     </div>
                   )}
                 </div>
@@ -278,6 +388,7 @@ export default function OwnerSettingsPage() {
         </Card>
 
         {/* Logo Struk Configuration */}
+<<<<<<< HEAD
         <Card className="border border-neutral-200/70 shadow-sm overflow-hidden rounded-2xl sm:rounded-3xl bg-white">
           <CardHeader className="bg-neutral-950 text-white p-4 sm:p-5">
             <CardTitle className="text-xs sm:text-sm font-bold flex items-center gap-2 uppercase tracking-widest text-neutral-200">
@@ -295,16 +406,40 @@ export default function OwnerSettingsPage() {
                     <Input 
                       placeholder="https://res.cloudinary.com/..." 
                       className="pl-10 h-10 rounded-full bg-[#F5F3F0] border border-neutral-200/70 font-medium text-xs"
+=======
+        <Card className="border-none soft-shadow overflow-hidden rounded-3xl">
+          <CardHeader className="bg-primary/5 border-b">
+            <CardTitle className="text-lg font-black flex items-center gap-2 uppercase text-primary">
+              <Shirt className="h-5 w-5" /> Pengaturan Logo Struk
+            </CardTitle>
+            <CardDescription>Logo ini akan muncul pada hasil cetak struk belanja 58mm/80mm.</CardDescription>
+          </CardHeader>
+          <CardContent className="p-8">
+            <div className="flex flex-col lg:flex-row gap-12 items-start">
+              <div className="flex-1 w-full space-y-6">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Link Logo Struk (Cloudinary)</Label>
+                  <div className="relative">
+                    <Globe className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <Input 
+                      placeholder="https://res.cloudinary.com/..." 
+                      className="pl-12 h-14 rounded-2xl bg-white border-2 border-slate-100 font-medium"
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                       value={receiptLogoUrl}
                       onChange={(e) => setReceiptLogoUrl(e.target.value)}
                     />
                   </div>
+<<<<<<< HEAD
                   <p className="text-[10px] text-neutral-400 mt-1 italic px-2">
+=======
+                  <p className="text-[10px] text-muted-foreground mt-2 italic px-1">
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                     * Pastikan link bersifat publik dan memiliki background transparan atau putih.
                   </p>
                 </div>
                 
                 <Button 
+<<<<<<< HEAD
                   className="w-full h-10 rounded-full font-bold text-xs uppercase tracking-widest bg-[#C82368] hover:bg-[#a61c55] text-white"
                   onClick={handleSaveLogo}
                   disabled={isSavingLogo}
@@ -316,6 +451,19 @@ export default function OwnerSettingsPage() {
               <div className="w-full lg:w-64 flex flex-col items-center gap-2">
                 <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-neutral-400">Preview Struk</p>
                 <div className="relative w-36 h-36 sm:w-44 sm:h-44 rounded-2xl bg-[#F5F3F0] border-2 border-dashed border-neutral-200 flex items-center justify-center overflow-hidden p-4 shadow-inner">
+=======
+                  className="w-full h-14 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-primary/20"
+                  onClick={handleSaveLogo}
+                  disabled={isSavingLogo}
+                >
+                  {isSavingLogo ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="h-5 w-5 mr-2" /> SIMPAN LOGO STRUK</>}
+                </Button>
+              </div>
+
+              <div className="w-full lg:w-72 flex flex-col items-center gap-4">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Preview Struk</p>
+                <div className="relative w-48 h-48 rounded-[2rem] bg-white border-2 border-dashed border-slate-200 flex items-center justify-center overflow-hidden p-6 shadow-inner">
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                   {receiptLogoUrl ? (
                     <img 
                       src={receiptLogoUrl} 
@@ -324,9 +472,15 @@ export default function OwnerSettingsPage() {
                       onError={() => setReceiptLogoUrl("")}
                     />
                   ) : (
+<<<<<<< HEAD
                     <div className="text-center space-y-2 opacity-25">
                       <Shirt className="h-10 w-10 mx-auto" />
                       <p className="text-[10px] font-bold uppercase">No Image</p>
+=======
+                    <div className="text-center space-y-2 opacity-20">
+                      <Shirt className="h-12 w-12 mx-auto" />
+                      <p className="text-[9px] font-bold uppercase">No Image</p>
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                     </div>
                   )}
                 </div>
@@ -336,6 +490,7 @@ export default function OwnerSettingsPage() {
         </Card>
 
         {/* Logo App (Terkunci) */}
+<<<<<<< HEAD
         <Card className="max-w-2xl border border-neutral-200/70 shadow-sm overflow-hidden rounded-3xl bg-white opacity-80">
           <CardHeader className="bg-[#F5F3F0] pb-4 border-b border-neutral-200/70">
             <CardTitle className="text-xs font-bold flex items-center gap-2 uppercase tracking-widest text-neutral-500">
@@ -356,6 +511,28 @@ export default function OwnerSettingsPage() {
               <div className="flex-1 space-y-1">
                 <h4 className="font-bold text-xs uppercase text-neutral-800">Logo Aplikasi Aktif</h4>
                 <p className="text-xs text-neutral-500 leading-relaxed">
+=======
+        <Card className="max-w-2xl border-none soft-shadow overflow-hidden rounded-3xl opacity-60">
+          <CardHeader className="bg-slate-50 pb-6 border-b">
+            <CardTitle className="text-sm font-black flex items-center gap-2 uppercase text-slate-400">
+              Logo Sistem (Header & Login)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-8">
+            <div className="flex items-center gap-8">
+              <div className="relative w-24 h-24 rounded-2xl bg-white border flex items-center justify-center overflow-hidden p-2">
+                <Image 
+                  src={DEFAULT_LOGO} 
+                  alt="Default App Logo" 
+                  width={80} 
+                  height={80} 
+                  className="object-contain" 
+                />
+              </div>
+              <div className="flex-1 space-y-1">
+                <h4 className="font-black text-xs uppercase text-slate-500">Logo Aplikasi Aktif</h4>
+                <p className="text-[10px] text-muted-foreground leading-relaxed">
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                   Logo sistem untuk antarmuka aplikasi dikunci demi stabilitas UI. Hanya logo struk yang dapat diubah secara dinamis.
                 </p>
               </div>

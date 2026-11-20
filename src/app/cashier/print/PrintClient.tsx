@@ -10,7 +10,10 @@ import { Badge } from '@/components/ui/badge';
 import { Printer, ArrowLeft, Download, Loader2, Info } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+<<<<<<< HEAD
 import { getTrxReturnSummary } from '@/components/cashier/types';
+=======
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
 
 const DEFAULT_LOGO_URL = 'https://res.cloudinary.com/dqujkgwah/image/upload/v1775115570/nibras_house-removebg-preview_gwdzut.png';
 
@@ -69,9 +72,13 @@ export default function PrintClient() {
   if (!user || !trx) return <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center space-y-4"><Info className="h-12 w-12 text-rose-500" /><h1 className="text-xl font-black">Data Transaksi Tidak Ditemukan</h1><Button onClick={() => router.back()}>Kembali</Button></div>;
 
   // CONSOLIDATE IDENTICAL ITEMS BY NAME (Peleburan Item Identik)
+<<<<<<< HEAD
   const returnSummary = getTrxReturnSummary(trx);
   const sourceItems = Array.isArray(trx.originalItems) ? trx.originalItems : (trx.items || []);
   const consolidatedItems = sourceItems.reduce((acc: any[], item: any) => {
+=======
+  const consolidatedItems = trx.items?.reduce((acc: any[], item: any) => {
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
     const itemName = (item.name || "").toUpperCase();
     const existing = acc.find(i => i.name.toUpperCase() === itemName && i.variantId === item.variantId);
     const labelPrice = item.labelPrice || item.price;
@@ -91,6 +98,7 @@ export default function PrintClient() {
   const logoToUse = brandData?.receiptLogoUrl || DEFAULT_LOGO_URL;
 
   return (
+<<<<<<< HEAD
     <div className="min-h-screen bg-[#F5F3F0] flex flex-col md:flex-row print:bg-white print:p-0">
       <aside className="w-full md:w-[340px] bg-neutral-950 text-white p-6 space-y-8 print:hidden shrink-0 flex flex-col justify-between">
         <div className="space-y-8">
@@ -137,6 +145,26 @@ export default function PrintClient() {
 
       <main className="flex-1 flex justify-center items-start p-4 sm:p-8 md:p-12 overflow-y-auto print:p-0 print:m-0">
       <div id="print-area" className="bg-white shadow-xl rounded-xl p-2 print:shadow-none print:rounded-none" style={{ width: paperSize, padding: '2mm', fontFamily: 'monospace', color: '#000', fontSize: '10px', lineHeight: '1.2', height: 'fit-content', minHeight: 'auto', display: 'inline-block' }}>
+=======
+    <div className="min-h-screen bg-slate-100 flex flex-col md:flex-row print:bg-white print:p-0">
+      <aside className="w-full md:w-[350px] bg-white border-r p-6 space-y-8 print:hidden shrink-0">
+        <div className="flex items-center justify-between"><Button variant="ghost" size="sm" onClick={() => router.back()}><ArrowLeft className="h-4 w-4 mr-2" /> Kembali</Button><Badge variant="secondary" className="font-black text-[10px]">PRINT CENTER</Badge></div>
+        <div className="space-y-6">
+          <div className="space-y-3">
+            <Label className="text-[10px] font-black uppercase tracking-widest text-primary">Pilih Ukuran Kertas</Label>
+            <RadioGroup value={paperSize} onValueChange={(v: any) => setPaperSize(v)} className="grid grid-cols-2 gap-3">
+              <div className="relative"><RadioGroupItem value="58mm" id="p-58" className="sr-only peer" /><Label htmlFor="p-58" className="flex items-center justify-center h-12 rounded-2xl border-2 peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 cursor-pointer font-black text-sm transition-all">58mm</Label></div>
+              <div className="relative"><RadioGroupItem value="80mm" id="p-80" className="sr-only peer" /><Label htmlFor="p-80" className="flex items-center justify-center h-12 rounded-2xl border-2 peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 cursor-pointer font-black text-sm transition-all">80mm</Label></div>
+            </RadioGroup>
+          </div>
+          <Button className="w-full h-20 rounded-[2.5rem] font-black text-lg shadow-2xl bg-primary" onClick={() => window.print()}><Printer className="h-6 w-6 mr-3" /> CETAK STRUK</Button>
+          <Button variant="outline" className="w-full h-14 rounded-2xl font-black text-xs" onClick={handleDownloadPDF} disabled={isGenerating}>{isGenerating ? <Loader2 className="animate-spin h-5 w-5 mr-3" /> : <Download className="h-5 w-5 mr-3" />} SIMPAN PDF</Button>
+        </div>
+      </aside>
+
+      <main className="flex-1 flex justify-center p-4 md:p-12 overflow-y-auto print:p-0 print:m-0">
+      <div id="print-area" className="bg-white print:shadow-none" style={{ width: paperSize, padding: '2mm', fontFamily: 'monospace', color: '#000', fontSize: '10px', lineHeight: '1.2', height: 'fit-content', minHeight: 'auto', display: 'inline-block' }}>
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
           <div className="text-center mb-3 space-y-1">
             <div className="flex justify-center mb-2">
               <img src={logoToUse} alt="Logo" className="h-14 w-auto object-contain mx-auto" />
@@ -151,13 +179,21 @@ export default function PrintClient() {
 
           <div className="border-y border-dashed border-black/30 py-3 my-3 space-y-1 text-[9px]">
             <div className="flex justify-between"><span>NO STRUK:</span><span>{trx.id}</span></div>
+<<<<<<< HEAD
             <div className="flex justify-between"><span>TANGGAL:</span><span>{trx.date?.toDate?.()?.toLocaleString('id-ID') || "Baru"}</span></div>
+=======
+            <div className="flex justify-between"><span>TANGGAL:</span><span>{trx.date?.toDate().toLocaleString('id-ID')}</span></div>
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
             <div className="flex justify-between"><span>KASIR:</span><span>{(headerInfo.cashier || trx.cashier || "").toUpperCase()}</span></div>
             <div className="pt-1 border-t border-dashed border-black/10 mt-1"><div className="flex justify-between font-bold"><span>CUSTOMER:</span><span className="uppercase">{trx.customerName || "UMUM"}</span></div></div>
           </div>
 
           <div className="space-y-2 mb-2">
+<<<<<<< HEAD
             {consolidatedItems.map((item: any, i: number) => {
+=======
+            {consolidatedItems.map((item, i) => {
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
               const labelPrice = item.labelPrice || item.price;
               const totalDisc = item.totalNominalDisc || 0;
               const totalLabelPrice = labelPrice * item.quantity;
@@ -182,6 +218,7 @@ export default function PrintClient() {
             <div className="flex justify-between text-[9px]"><span>JUMLAH QTY</span><span>{totalQty} PCS</span></div>
             <div className="flex justify-between text-[9px] font-bold"><span>SUBTOTAL (HARGA LABEL)</span><span>Rp{trx.subtotalLabel?.toLocaleString('id-ID')}</span></div>
             <div className="flex justify-between text-[9px] font-bold text-rose-600"><span>TOTAL POTONGAN</span><span>-Rp{trx.totalDiscount?.toLocaleString('id-ID')}</span></div>
+<<<<<<< HEAD
             {returnSummary.hasReturn ? (
               <>
                 <div className="flex justify-between text-[9px] font-bold"><span>TAGIHAN AWAL</span><span>Rp{returnSummary.originalTotal.toLocaleString('id-ID')}</span></div>
@@ -191,6 +228,9 @@ export default function PrintClient() {
             ) : (
               <div className="border-t border-black/10 pt-1 flex justify-between text-[11px] font-black uppercase"><span>TOTAL TAGIHAN</span><span>Rp{returnSummary.netTotal.toLocaleString('id-ID')}</span></div>
             )}
+=======
+            <div className="border-t border-black/10 pt-1 flex justify-between text-[11px] font-black uppercase"><span>TOTAL TAGIHAN</span><span>Rp{trx.total?.toLocaleString('id-ID')}</span></div>
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
             
             {trx.paymentMethod?.includes("CASH") && trx.cashReceived > 0 && (
               <div className="pt-2 space-y-1 border-t border-dashed border-black/20 mt-2">
@@ -199,10 +239,17 @@ export default function PrintClient() {
               </div>
             )}
             
+<<<<<<< HEAD
             {returnSummary.effectiveStatus === 'DP' && (
               <div className="pt-2 space-y-1 border-t border-dashed border-black/20 mt-2">
                 <div className="flex justify-between text-[9px] font-bold"><span>TOTAL SUDAH DIBAYAR</span><span>Rp{returnSummary.netPaid.toLocaleString('id-ID')}</span></div>
                 <div className="flex justify-between text-[9px] font-black text-rose-600"><span>SISA PELUNASAN</span><span>Rp{returnSummary.netRemaining.toLocaleString('id-ID')}</span></div>
+=======
+            {trx.status === 'DP' && (
+              <div className="pt-2 space-y-1 border-t border-dashed border-black/20 mt-2">
+                <div className="flex justify-between text-[9px] font-bold"><span>TOTAL SUDAH DIBAYAR</span><span>Rp{trx.paidAmount?.toLocaleString('id-ID')}</span></div>
+                <div className="flex justify-between text-[9px] font-black text-rose-600"><span>SISA PELUNASAN</span><span>Rp{trx.remainingAmount?.toLocaleString('id-ID')}</span></div>
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
               </div>
             )}
           </div>

@@ -10,6 +10,7 @@ import {
   signOut
 } from "firebase/auth";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
+<<<<<<< HEAD
 import { jsPDF } from "jspdf";
 import { applyPlugin } from "jspdf-autotable";
 
@@ -18,6 +19,8 @@ try {
 } catch {
   // Ignore if already registered
 }
+=======
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
 
 export type UserRole = "ADMIN" | "OWNER" | "KASIR_TOKO_A" | "KASIR_TOKO_B" | "KASIR_TOKO_C";
 
@@ -37,6 +40,7 @@ interface AuthContextType {
 }
 
 /**
+<<<<<<< HEAD
  * DAFTAR KREDENSIAL RESMI (MASTER) - Dimuat dari Environment Variables (.env / .env.local)
  * Catatan: Firebase Auth mewajibkan password minimal 6 karakter.
  */
@@ -61,6 +65,17 @@ const OFFICIAL_CREDENTIALS: Record<UserRole, { email: string; pass: string }> = 
     email: (process.env.NEXT_PUBLIC_AUTH_KASIR_C_EMAIL || "").toLowerCase().trim(),
     pass: process.env.NEXT_PUBLIC_AUTH_KASIR_C_PASS || "",
   },
+=======
+ * DAFTAR KREDENSIAL RESMI (MASTER)
+ * Catatan: Firebase Auth mewajibkan password minimal 6 karakter.
+ */
+const OFFICIAL_CREDENTIALS: Record<UserRole, { email: string; pass: string }> = {
+  OWNER: { email: "owner@nibrashouse.id", pass: "123owner" },
+  ADMIN: { email: "admin@nibrashouse.id", pass: "123admin" },
+  KASIR_TOKO_A: { email: "nhskwt@kasir.id", pass: "nhskwt" },
+  KASIR_TOKO_B: { email: "indco@kasir.id", pass: "indco123" }, // Diubah ke 6+ karakter agar valid di Firebase
+  KASIR_TOKO_C: { email: "nhsgdm@kasir.id", pass: "nhsgdm" },
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -107,6 +122,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const normalizedEmail = email.toLowerCase().trim();
     
     try {
+<<<<<<< HEAD
       // 1. Validasi terhadap Kredensial Kustom di Firestore (jika ada dari Owner Settings) atau Master List
       const official = OFFICIAL_CREDENTIALS[role];
       if (!official) throw new Error("Role tidak valid.");
@@ -130,6 +146,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const matchesCustom = normalizedEmail === expectedEmail && password === expectedPass;
 
       if (!matchesMaster && !matchesCustom) {
+=======
+      // 1. Validasi terhadap Daftar Kredensial Resmi
+      const official = OFFICIAL_CREDENTIALS[role];
+      if (!official) throw new Error("Role tidak valid.");
+
+      if (normalizedEmail !== official.email || password !== official.pass) {
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
         throw new Error("Email atau Password tidak cocok dengan daftar otoritas sistem.");
       }
 

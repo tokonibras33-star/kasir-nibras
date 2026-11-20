@@ -187,6 +187,7 @@ export default function StockTokoAPage() {
   };
 
   return (
+<<<<<<< HEAD
     <div className="space-y-4 sm:space-y-5">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
@@ -196,10 +197,22 @@ export default function StockTokoAPage() {
         <div className="flex gap-2 w-full sm:w-auto">
           <Button variant="outline" onClick={handleExportExcel} className="h-9 sm:h-10 rounded-full border-neutral-200 bg-white font-bold text-[11px] sm:text-xs flex-1 sm:flex-none"><FileSpreadsheet className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 text-emerald-600" /> Excel</Button>
           <Button variant="outline" onClick={exportToPDF} className="h-9 sm:h-10 rounded-full border-neutral-200 bg-white font-bold text-[11px] sm:text-xs flex-1 sm:flex-none"><FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 text-[#C82368]" /> PDF</Button>
+=======
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold font-headline tracking-tight text-foreground">Stok {sourceDisplayName}</h1>
+          <p className="text-muted-foreground text-sm">Monitoring inventaris di Cabang {sourceDisplayName}.</p>
+        </div>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <Button variant="outline" onClick={handleExportExcel} className="h-9"><FileSpreadsheet className="h-4 w-4 mr-2 text-emerald-600" /> Excel</Button>
+          <Button variant="outline" onClick={exportToPDF} className="h-9"><FileText className="h-4 w-4 mr-2 text-rose-600" /> PDF</Button>
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
         </div>
       </div>
 
       <div className="relative max-w-md">
+<<<<<<< HEAD
         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-neutral-400" />
         <Input placeholder="Cari Nama, Merk, Kategori, Warna, Size..." className="pl-9 sm:pl-10 h-9 sm:h-10 bg-white border-neutral-200 rounded-full shadow-sm text-xs" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
       </div>
@@ -265,10 +278,28 @@ export default function StockTokoAPage() {
                   <TableHead className="text-center text-white text-[10px] uppercase font-bold">Sisa Stok</TableHead>
                   <TableHead className="text-right text-white text-[10px] uppercase font-bold">Harga Jual</TableHead>
                   <TableHead className="text-right text-white text-[10px] uppercase font-bold">Aksi</TableHead>
+=======
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input placeholder="Cari Nama, Merk, Kategori, Warna, Size..." className="pl-10 h-10 shadow-sm" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+      </div>
+
+      <Card className="soft-shadow border-none overflow-hidden">
+        <CardContent className="p-0">
+          <div className="w-full overflow-x-auto">
+            <Table>
+              <TableHeader className="bg-muted/50">
+                <TableRow>
+                  <TableHead>Nama Barang</TableHead>
+                  <TableHead>Merk</TableHead>
+                  <TableHead className="text-center">Sisa Stok</TableHead>
+                  <TableHead className="text-right">Harga Jual</TableHead>
+                  <TableHead className="text-right">Aksi</TableHead>
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {flattenedVariants.length > 0 ? flattenedVariants.map((item, idx) => (
+<<<<<<< HEAD
                   <TableRow key={idx} className="hover:bg-[#F5F3F0]/60 transition-colors border-b border-neutral-100">
                     <TableCell className="font-medium text-sm">
                       <p className="font-bold text-neutral-950">{item.productName}</p>
@@ -279,6 +310,18 @@ export default function StockTokoAPage() {
                       <span className={item.stock <= 5 ? "text-rose-600" : "text-neutral-950"}>{item.stock}</span>
                     </TableCell>
                     <TableCell className="text-right font-bold text-sm text-[#C82368]">
+=======
+                  <TableRow key={idx} className="hover:bg-muted/20 transition-colors">
+                    <TableCell className="font-medium text-sm">
+                      <p className="font-bold">{item.productName}</p>
+                      <p className="text-[10px] text-muted-foreground uppercase font-black">{item.category} | {item.series}</p>
+                    </TableCell>
+                    <TableCell className="text-xs font-bold uppercase">{item.brand}</TableCell>
+                    <TableCell className="text-center font-black text-sm">
+                      <span className={item.stock <= 5 ? "text-destructive" : "text-primary"}>{item.stock}</span>
+                    </TableCell>
+                    <TableCell className="text-right font-bold text-sm">
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                       Rp {item.price.toLocaleString('id-ID')}
                     </TableCell>
                     <TableCell className="text-right">
@@ -286,7 +329,11 @@ export default function StockTokoAPage() {
                         <Button 
                           variant="ghost" 
                           size="icon" 
+<<<<<<< HEAD
                           className="h-8 w-8 rounded-full text-neutral-700 hover:bg-[#C82368]/10 hover:text-[#C82368]"
+=======
+                          className="h-8 w-8 text-primary hover:bg-primary/10"
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                           onClick={() => { 
                             setSelectedVariant(item); 
                             setMigrateQty("1");
@@ -295,14 +342,22 @@ export default function StockTokoAPage() {
                         >
                           <ArrowRightLeft className="h-4 w-4" />
                         </Button>
+<<<<<<< HEAD
                         <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-rose-600 hover:bg-rose-50" onClick={() => handleSetZero(item.productId, item.id)}>
+=======
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" onClick={() => handleSetZero(item.productId, item.id)}>
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </TableCell>
                   </TableRow>
                 )) : (
+<<<<<<< HEAD
                   <TableRow><TableCell colSpan={5} className="h-32 text-center text-neutral-400 italic">Belum ada data barang terdaftar.</TableCell></TableRow>
+=======
+                  <TableRow><TableCell colSpan={5} className="h-32 text-center text-muted-foreground italic">Belum ada data barang terdaftar.</TableCell></TableRow>
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                 )}
               </TableBody>
             </Table>
@@ -311,6 +366,7 @@ export default function StockTokoAPage() {
       </Card>
 
       <Dialog open={isMigrateOpen} onOpenChange={setIsMigrateOpen}>
+<<<<<<< HEAD
         <DialogContent className="max-w-md w-[95vw] rounded-3xl p-0 overflow-hidden border-none shadow-2xl">
           <DialogHeader className="p-6 bg-neutral-950 text-white">
             <DialogTitle className="font-serif text-xl font-bold flex items-center gap-2"><ArrowRightLeft className="h-5 w-5 text-[#C82368]" /> Migrasi Stok Cabang</DialogTitle>
@@ -326,6 +382,23 @@ export default function StockTokoAPage() {
               <Label className="text-xs font-bold uppercase text-neutral-600">Pilih Toko Tujuan</Label>
               <Select value={targetStoreId} onValueChange={setTargetStoreId}>
                 <SelectTrigger className="h-11 font-bold bg-white rounded-xl">
+=======
+        <DialogContent className="max-w-md rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><ArrowRightLeft className="h-5 w-5" /> Migrasi Stok Cabang</DialogTitle>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            <div className="bg-muted/30 p-4 rounded-xl space-y-1">
+              <p className="text-xs font-bold text-muted-foreground uppercase">Barang Asal ({sourceDisplayName})</p>
+              <p className="font-black text-sm">{selectedVariant?.productName}</p>
+              <p className="text-xs font-medium">Sisa Stok Sekarang: {selectedVariant?.stock} unit</p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs font-bold uppercase">Pilih Toko Tujuan</Label>
+              <Select value={targetStoreId} onValueChange={setTargetStoreId}>
+                <SelectTrigger className="h-11 font-bold">
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -336,19 +409,32 @@ export default function StockTokoAPage() {
             </div>
 
             <div className="space-y-2">
+<<<<<<< HEAD
               <Label className="text-xs font-bold uppercase text-neutral-600">Jumlah Pindah</Label>
+=======
+              <Label className="text-xs font-bold uppercase">Jumlah Pindah</Label>
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
               <Input 
                 type="number" 
                 value={migrateQty} 
                 onChange={e => setMigrateQty(e.target.value)} 
                 max={selectedVariant?.stock} 
                 min="1" 
+<<<<<<< HEAD
                 className="h-11 font-bold text-lg bg-white rounded-xl"
               />
             </div>
           </div>
           <DialogFooter className="p-5 bg-white border-t">
             <Button className="w-full font-bold h-12 rounded-full bg-neutral-950 hover:bg-[#C82368] text-white transition-colors" onClick={handleMigrate}>KONFIRMASI PINDAH STOK</Button>
+=======
+                className="h-11 font-bold text-lg"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button className="w-full font-black h-12 rounded-xl" onClick={handleMigrate}>KONFIRMASI PINDAH STOK</Button>
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -130,6 +130,7 @@ export default function StockOpnameTokoA() {
   };
 
   return (
+<<<<<<< HEAD
     <div className="space-y-4 sm:space-y-5">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
@@ -161,10 +162,44 @@ export default function StockOpnameTokoA() {
           <div className="relative">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-neutral-400" />
             <Input placeholder="Cari nama, merk, warna, no nota..." className="pl-9 sm:pl-10 h-9 sm:h-10 rounded-full bg-white border-neutral-200 shadow-sm text-xs sm:text-sm" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+=======
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold font-headline tracking-tight text-primary uppercase">Stock Opname: {displayStoreName}</h1>
+          <p className="text-muted-foreground text-xs md:text-sm">Audit inventaris harian/bulanan {displayStoreName}.</p>
+        </div>
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="h-9 md:h-10 text-[10px] md:text-sm font-bold"><Download className="h-3.5 w-3.5 md:h-4 md:w-4 mr-2" /> EXPORT</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={exportToPDF} className="cursor-pointer">PDF (Landscape)</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <Button variant="outline" size="sm" onClick={() => setPhysicalCounts({})} className="h-9 md:h-10 text-[10px] md:text-sm font-bold"><RotateCcw className="h-3.5 w-3.5 md:h-4 md:w-4 mr-2" /> RESET</Button>
+          <Button size="sm" onClick={handleSyncStock} className="h-9 md:h-10 text-[10px] md:text-sm font-black shadow-lg shadow-primary/20"><Save className="h-3.5 w-3.5 md:h-4 md:w-4 mr-2" /> SINKRON STOK</Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-1">
+          <Label className="text-[10px] md:text-xs font-black uppercase text-muted-foreground ml-1">Tanggal Pelaksanaan</Label>
+          <Input type="date" className="h-10 md:h-11 rounded-xl bg-white border-none shadow-sm font-bold text-sm" value={opnameDate} onChange={(e) => setOpnameDate(e.target.value)} />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-[10px] md:text-xs font-black uppercase text-muted-foreground ml-1">Cari Produk</Label>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input placeholder="Cari nama, merk, warna, no nota..." className="pl-10 h-10 md:h-11 rounded-xl bg-white border-none shadow-sm text-sm" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
           </div>
         </div>
       </div>
 
+<<<<<<< HEAD
       <Card className="border border-neutral-200/70 shadow-sm bg-white overflow-hidden rounded-2xl sm:rounded-3xl">
         <CardContent className="p-0">
           {/* Mobile Compact Opname Cards (Zero Horizontal Scroll) */}
@@ -247,6 +282,26 @@ export default function StockOpnameTokoA() {
                   <TableHead className="text-center w-[100px] text-white">Fisik</TableHead>
                   <TableHead className="text-center text-white">Selisih</TableHead>
                   <TableHead className="text-right pr-4 md:pr-6 text-white">Status</TableHead>
+=======
+      <Card className="soft-shadow border-none overflow-hidden rounded-3xl">
+        <CardContent className="p-0">
+          <div className="w-full overflow-x-auto">
+            <Table>
+              <TableHeader className="bg-muted/50 border-none">
+                <TableRow className="text-[10px] font-black uppercase">
+                  <TableHead className="pl-4 md:pl-6">Tgl Nota</TableHead>
+                  <TableHead>No Nota</TableHead>
+                  <TableHead>Nama Barang</TableHead>
+                  <TableHead>Merk</TableHead>
+                  <TableHead>Kat</TableHead>
+                  <TableHead>Seri</TableHead>
+                  <TableHead>Size</TableHead>
+                  <TableHead>Warna</TableHead>
+                  <TableHead className="text-center">Sistem</TableHead>
+                  <TableHead className="text-center w-[100px]">Fisik</TableHead>
+                  <TableHead className="text-center">Selisih</TableHead>
+                  <TableHead className="text-right pr-4 md:pr-6">Status</TableHead>
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -256,6 +311,7 @@ export default function StockOpnameTokoA() {
                   const difference = physicalNum !== null ? physicalNum - item.stock : null;
 
                   return (
+<<<<<<< HEAD
                     <TableRow key={idx} className="hover:bg-[#F5F3F0]/60 border-b border-neutral-100 transition-colors text-[11px]">
                       <TableCell className="pl-4 md:pl-6 text-neutral-500">{item.invoiceDate || "-"}</TableCell>
                       <TableCell className="font-mono font-bold text-[#C82368]">{item.invoiceNo || "-"}</TableCell>
@@ -270,6 +326,22 @@ export default function StockOpnameTokoA() {
                         <Input 
                           type="number" 
                           className="h-8 text-center text-[11px] font-bold rounded-full border border-neutral-300 focus-visible:border-[#C82368] shadow-none p-0 bg-white" 
+=======
+                    <TableRow key={idx} className="hover:bg-muted/20 border-b border-muted/50 transition-colors text-[11px]">
+                      <TableCell className="pl-4 md:pl-6 text-muted-foreground">{item.invoiceDate || "-"}</TableCell>
+                      <TableCell className="font-mono font-bold text-primary">{item.invoiceNo || "-"}</TableCell>
+                      <TableCell className="font-bold uppercase min-w-[150px]">{item.productName}</TableCell>
+                      <TableCell className="uppercase font-medium">{item.brand}</TableCell>
+                      <TableCell className="uppercase">{item.category}</TableCell>
+                      <TableCell className="uppercase">{item.series}</TableCell>
+                      <TableCell className="font-black">{item.size}</TableCell>
+                      <TableCell>{item.color}</TableCell>
+                      <TableCell className="text-center font-mono font-bold text-slate-500">{item.stock}</TableCell>
+                      <TableCell className="text-center">
+                        <Input 
+                          type="number" 
+                          className="h-8 text-center text-[11px] font-black rounded-lg border-2 border-primary/10 focus-visible:border-primary shadow-none p-0" 
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                           placeholder="0"
                           value={physicalCounts[item.compositeId] || ""}
                           onChange={(e) => handlePhysicalInput(item.compositeId, e.target.value)}
@@ -277,26 +349,46 @@ export default function StockOpnameTokoA() {
                       </TableCell>
                       <TableCell className="text-center">
                         {difference !== null ? (
+<<<<<<< HEAD
                           <span className={`font-bold ${difference === 0 ? "text-neutral-500" : difference > 0 ? "text-emerald-600" : "text-rose-600"}`}>
                             {difference > 0 ? `+${difference}` : difference}
                           </span>
                         ) : (
                           <span className="text-neutral-300">-</span>
+=======
+                          <span className={`font-black ${difference === 0 ? "text-muted-foreground" : difference > 0 ? "text-emerald-600" : "text-rose-600"}`}>
+                            {difference > 0 ? `+${difference}` : difference}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground/30">-</span>
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                         )}
                       </TableCell>
                       <TableCell className="text-right pr-4 md:pr-6">
                         {difference === null ? (
+<<<<<<< HEAD
                           <Badge variant="outline" className="text-[9px] rounded-full font-bold text-neutral-400 px-2">MENUNGGU</Badge>
                         ) : difference === 0 ? (
                           <Badge variant="secondary" className="text-[9px] rounded-full font-bold bg-emerald-50 text-emerald-700 border-none px-2">SESUAI</Badge>
                         ) : (
                           <Badge variant="destructive" className="text-[9px] rounded-full font-bold px-2">SELISIH</Badge>
+=======
+                          <Badge variant="outline" className="text-[8px] font-normal opacity-50 px-1.5">MENUNGGU</Badge>
+                        ) : difference === 0 ? (
+                          <Badge variant="secondary" className="text-[8px] font-bold bg-emerald-50 text-emerald-700 border-none px-1.5">SESUAI</Badge>
+                        ) : (
+                          <Badge variant="destructive" className="text-[8px] font-black px-1.5">SELISIH</Badge>
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                         )}
                       </TableCell>
                     </TableRow>
                   );
                 }) : (
+<<<<<<< HEAD
                   <TableRow><TableCell colSpan={12} className="h-48 text-center text-neutral-400 italic">Belum ada data produk tersedia.</TableCell></TableRow>
+=======
+                  <TableRow><TableCell colSpan={12} className="h-48 text-center text-muted-foreground italic">Belum ada data produk tersedia.</TableCell></TableRow>
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                 )}
               </TableBody>
             </Table>

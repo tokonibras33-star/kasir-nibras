@@ -86,12 +86,18 @@ export default function CouponsManagementPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
+<<<<<<< HEAD
           <h1 className="text-2xl md:text-3xl font-serif font-bold tracking-tight text-neutral-950">Kupon Diskon</h1>
           <p className="text-neutral-500 text-sm">Kelola kupon sekali pakai untuk promosi khusus.</p>
+=======
+          <h1 className="text-2xl md:text-3xl font-bold font-headline tracking-tight">Kupon Diskon</h1>
+          <p className="text-muted-foreground text-sm">Kelola kupon sekali pakai untuk promosi khusus.</p>
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
         </div>
         
         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
           <DialogTrigger asChild>
+<<<<<<< HEAD
             <Button className="h-10 px-5 rounded-full bg-neutral-950 hover:bg-[#C82368] text-white font-bold shadow-lg text-xs transition-colors w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" /> Buat Kupon Baru
             </Button>
@@ -103,31 +109,60 @@ export default function CouponsManagementPage() {
             <div className="space-y-4 p-6 bg-[#F5F3F0]">
               <div className="grid gap-2">
                 <Label className="text-xs font-bold uppercase text-neutral-600">Nomor / Kode Kupon</Label>
+=======
+            <Button className="font-bold shadow-lg shadow-primary/20">
+              <Plus className="h-4 w-4 mr-2" /> Buat Kupon Baru
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-md rounded-3xl">
+            <DialogHeader>
+              <DialogTitle>Buat Kupon Diskon</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="grid gap-2">
+                <Label>Nomor / Kode Kupon</Label>
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                 <Input 
                   placeholder="CONTOH: PROMO10" 
                   value={formData.code}
                   onChange={e => setFormData({...formData, code: e.target.value})}
+<<<<<<< HEAD
                   className="bg-white rounded-xl h-11 font-bold"
                 />
               </div>
               <div className="grid gap-2">
                 <Label className="text-xs font-bold uppercase text-neutral-600">Potongan Diskon (%)</Label>
+=======
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label>Potongan Diskon (%)</Label>
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                 <Input 
                   type="number"
                   placeholder="10"
                   value={formData.discount}
                   onChange={e => setFormData({...formData, discount: e.target.value})}
+<<<<<<< HEAD
                   className="bg-white rounded-xl h-11 font-bold"
                 />
               </div>
             </div>
             <DialogFooter className="p-5 bg-white border-t">
               <Button className="w-full font-bold h-12 rounded-full bg-neutral-950 hover:bg-[#C82368] text-white transition-colors" onClick={handleAddCoupon}>RILIS KUPON</Button>
+=======
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button className="w-full font-black h-12 rounded-xl" onClick={handleAddCoupon}>RILIS KUPON</Button>
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
             </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
 
+<<<<<<< HEAD
       <Card className="border border-neutral-200/70 shadow-sm bg-white rounded-2xl sm:rounded-3xl overflow-hidden">
         <CardHeader className="p-3.5 sm:p-5 border-b border-neutral-200/60 bg-[#F5F3F0]/50">
           <div className="relative w-full sm:max-w-sm">
@@ -135,12 +170,22 @@ export default function CouponsManagementPage() {
             <Input 
               placeholder="Cari kode kupon..." 
               className="pl-9 sm:pl-10 h-9 sm:h-10 bg-white border-neutral-200 rounded-full text-xs" 
+=======
+      <Card className="soft-shadow border-none">
+        <CardHeader className="pb-4 border-b bg-muted/20">
+          <div className="relative w-full sm:max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input 
+              placeholder="Cari kode kupon..." 
+              className="pl-10" 
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
         </CardHeader>
         <CardContent className="p-0">
+<<<<<<< HEAD
           {/* Mobile Compact Cards (Zero Horizontal Scroll) */}
           <div className="md:hidden divide-y divide-neutral-100">
             {filtered.length > 0 ? filtered.map((c) => (
@@ -222,6 +267,57 @@ export default function CouponsManagementPage() {
               </TableBody>
             </Table>
           </div>
+=======
+          <Table>
+            <TableHeader className="bg-muted/50">
+              <TableRow>
+                <TableHead>Kode Kupon</TableHead>
+                <TableHead>Potongan</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Dibuat Pada</TableHead>
+                <TableHead className="text-right">Aksi</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filtered.length > 0 ? filtered.map((c) => (
+                <TableRow key={c.id}>
+                  <TableCell className="font-mono font-bold text-primary">{c.code}</TableCell>
+                  <TableCell className="font-black text-emerald-600">{c.discount}%</TableCell>
+                  <TableCell>
+                    {c.isUsed ? (
+                      <Badge variant="outline" className="text-rose-600 border-rose-200 bg-rose-50 gap-1.5">
+                        <XCircle className="h-3 w-3" /> Terpakai
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-emerald-600 border-emerald-200 bg-emerald-50 gap-1.5">
+                        <CheckCircle2 className="h-3 w-3" /> Aktif
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground">
+                    {c.createdAt?.toDate().toLocaleString('id-ID') || "Baru"}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="text-destructive hover:bg-destructive/10"
+                      onClick={() => handleDeleteCoupon(c.id!)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              )) : (
+                <TableRow>
+                  <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
+                    Belum ada kupon diskon.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
         </CardContent>
       </Card>
     </div>

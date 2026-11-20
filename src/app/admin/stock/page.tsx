@@ -105,7 +105,10 @@ export default function StockPage() {
 
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [historyDateFilter, setHistoryDateFilter] = useState('');
+<<<<<<< HEAD
   const [viewingHistoryItem, setViewingHistoryItem] = useState<any>(null);
+=======
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
 
   const [invoiceHeader, setInvoiceHeader] = useState({
     entryDate: format(new Date(), 'yyyy-MM-dd'),
@@ -193,7 +196,11 @@ export default function StockPage() {
         return acc;
     }, {});
 
+<<<<<<< HEAD
     let list: any[] = Object.values(grouped).filter((item: any) => item.totalQty > 0);
+=======
+    let list = Object.values(grouped).filter((item: any) => item.totalQty > 0);
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
 
     if (brandFilter !== 'ALL') list = list.filter((item: any) => item.brand === brandFilter);
     if (categoryFilter !== 'ALL') list = list.filter((item: any) => item.category === categoryFilter);
@@ -407,7 +414,11 @@ export default function StockPage() {
       if (item.id === id) {
         let updatedItem = { ...item };
         if (['labelPrice', 'sellPrice', 'buyPriceRp'].includes(field)) {
+<<<<<<< HEAD
           (updatedItem as any)[field] = parseCurrencyInput(value);
+=======
+          updatedItem[field as keyof StockItemInput] = parseCurrencyInput(value);
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
         } else if (field.startsWith('dist-')) {
           const storeId = field.split('-')[1] as keyof StockItemInput['distribution'];
           const totalQty = parseInt(item.quantity) || 0;
@@ -504,6 +515,7 @@ export default function StockPage() {
       <datalist id='category-recommendations'>{CATEGORY_DATABASE.map((cat, idx) => <option key={`cat-${cat}-${idx}`} value={cat} />)}</datalist>
       <datalist id='size-recommendations'>{SIZE_DATABASE.map((size, idx) => <option key={`sz-${size}-${idx}`} value={size} />)}</datalist>
 
+<<<<<<< HEAD
       <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3'>
         <div>
           <h1 className='text-xl sm:text-2xl md:text-3xl font-serif font-bold tracking-tight text-neutral-950'>Ringkasan Stok Global</h1>
@@ -523,12 +535,31 @@ export default function StockPage() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild><Button variant='outline' className='h-9 sm:h-10 rounded-full border-neutral-200 bg-white font-bold text-[11px] sm:text-xs'><Download className='h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2' /> Ekspor Stok</Button></DropdownMenuTrigger>
               <DropdownMenuContent align='end' className='w-48 rounded-2xl'>
+=======
+      <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4'>
+        <div><h1 className='text-2xl md:text-3xl font-bold font-headline tracking-tight text-primary uppercase'>Ringkasan Stok Global</h1><p className='text-muted-foreground text-sm'>Monitoring rincian inventaris seluruh cabang.</p></div>
+        <div className='flex flex-col gap-2 w-full sm:w-auto'>
+          <div className='grid grid-cols-2 gap-2 sm:flex sm:items-center'>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild><Button variant='outline' className='h-10 font-bold'><Upload className='h-4 w-4 mr-2' /> Impor Stok</Button></DropdownMenuTrigger>
+              <DropdownMenuContent align='end' className='w-56 rounded-xl'>
+                <DropdownMenuItem className='cursor-pointer font-bold gap-2 py-3' onClick={() => fileInputRef.current?.click()}>
+                  <FileSpreadsheet className='h-4 w-4 text-emerald-600' /> Unggah File Excel
+                </DropdownMenuItem>
+                <DropdownMenuItem className='cursor-pointer font-bold gap-2 py-3' onClick={handleDownloadFormat}><FileDown className='h-4 w-4 text-primary' /> Format Excel</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild><Button variant='outline' className='h-10 font-bold'><Download className='h-4 w-4 mr-2' /> Ekspor Stok</Button></DropdownMenuTrigger>
+              <DropdownMenuContent align='end' className='w-48 rounded-xl'>
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                 <DropdownMenuItem className='cursor-pointer font-bold gap-2 py-3' onClick={handleExportExcel}><FileSpreadsheet className='h-4 w-4 text-emerald-600' /> Excel</DropdownMenuItem>
                 <DropdownMenuItem className='cursor-pointer font-bold gap-2 py-3' onClick={handleExportPDF}><FileText className='h-4 w-4 text-rose-600' /> PDF (A4)</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
           <div className='grid grid-cols-2 gap-2 sm:flex sm:items-center'>
+<<<<<<< HEAD
             <Button variant="outline" className="h-9 sm:h-10 px-4 sm:px-5 rounded-full border-neutral-200 bg-white font-bold text-[11px] sm:text-xs" onClick={() => setIsHistoryOpen(true)}><History className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" /> Riwayat Input</Button>
             <Dialog open={isInputOpen} onOpenChange={(o) => { setIsInputOpen(o); if (o) resetInputForm(); }}>
               <DialogTrigger asChild><Button className='h-9 sm:h-10 px-4 sm:px-6 rounded-full font-bold text-[11px] sm:text-xs bg-neutral-950 hover:bg-[#C82368] text-white shadow-lg transition-colors'><PackagePlus className='h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2' /> Input Stok Baru</Button></DialogTrigger>
@@ -548,12 +579,34 @@ export default function StockPage() {
                   </div>
                 </div>
                 <DialogFooter className='p-6 bg-white border-t shrink-0'><Button className='w-full font-bold h-12 rounded-full bg-neutral-950 hover:bg-[#C82368] text-white shadow-xl text-sm tracking-wide transition-colors' onClick={handleInputStock}>SIMPAN KE DATABASE</Button></DialogFooter>
+=======
+            <Button variant="outline" className="h-12 px-6 font-bold" onClick={() => setIsHistoryOpen(true)}><History className="h-5 w-5 mr-2" /> Riwayat Input</Button>
+            <Dialog open={isInputOpen} onOpenChange={(o) => { setIsInputOpen(o); if (o) resetInputForm(); }}>
+              <DialogTrigger asChild><Button className='h-12 px-6 font-black bg-primary shadow-xl shadow-primary/20 text-white'><PackagePlus className='h-5 w-5 mr-2' /> Input Stok Baru</Button></DialogTrigger>
+              <DialogContent className='sm:max-w-5xl w-[95vw] h-[90vh] rounded-3xl flex flex-col p-0 overflow-hidden border-none shadow-2xl'>
+                <DialogHeader className='p-6 shrink-0'><DialogTitle className='text-2xl font-black'>Input Stok & Nota Beli</DialogTitle></DialogHeader>
+                <div className='flex-1 overflow-y-auto px-6 bg-slate-50'>
+                  <div className='space-y-6 py-4'>
+                    <Card className='border-none shadow-none bg-muted/30 rounded-2xl'><CardContent className='p-4 grid grid-cols-1 sm:grid-cols-4 gap-4'><div className='space-y-1.5'><Label className='text-[10px] font-black uppercase text-muted-foreground'>Tanggal Entry</Label><Input type='date' value={invoiceHeader.entryDate} disabled className='h-10 bg-white/50' /></div><div className='space-y-1.5'><Label className='text-[10px] font-black uppercase'>No Nota Beli</Label><Input placeholder='NB-001' value={invoiceHeader.invoiceNo} onChange={e => setInvoiceHeader({...invoiceHeader, invoiceNo: e.target.value})} className='h-10 bg-white font-bold' /></div><div className='space-y-1.5'><Label className='text-[10px] font-black uppercase'>Tanggal Nota</Label><Input type='date' value={invoiceHeader.invoiceDate} onChange={e => setInvoiceHeader({...invoiceHeader, invoiceDate: e.target.value})} className='h-10 bg-white' /></div></CardContent></Card>
+                    <div className='space-y-4 pb-8'>{items.map((item) => {
+                        const isDistOk = isRowDistributed(item);
+                        return (
+                          <Card key={item.id} className={cn('relative border-2 rounded-2xl shadow-sm', isDistOk ? 'border-emerald-200 bg-emerald-50/20' : 'border-primary/10 bg-primary/5')}>{items.length > 1 && <Button variant='destructive' size='icon' className='absolute top-2 right-2 h-8 w-8 rounded-full' onClick={() => setItems(items.filter(i => i.id !== item.id))}><Trash2 className='h-4 w-4' /></Button>}<CardContent className='p-5 space-y-4'><div className='grid grid-cols-2 md:grid-cols-6 gap-4'><div className='space-y-1'><Label className='text-[10px] font-black uppercase'>Merk</Label><Input value={item.brand} list='brand-recommendations' onChange={e => updateItemField(item.id, 'brand', e.target.value)} className='h-9 bg-white' /></div><div className='space-y-1'><Label className='text-[10px] font-black uppercase'>Kategori</Label><Input value={item.category} list='category-recommendations' onChange={e => updateItemField(item.id, 'category', e.target.value)} className='h-9 bg-white' /></div><div className='space-y-1'><Label className='text-[10px] font-black uppercase'>Seri</Label><Input value={item.series} onChange={e => updateItemField(item.id, 'series', e.target.value)} className='h-9 bg-white' /></div><div className='space-y-1'><Label className='text-[10px] font-black uppercase'>Size</Label><Input value={item.size} list='size-recommendations' onChange={e => updateItemField(item.id, 'size', e.target.value)} className='h-9 bg-white text-center' /></div><div className='space-y-1'><Label className='text-[10px] font-black uppercase'>Warna</Label><Input value={item.color} list='color-recommendations' onChange={e => updateItemField(item.id, 'color', e.target.value)} className='h-9 bg-white' /></div><div className='space-y-1'><Label className='text-[10px] font-black uppercase'>Label</Label><Input value={formatCurrency(item.labelPrice)} onChange={e => updateItemField(item.id, 'labelPrice', e.target.value)} className='h-9 font-bold bg-white' /></div><div className='space-y-1'><Label className='text-[10px] font-black uppercase text-emerald-600'>% Beli</Label><Input value={item.buyDiscount} onChange={e => updateItemField(item.id, 'buyDiscount', e.target.value)} className='h-9 bg-white font-bold border-emerald-200' /></div><div className='space-y-1'><Label className='text-[10px] font-black uppercase text-primary'>H. Beli</Label><Input value={formatCurrency(item.buyPriceRp)} onChange={e => updateItemField(item.id, 'buyPriceRp', e.target.value)} className='h-9 font-bold bg-white border-primary/20' /></div><div className='space-y-1'><Label className='text-[10px] font-black uppercase text-accent'>H. Jual</Label><Input value={formatCurrency(item.sellPrice)} onChange={e => updateItemField(item.id, 'sellPrice', e.target.value)} className='h-9 font-bold bg-white border-accent/30' /></div><div className='space-y-1'><Label className='text-[10px] font-black uppercase text-blue-600'>QTY (Total)</Label><Input type='number' value={item.quantity} onChange={e => updateItemField(item.id, 'quantity', e.target.value)} className='h-9 bg-white border-blue-200' /></div><div className='col-span-2 flex flex-col justify-end'><Button variant={isDistOk ? 'secondary' : 'outline'} className={cn('w-full h-9 font-black', isDistOk ? 'bg-emerald-500 text-white' : 'border-primary text-primary')}><GitMerge className='h-4 w-4 mr-2' /> BAGI CABANG</Button></div></div><div className='pt-4 border-t border-primary/10 grid grid-cols-3 gap-4'><div className='space-y-1'><Label className='text-[9px] font-black text-primary'>NHS KWT</Label><Input type='number' value={item.distribution.TOKO_A} onChange={e => updateItemField(item.id, 'dist-TOKO_A', e.target.value)} className='h-10 bg-white font-black text-center' /></div><div className='space-y-1'><Label className='text-[9px] font-black text-blue-600'>IND CO</Label><Input type='number' value={item.distribution.TOKO_B} onChange={e => updateItemField(item.id, 'dist-TOKO_B', e.target.value)} className='h-10 bg-white font-black text-center' /></div><div className='space-y-1'><Label className='text-[9px] font-black text-emerald-600'>NHS GDM</Label><Input type='number' value={item.distribution.TOKO_C} onChange={e => updateItemField(item.id, 'dist-TOKO_C', e.target.value)} className='h-10 bg-white font-black text-center' /></div></div></CardContent></Card>
+                        );
+                    })}
+                      <Button variant='outline' onClick={() => setItems([...items, createNewItem()])} className='w-full h-14 border-2 border-dashed border-primary/20 text-primary font-black rounded-2xl'><Plus className='h-5 w-5 mr-2' /> TAMBAH BARIS BARU</Button>
+                    </div>
+                  </div>
+                </div>
+                <DialogFooter className='p-6 bg-white border-t shrink-0'><Button className='w-full font-black h-14 rounded-2xl shadow-2xl text-lg' onClick={handleInputStock}>SIMPAN KE DATABASE</Button></DialogFooter>
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
               </DialogContent>
             </Dialog>
           </div>
         </div>
       </div>
 
+<<<<<<< HEAD
       <div className='grid grid-cols-3 gap-2 sm:gap-4'>
         <Card className='rounded-2xl sm:rounded-3xl border-none bg-neutral-950 text-white shadow-md sm:shadow-lg'>
           <CardHeader className='p-2.5 sm:p-5 pb-1 sm:pb-2'>
@@ -599,10 +652,28 @@ export default function StockPage() {
                     <Select value={brandFilter} onValueChange={setBrandFilter}><SelectTrigger className='h-9 sm:h-10 w-full md:w-44 bg-white border-neutral-200 rounded-full shadow-sm font-bold text-[10px] sm:text-xs px-2.5 sm:px-3.5'><SelectValue placeholder='Merk' /></SelectTrigger><SelectContent>{['ALL', ...BRAND_DATABASE].map((b, i) => <SelectItem key={`${b}-${i}`} value={b} className='text-xs'>{b === 'ALL' ? 'Semua Merk' : b}</SelectItem>)}</SelectContent></Select>
                     <Select value={categoryFilter} onValueChange={setCategoryFilter}><SelectTrigger className='h-9 sm:h-10 w-full md:w-44 bg-white border-neutral-200 rounded-full shadow-sm font-bold text-[10px] sm:text-xs px-2.5 sm:px-3.5'><SelectValue placeholder='Kategori' /></SelectTrigger><SelectContent>{['ALL', ...CATEGORY_DATABASE].map((c, i) => <SelectItem key={`${c}-${i}`} value={c} className='text-xs'>{c === 'ALL' ? 'Semua Kat' : c}</SelectItem>)}</SelectContent></Select>
                     <Select value={storeFilter} onValueChange={setStoreFilter}><SelectTrigger className='h-9 sm:h-10 w-full md:w-44 bg-white border-neutral-200 rounded-full shadow-sm font-bold text-[10px] sm:text-xs px-2.5 sm:px-3.5'><SelectValue placeholder='Toko' /></SelectTrigger><SelectContent><SelectItem value='ALL' className='text-xs'>Semua Toko</SelectItem><SelectItem value='TOKO_A' className='text-xs'>NHS KWT</SelectItem><SelectItem value='TOKO_B' className='text-xs'>IND CO</SelectItem><SelectItem value='TOKO_C' className='text-xs'>NHS GDM</SelectItem></SelectContent></Select>
+=======
+      <div className='grid grid-cols-3 gap-4'>
+        <Card className='border-none bg-primary/5'><CardHeader className='p-4'><CardTitle className='text-xs uppercase font-black text-primary opacity-70'>NHS KWT</CardTitle></CardHeader><CardContent className='p-4 pt-0'><p className='text-3xl font-black text-primary'>{totalA} Unit</p></CardContent></Card>
+        <Card className='border-none bg-blue-50'><CardHeader className='p-4'><CardTitle className='text-xs uppercase font-black text-blue-600 opacity-70'>IND CO</CardTitle></CardHeader><CardContent className='p-4 pt-0'><p className='text-3xl font-black text-blue-600'>{totalB} Unit</p></CardContent></Card>
+        <Card className='border-none bg-emerald-50'><CardHeader className='p-4'><CardTitle className='text-xs uppercase font-black text-emerald-600 opacity-70'>NHS GDM</CardTitle></CardHeader><CardContent className='p-4 pt-0'><p className='text-3xl font-black text-emerald-600'>{totalC} Unit</p></CardContent></Card>
+      </div>
+
+      <Card className='soft-shadow border-none overflow-hidden rounded-3xl flex flex-col'>
+        <CardHeader className='p-6 border-b bg-muted/10'>
+            <div className='flex items-center justify-between'><div className='space-y-1'><CardTitle className='text-xl font-black uppercase tracking-tight'>Inventaris Detail Global</CardTitle><CardDescription className='text-xs'>Daftar rincian barang seluruh cabang.</CardDescription></div><div className='flex items-center border rounded-xl p-1 bg-white'><Button variant={view === 'table' ? 'secondary' : 'ghost'} size='icon' onClick={() => setView('table')}><List className='h-4 w-4' /></Button><Button variant={view === 'grid' ? 'secondary' : 'ghost'} size='icon' onClick={() => setView('grid')}><LayoutGrid className='h-4 w-4' /></Button></div></div>
+            <div className="flex flex-col space-y-3 mt-4">
+                <div className='relative flex-1'><Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground' /><Input placeholder='Cari Merk, Kategori, Warna, Nama...' className='pl-10 h-10 bg-white border-none shadow-sm' value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
+                <div className="flex items-center gap-3">
+                    <Select value={brandFilter} onValueChange={setBrandFilter}><SelectTrigger className='h-10 w-44 bg-white border-none shadow-sm font-bold'><SelectValue placeholder='Merk' /></SelectTrigger><SelectContent>{['ALL', ...BRAND_DATABASE].map((b, i) => <SelectItem key={`${b}-${i}`} value={b}>{b}</SelectItem>)}</SelectContent></Select>
+                    <Select value={categoryFilter} onValueChange={setCategoryFilter}><SelectTrigger className='h-10 w-44 bg-white border-none shadow-sm font-bold'><SelectValue placeholder='Kategori' /></SelectTrigger><SelectContent>{['ALL', ...CATEGORY_DATABASE].map((c, i) => <SelectItem key={`${c}-${i}`} value={c}>{c}</SelectItem>)}</SelectContent></Select>
+                    <Select value={storeFilter} onValueChange={setStoreFilter}><SelectTrigger className='h-10 w-44 bg-white border-none shadow-sm font-bold'><SelectValue placeholder='Toko' /></SelectTrigger><SelectContent><SelectItem value='ALL'>Semua Toko</SelectItem><SelectItem value='TOKO_A'>NHS KWT</SelectItem><SelectItem value='TOKO_B'>IND CO</SelectItem><SelectItem value='TOKO_C'>NHS GDM</SelectItem></SelectContent></Select>
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                 </div>
             </div>
         </CardHeader>
         <CardContent className='p-0 flex-1'>{view === 'table' ? (
+<<<<<<< HEAD
           <>
             {/* Mobile Compact List View (Zero Horizontal Scroll) */}
             <div className='md:hidden divide-y divide-neutral-100'>
@@ -674,27 +745,46 @@ export default function StockPage() {
           </>
         ) : (
           <div className='grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 p-3 sm:p-6 bg-[#F5F3F0]/50'>{detailedStockList.map((item, idx) => (<Card key={idx} className='border border-neutral-200/70 bg-white shadow-sm rounded-2xl group transition-transform hover:-translate-y-0.5'><CardContent className='p-3 sm:p-4 space-y-2.5 sm:space-y-3'><div className='flex justify-between items-start'><div style={{ backgroundImage: `url(${item.productImage || 'https://placehold.co/400x500/E2E8F0/A0AEC0?text=No+Image'})`}} className='h-16 w-12 sm:h-20 sm:w-16 rounded-xl bg-cover bg-center bg-neutral-100 shadow-sm'></div><Button variant='outline' size='icon' className='h-7 w-7 sm:h-8 sm:w-8 rounded-full' onClick={() => setActionItem(item)}><List className='h-3.5 w-3.5 sm:h-4 sm:w-4' /></Button></div><div><h4 className='font-bold text-[11px] sm:text-xs uppercase leading-tight line-clamp-2 text-neutral-950'>{item.productName}</h4><p className='text-[9px] sm:text-[10px] text-neutral-500 mt-0.5 uppercase truncate'>{item.brand} | {item.category}</p></div><div className='grid grid-cols-2 gap-1.5 pt-2 border-t border-dashed border-neutral-200'><div><p className='text-[8px] uppercase font-bold text-neutral-400'>Harga Jual</p><p className='text-[10px] sm:text-xs font-bold text-[#C82368] truncate'>{formatCurrency(item.price)}</p></div><div className='text-right'><p className='text-[8px] uppercase font-bold text-neutral-400'>Total Stok</p><p className='text-[10px] sm:text-xs font-bold text-neutral-950'>{item.totalQty} PCS</p></div></div><div className='grid grid-cols-3 gap-1 pt-2 border-t border-neutral-100 text-[9px] sm:text-[10px] text-center'><Badge variant='outline' className='bg-neutral-100 text-neutral-950 border-none rounded-full uppercase justify-center px-1'>K:{item.qty_TOKO_A}</Badge><Badge variant='outline' className='bg-neutral-100 text-neutral-700 border-none rounded-full uppercase justify-center px-1'>I:{item.qty_TOKO_B}</Badge><Badge variant='outline' className='bg-[#C82368]/10 text-[#C82368] border-none rounded-full uppercase justify-center px-1'>G:{item.qty_TOKO_C}</Badge></div></CardContent></Card>))}</div>
+=======
+          <div className='overflow-x-auto'><div className='min-w-[1800px]'><Table><TableHeader className='bg-muted/50'><TableRow className='text-[10px] uppercase font-black'><TableHead className='pl-6'>Aksi</TableHead><TableHead>Tgl Nota</TableHead><TableHead>No Nota</TableHead><TableHead>Merk</TableHead><TableHead>Kategori</TableHead><TableHead>Seri</TableHead><TableHead>Size</TableHead><TableHead>Warna</TableHead><TableHead className='text-right'>Label</TableHead><TableHead className='text-center'>% Beli</TableHead><TableHead className='text-right'>H. Beli</TableHead><TableHead className='text-right'>H. Jual</TableHead><TableHead className='text-center'>Qty KWT</TableHead><TableHead className='text-center'>Qty IND</TableHead><TableHead className='text-center'>Qty GDM</TableHead><TableHead className='text-center'>Jumlah Qty</TableHead><TableHead className='pr-6'>Nama Barang</TableHead></TableRow></TableHeader><TableBody>{detailedStockList.map((item, idx) => (<TableRow key={idx} className='hover:bg-muted/20 text-[11px] border-b'><TableCell className='pl-6'><Button variant='outline' size='icon' className='h-7 w-7' onClick={() => setActionItem(item)}><List className='h-3.5 w-3.5' /></Button></TableCell><TableCell>{item.invoiceDate || '-'}</TableCell><TableCell className='font-mono font-bold'>{item.invoiceNo || '-'}</TableCell><TableCell className='font-bold uppercase'>{item.brand}</TableCell><TableCell className='uppercase'>{item.category}</TableCell><TableCell className='uppercase'>{item.series}</TableCell><TableCell className='font-black'>{item.size}</TableCell><TableCell className='uppercase'>{item.color}</TableCell><TableCell className='text-right'>{formatCurrency(item.labelPrice)}</TableCell><TableCell className='text-center text-emerald-600'>{item.buyDiscount}%</TableCell><TableCell className='text-right text-primary font-bold'>{formatCurrency(item.buyPrice)}</TableCell><TableCell className='text-right font-black text-accent'>{formatCurrency(item.price)}</TableCell><TableCell className='text-center font-black text-primary'>{item.qty_TOKO_A}</TableCell><TableCell className='text-center font-black text-blue-600'>{item.qty_TOKO_B}</TableCell><TableCell className='text-center font-black text-emerald-600'>{item.qty_TOKO_C}</TableCell><TableCell className='text-center font-black text-lg'>{item.totalQty}</TableCell><TableCell className='font-bold pr-6 uppercase'>{item.productName}</TableCell></TableRow>))}</TableBody></Table></div></div>
+        ) : (
+          <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-6 bg-slate-50/50'>{detailedStockList.map((item, idx) => (<Card key={idx} className='border-none bg-white soft-shadow rounded-2xl group transition-transform hover:scale-[1.02]'><CardContent className='p-4 space-y-3'><div className='flex justify-between items-start'><div style={{ backgroundImage: `url(${item.productImage || 'https://placehold.co/400x500/E2E8F0/A0AEC0?text=No+Image'})`}} className='h-20 w-16 rounded-lg bg-cover bg-center bg-muted shadow-sm'></div><Button variant='outline' size='icon' className='h-8 w-8' onClick={() => setActionItem(item)}><List className='h-4 w-4' /></Button></div><div><h4 className='font-black text-xs uppercase leading-tight line-clamp-2'>{item.productName}</h4><p className='text-[10px] text-muted-foreground mt-1 uppercase'>{item.brand} | {item.category}</p></div><div className='grid grid-cols-2 gap-2 pt-2 border-t border-dashed'><div><p className='text-[8px] uppercase font-black opacity-50'>Harga Jual</p><p className='text-xs font-black text-accent'>{formatCurrency(item.price)}</p></div><div className='text-right'><p className='text-[8px] uppercase font-black opacity-50'>Total Stok</p><p className='text-xs font-black text-primary'>{item.totalQty} PCS</p></div></div><div className='flex justify-between pt-2 border-t text-[10px]'><Badge variant='outline' className='bg-primary/5 text-primary border-none uppercase'>KWT: {item.qty_TOKO_A}</Badge><Badge variant='outline' className='bg-blue-50 text-blue-700 border-none uppercase'>IND: {item.qty_TOKO_B}</Badge><Badge variant='outline' className='bg-emerald-50 text-emerald-700 border-none uppercase'>GDM: {item.qty_TOKO_C}</Badge></div></CardContent></Card>))}</div>
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
         )}</CardContent>
       </Card>
 
       <Dialog open={!!actionItem} onOpenChange={o => !o && setActionItem(null)}>
+<<<<<<< HEAD
         <DialogContent className="max-w-xl w-[95vw] rounded-3xl p-0 overflow-hidden border-none shadow-2xl">
           <DialogHeader className="p-6 bg-neutral-950 text-white"><DialogTitle className="font-serif text-xl font-bold">Aksi Barang</DialogTitle><DialogDescription className="uppercase font-bold text-neutral-400 text-xs">{actionItem?.productName}</DialogDescription></DialogHeader>
           <div className="p-4 sm:p-6 bg-white">
             <Table><TableHeader><TableRow className="text-[10px] uppercase font-bold"><TableHead>Cabang</TableHead><TableHead>Stok</TableHead><TableHead className="text-right">Aksi</TableHead></TableRow></TableHeader><TableBody>{actionItem?.variants.map((v: any) => (<TableRow key={v.id}><TableCell><Badge variant='outline' className={cn('text-[9px] font-bold rounded-full border-none', v.storeId === 'TOKO_A' ? 'bg-neutral-950 text-white' : v.storeId === 'TOKO_B' ? 'bg-neutral-200 text-neutral-950' : 'bg-[#C82368]/15 text-[#C82368]')}>{v.storeName}</Badge></TableCell><TableCell className="font-bold">{v.stock}</TableCell><TableCell className="text-right"><Button variant='ghost' size='icon' className='h-8 w-8 rounded-full text-neutral-950' onClick={() => { setSelectedEditItem(v); setActionItem(null); }}><Edit2 className='h-4 w-4' /></Button><Button variant='ghost' size='icon' className='h-8 w-8 rounded-full text-rose-600' onClick={() => { if(confirm('Hapus rincian ini?')) { deleteDocumentNonBlocking(doc(db, 'stores', v.storeId, 'stock', v.productId)); setActionItem(null); } }}><Trash2 className='h-4 w-4' /></Button></TableCell></TableRow>))}</TableBody></Table>
           </div>
+=======
+        <DialogContent className="max-w-xl rounded-3xl">
+          <DialogHeader><DialogTitle className="uppercase font-black">Aksi Barang</DialogTitle><DialogDescription className="uppercase font-bold">{actionItem?.productName}</DialogDescription></DialogHeader>
+          <Table><TableHeader><TableRow className="text-[10px] uppercase font-black"><TableHead>Cabang</TableHead><TableHead>Stok</TableHead><TableHead className="text-right">Aksi</TableHead></TableRow></TableHeader><TableBody>{actionItem?.variants.map((v: any) => (<TableRow key={v.id}><TableCell><Badge variant='outline' className={cn('text-[9px] font-black', v.storeId === 'TOKO_A' ? 'bg-primary/10 text-primary' : v.storeId === 'TOKO_B' ? 'bg-blue-50 text-blue-700' : 'bg-emerald-50 text-emerald-700')}>{v.storeName}</Badge></TableCell><TableCell className="font-bold">{v.stock}</TableCell><TableCell className="text-right"><Button variant='ghost' size='icon' className='h-8 w-8 text-primary' onClick={() => { setSelectedEditItem(v); setActionItem(null); }}><Edit2 className='h-4 w-4' /></Button><Button variant='ghost' size='icon' className='h-8 w-8 text-destructive' onClick={() => { if(confirm('Hapus rincian ini?')) { deleteDocumentNonBlocking(doc(db, 'stores', v.storeId, 'stock', v.productId)); setActionItem(null); } }}><Trash2 className='h-4 w-4' /></Button></TableCell></TableRow>))}</TableBody></Table>
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
         </DialogContent>
       </Dialog>
 
       <Dialog open={!!editingItem} onOpenChange={o => !o && setSelectedEditItem(null)}>
+<<<<<<< HEAD
         <DialogContent className='max-w-2xl w-[95vw] rounded-3xl overflow-hidden p-0 border-none shadow-2xl'>
           <DialogHeader className='p-6 bg-neutral-950 text-white'><DialogTitle className='text-xl font-serif font-bold'>Edit Rincian Barang</DialogTitle></DialogHeader>
           {editingItem && (<div className='p-6 space-y-6 max-h-[70vh] overflow-y-auto bg-[#F5F3F0]'><div className='grid grid-cols-1 md:grid-cols-2 gap-4'><div className='space-y-4'><div className='grid gap-3 p-4 bg-white rounded-2xl border border-neutral-200/70 shadow-sm'><div className='space-y-1'><Label className='text-[10px] font-bold uppercase'>No Nota</Label><Input value={editingItem.invoiceNo || ''} onChange={e => setSelectedEditItem({...editingItem, invoiceNo: e.target.value})} className='h-10 font-bold uppercase' /></div><div className='space-y-1'><Label className='text-[10px] font-bold uppercase'>Merk</Label><Input value={editingItem.brand || ''} list='brand-recommendations' onChange={e => setSelectedEditItem({...editingItem, brand: e.target.value.toUpperCase()})} className='h-10 uppercase' /></div><div className='space-y-1'><Label className='text-[10px] font-bold uppercase'>Kategori</Label><Input value={editingItem.category || ''} list='category-recommendations' onChange={e => setSelectedEditItem({...editingItem, category: e.target.value.toUpperCase()})} className='h-10 uppercase' /></div><div className='space-y-1'><Label className='text-[10px] font-bold uppercase'>Warna & Ukuran</Label><div className='flex gap-2'><Input value={editingItem.color || ''} list='color-recommendations' onChange={e => setSelectedEditItem({...editingItem, color: e.target.value.toUpperCase()})} className='uppercase' /><Input value={editingItem.size || ''} list='size-recommendations' onChange={e => setSelectedEditItem({...editingItem, size: e.target.value.toUpperCase()})} className='uppercase w-20 text-center' /></div></div></div></div><div className='space-y-4'><div className='grid gap-3 p-4 bg-white rounded-2xl border border-neutral-200/70 shadow-sm'><div className='space-y-1'><Label className='text-[10px] font-bold uppercase'>Harga Label</Label><Input value={formatCurrency(editingItem.labelPrice)} onChange={e => setSelectedEditItem({...editingItem, labelPrice: parseCurrencyInput(e.target.value)})} className='h-10 font-bold' /></div><div className='space-y-1'><Label className='text-[10px] font-bold uppercase text-[#C82368]'>Harga Jual</Label><Input value={formatCurrency(editingItem.price)} onChange={e => setSelectedEditItem({...editingItem, price: parseCurrencyInput(e.target.value)})} className='h-10 font-bold' /></div><div className='space-y-1'><Label className='text-[10px] font-bold uppercase text-neutral-700'>Stok</Label><Input type='number' value={editingItem.stock || 0} onChange={e => setSelectedEditItem({...editingItem, stock: e.target.value})} className='h-10 font-bold' /></div></div></div></div></div>)}
           <DialogFooter className='p-6 bg-white border-t'><Button className='w-full font-bold h-12 rounded-full bg-neutral-950 hover:bg-[#C82368] text-white shadow-lg transition-colors' onClick={handleUpdateEdit}>SIMPAN PERUBAHAN</Button></DialogFooter>
+=======
+        <DialogContent className='max-w-2xl rounded-3xl overflow-hidden p-0 border-none shadow-2xl'>
+          <DialogHeader className='p-6 bg-primary text-white'><DialogTitle className='text-xl font-black uppercase'>Edit Rincian Barang</DialogTitle></DialogHeader>
+          {editingItem && (<div className='p-6 space-y-6 max-h-[70vh] overflow-y-auto bg-slate-50/50'><div className='grid grid-cols-1 md:grid-cols-2 gap-6'><div className='space-y-4'><div className='grid gap-3 p-4 bg-white rounded-2xl border shadow-sm'><div className='space-y-1'><Label className='text-[10px] font-black uppercase'>No Nota</Label><Input value={editingItem.invoiceNo || ''} onChange={e => setSelectedEditItem({...editingItem, invoiceNo: e.target.value})} className='h-10 font-bold uppercase' /></div><div className='space-y-1'><Label className='text-[10px] font-black uppercase'>Merk</Label><Input value={editingItem.brand || ''} list='brand-recommendations' onChange={e => setSelectedEditItem({...editingItem, brand: e.target.value.toUpperCase()})} className='h-10 uppercase' /></div><div className='space-y-1'><Label className='text-[10px] font-black uppercase'>Kategori</Label><Input value={editingItem.category || ''} list='category-recommendations' onChange={e => setSelectedEditItem({...editingItem, category: e.target.value.toUpperCase()})} className='h-10 uppercase' /></div><div className='space-y-1'><Label className='text-[10px] font-black uppercase'>Warna & Ukuran</Label><div className='flex gap-2'><Input value={editingItem.color || ''} list='color-recommendations' onChange={e => setSelectedEditItem({...editingItem, color: e.target.value.toUpperCase()})} className='uppercase' /><Input value={editingItem.size || ''} list='size-recommendations' onChange={e => setSelectedEditItem({...editingItem, size: e.target.value.toUpperCase()})} className='uppercase w-20 text-center' /></div></div></div></div><div className='space-y-4'><div className='grid gap-3 p-4 bg-white rounded-2xl border shadow-sm'><div className='space-y-1'><Label className='text-[10px] font-black uppercase'>Harga Label</Label><Input value={formatCurrency(editingItem.labelPrice)} onChange={e => setSelectedEditItem({...editingItem, labelPrice: parseCurrencyInput(e.target.value)})} className='h-10 font-bold' /></div><div className='space-y-1'><Label className='text-[10px] font-black uppercase text-accent'>Harga Jual</Label><Input value={formatCurrency(editingItem.price)} onChange={e => setSelectedEditItem({...editingItem, price: parseCurrencyInput(e.target.value)})} className='h-10 font-bold' /></div><div className='space-y-1'><Label className='text-[10px] font-black uppercase text-blue-600'>Stok</Label><Input type='number' value={editingItem.stock || 0} onChange={e => setSelectedEditItem({...editingItem, stock: e.target.value})} className='h-10 font-bold' /></div></div></div></div></div>)}
+          <DialogFooter className='p-6 bg-white border-t'><Button className='w-full font-black h-14 rounded-2xl shadow-xl' onClick={handleUpdateEdit}>SIMPAN PERUBAHAN</Button></DialogFooter>
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
         </DialogContent>
       </Dialog>
 
       <Dialog open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
+<<<<<<< HEAD
         <DialogContent className="sm:max-w-4xl w-[95vw] h-[90vh] rounded-3xl flex flex-col p-0 overflow-hidden border-none shadow-2xl">
             <DialogHeader className="p-6 bg-neutral-950 text-white shrink-0"><DialogTitle className="font-serif text-xl font-bold">Riwayat Input Stok</DialogTitle></DialogHeader>
             <div className="p-4 sm:p-6 flex-1 flex flex-col overflow-hidden bg-[#F5F3F0]">
@@ -746,6 +836,12 @@ export default function StockPage() {
           <DialogFooter className="p-4 bg-white border-t shrink-0">
             <Button className="w-full rounded-full bg-neutral-950 hover:bg-[#C82368] text-white font-bold" onClick={() => setViewingHistoryItem(null)}>Tutup</Button>
           </DialogFooter>
+=======
+        <DialogContent className="sm:max-w-4xl w-[95vw] h-[90vh] rounded-3xl flex flex-col">
+            <DialogHeader><DialogTitle className="uppercase font-black">Riwayat Input Stok</DialogTitle></DialogHeader>
+            <div className="flex items-center gap-2 mb-4"><Label className="text-[10px] font-black uppercase">Filter Tanggal:</Label><Input type="date" value={historyDateFilter} onChange={e => setHistoryDateFilter(e.target.value)} className="w-44" /></div>
+            <ScrollArea className="flex-1"><Table><TableHeader><TableRow className="text-[10px] uppercase font-black"><TableHead>Waktu</TableHead><TableHead>No Nota</TableHead><TableHead>Item</TableHead><TableHead className="text-right">Aksi</TableHead></TableRow></TableHeader><TableBody>{(stockEntries || []).map(entry => (<TableRow key={entry.id} className="text-xs"><TableCell className="text-muted-foreground">{format(new Date(entry.timestamp), 'dd/MM/yyyy HH:mm')}</TableCell><TableCell className="font-bold uppercase">{entry.invoiceNo}</TableCell><TableCell className="font-medium">{entry.totalItems} items</TableCell><TableCell className="text-right"><Button variant="ghost" size="icon" onClick={() => setViewingHistoryItem(entry)}><Eye className="h-4 w-4" /></Button></TableCell></TableRow>))}</TableBody></Table></ScrollArea>
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
         </DialogContent>
       </Dialog>
     </div>

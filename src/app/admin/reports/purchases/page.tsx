@@ -72,7 +72,11 @@ export default function PurchaseReportPage() {
         return acc;
     }, {});
 
+<<<<<<< HEAD
     let list: any[] = Object.values(grouped).filter((item: any) => item.totalQty > 0);
+=======
+    let list = Object.values(grouped).filter((item: any) => item.totalQty > 0);
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
 
     if (filterMode === 'daily') {
         list = list.filter((item: any) => item.invoiceDate === selectedDate);
@@ -101,7 +105,11 @@ export default function PurchaseReportPage() {
   }, [entriesData, searchTerm, storeFilter, brandFilter, categoryFilter, filterMode, selectedDate, selectedMonth]);
 
   const totals = useMemo(() => {
+<<<<<<< HEAD
     return detailedStockList.reduce((acc: { totalQty: number; totalBuy: number }, item: any) => {
+=======
+    return detailedStockList.reduce((acc, item: any) => {
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
       acc.totalQty += item.totalQty;
       acc.totalBuy += (item.buyPrice || 0) * item.totalQty;
       return acc;
@@ -169,6 +177,7 @@ export default function PurchaseReportPage() {
   };
 
   return (
+<<<<<<< HEAD
     <div className='space-y-6 pb-8'>
       <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4'>
         <div>
@@ -222,10 +231,64 @@ export default function PurchaseReportPage() {
             </div>
             <div className="flex items-end">
                 <Button variant="ghost" className="h-10 w-full rounded-full text-xs font-bold bg-neutral-100 hover:bg-neutral-200 text-neutral-700" onClick={() => { setSearchTerm(''); setBrandFilter('ALL'); setCategoryFilter('ALL'); setFilterMode('all'); setStoreFilter('ALL'); }}><X className="h-3.5 w-3.5 mr-1.5" /> RESET</Button>
+=======
+    <div className='space-y-6'>
+      <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4'>
+        <div>
+          <h1 className='text-2xl md:text-3xl font-black text-primary uppercase'>Laporan Pembelian</h1>
+          <p className='text-muted-foreground text-sm'>Rincian barang yang dibeli dari seluruh riwayat input stok.</p>
+        </div>
+        <div className='flex items-center gap-2'>
+          <Button variant='outline' onClick={handleExportExcel} className='h-10 font-bold'><FileSpreadsheet className='h-4 w-4 mr-2' /> EXCEL</Button>
+          <Button variant='outline' onClick={handleExportPDF} className='h-10 font-bold'><FileText className='h-4 w-4 mr-2' /> PDF</Button>
+        </div>
+      </div>
+
+      <Card className='soft-shadow border-none overflow-hidden rounded-3xl flex flex-col'>
+      <CardHeader className='p-4 md:p-6 space-y-4 border-b bg-muted/10'>
+        <div className="grid grid-cols-3 md:contents gap-2">
+            <div className="space-y-2 md:contents">
+                <div className='relative md:flex-1 col-span-1 md:block'>
+                  <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground' />
+                  <Input placeholder='Cari...' className='pl-8 h-10 bg-white border-none shadow-sm text-[9px] md:text-xs rounded-xl' value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                </div>
+            </div>
+            <div className="space-y-2 col-span-1">
+                <Label className="text-[8px] md:text-[10px] font-black uppercase text-muted-foreground ml-1 hidden md:block">Tipe Periode</Label>
+                <Select onValueChange={(v) => setFilterMode(v as any)} value={filterMode}>
+                    <SelectTrigger className='h-10 w-full bg-white border-none shadow-sm text-[9px] md:text-xs font-bold rounded-xl'><SelectValue placeholder="Tipe" /></SelectTrigger>
+                    <SelectContent className='rounded-xl'><SelectItem value="all">Semua</SelectItem><SelectItem value="monthly">Bulan</SelectItem><SelectItem value="daily">Hari</SelectItem></SelectContent>
+                </Select>
+            </div>
+            <div className="space-y-2 col-span-1">
+                <Label className="text-[8px] md:text-[10px] font-black uppercase text-muted-foreground ml-1 hidden md:block">Pilih</Label>
+                {filterMode === "daily" && <Input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} className='h-10 bg-white border-none shadow-sm text-[9px] md:text-xs rounded-xl font-bold' />}
+                {filterMode === "monthly" && <Input type="month" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className='h-10 bg-white border-none shadow-sm text-[9px] md:text-xs rounded-xl font-bold' />}
+                {filterMode === "all" && <div className='h-10 bg-slate-100 rounded-xl flex items-center justify-center text-[9px] md:text-xs text-muted-foreground font-bold'>-</div>}
+            </div>
+        </div>
+
+        <div className="grid grid-cols-4 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-6 gap-2">
+            <div className="space-y-1 md:space-y-2">
+                <Label className="text-[8px] md:text-[10px] font-black uppercase text-muted-foreground ml-1 hidden md:block">Merek</Label>
+                <Select value={brandFilter} onValueChange={setBrandFilter}><SelectTrigger className='h-10 w-full bg-white border-none shadow-sm text-[9px] md:text-xs font-bold rounded-xl'><SelectValue placeholder='Merk' /></SelectTrigger><SelectContent className='rounded-xl'><SelectItem value='ALL'>Semua</SelectItem>{BRAND_DATABASE.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent></Select>
+            </div>
+            <div className="space-y-1 md:space-y-2">
+                <Label className="text-[8px] md:text-[10px] font-black uppercase text-muted-foreground ml-1 hidden md:block">Kat</Label>
+                <Select value={categoryFilter} onValueChange={setCategoryFilter}><SelectTrigger className='h-10 w-full bg-white border-none shadow-sm text-[9px] md:text-xs font-bold rounded-xl'><SelectValue placeholder='Kat' /></SelectTrigger><SelectContent className='rounded-xl'><SelectItem value='ALL'>Semua</SelectItem>{CATEGORY_DATABASE.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select>
+            </div>
+            <div className="space-y-1 md:space-y-2">
+                <Label className="text-[8px] md:text-[10px] font-black uppercase text-muted-foreground ml-1 hidden md:block">Toko</Label>
+                <Select value={storeFilter} onValueChange={setStoreFilter}><SelectTrigger className='h-10 w-full bg-white border-none shadow-sm text-[9px] md:text-xs font-bold rounded-xl'><SelectValue placeholder='Toko' /></SelectTrigger><SelectContent className='rounded-xl'><SelectItem value='ALL'>Semua</SelectItem><SelectItem value='TOKO_A'>KWT</SelectItem><SelectItem value='TOKO_B'>IND</SelectItem><SelectItem value='TOKO_C'>GDM</SelectItem></SelectContent></Select>
+            </div>
+            <div className="flex items-end">
+                <Button variant="ghost" className="h-10 w-full rounded-xl text-[9px] md:text-xs font-black" onClick={() => { setSearchTerm(''); setBrandFilter('ALL'); setCategoryFilter('ALL'); setFilterMode('all'); setStoreFilter('ALL'); }}><X className="h-3.5 w-3.5 mr-1" /> RESET</Button>
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
             </div>
         </div>
     </CardHeader>
         <CardContent className='p-0 flex-1'>
+<<<<<<< HEAD
           <div className='w-full overflow-x-auto'>
             <Table>
               <TableHeader className='bg-neutral-950 text-white'>
@@ -245,10 +308,32 @@ export default function PurchaseReportPage() {
                   <TableHead className='text-center text-neutral-300'>Qty GDM</TableHead>
                   <TableHead className='text-center text-neutral-300'>Jumlah Qty</TableHead>
                   <TableHead className='text-right text-neutral-300 pr-6'>Total Beli</TableHead>
+=======
+          <div className='overflow-x-auto'>
+            <Table>
+              <TableHeader className='bg-muted/50'>
+                <TableRow className='text-[10px] uppercase font-black'>
+                  <TableHead>Tgl Nota</TableHead>
+                  <TableHead>No Nota</TableHead>
+                  <TableHead>Merk</TableHead>
+                  <TableHead>Kategori</TableHead>
+                  <TableHead>Seri</TableHead>
+                  <TableHead>Size</TableHead>
+                  <TableHead>Warna</TableHead>
+                  <TableHead className='text-right'>Label</TableHead>
+                  <TableHead className='text-center'>% Beli</TableHead>
+                  <TableHead className='text-right'>H. Beli</TableHead>
+                  <TableHead className='text-center'>Qty KWT</TableHead>
+                  <TableHead className='text-center'>Qty IND</TableHead>
+                  <TableHead className='text-center'>Qty GDM</TableHead>
+                  <TableHead className='text-center'>Jumlah Qty</TableHead>
+                  <TableHead className='text-right'>Total Beli</TableHead>
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {detailedStockList.length > 0 ? detailedStockList.map((item: any, idx) => (
+<<<<<<< HEAD
                   <TableRow key={idx} className='text-[11px] hover:bg-[#F5F3F0]/60 border-b border-neutral-100'>
                     <TableCell className='text-neutral-500 pl-6 whitespace-nowrap'>{item.invoiceDate || '-'}</TableCell>
                     <TableCell className='font-mono font-bold text-neutral-900 whitespace-nowrap'>{item.invoiceNo || '-'}</TableCell>
@@ -276,6 +361,35 @@ export default function PurchaseReportPage() {
                     <TableCell colSpan={13} className="pl-6 uppercase text-[11px] tracking-widest text-neutral-500">Total Pembelian</TableCell>
                     <TableCell className="text-center font-serif text-lg text-[#C82368]">{totals.totalQty}</TableCell>
                     <TableCell className="text-right font-serif text-lg text-neutral-900 pr-6">{formatCurrency(totals.totalBuy)}</TableCell>
+=======
+                  <TableRow key={idx} className='text-[11px]'>
+                    <TableCell className='text-muted-foreground'>{item.invoiceDate || '-'}</TableCell>
+                    <TableCell className='font-mono font-bold'>{item.invoiceNo || '-'}</TableCell>
+                    <TableCell className='font-bold'>{item.brand}</TableCell>
+                    <TableCell>{item.category}</TableCell>
+                    <TableCell>{item.series}</TableCell>
+                    <TableCell className='font-black'>{item.size}</TableCell>
+                    <TableCell>{item.color}</TableCell>
+                    <TableCell className='text-right'>{formatCurrency(item.labelPrice || 0)}</TableCell>
+                    <TableCell className='text-center text-emerald-600'>{item.buyDiscount || '0'}%</TableCell>
+                    <TableCell className='text-right text-primary font-bold'>{formatCurrency(item.buyPrice || 0)}</TableCell>
+                    <TableCell className='text-center font-bold text-primary'>{item.qty_TOKO_A || 0}</TableCell>
+                    <TableCell className='text-center font-bold text-blue-600'>{item.qty_TOKO_B || 0}</TableCell>
+                    <TableCell className='text-center font-bold text-emerald-600'>{item.qty_TOKO_C || 0}</TableCell>
+                    <TableCell className='text-center font-black text-lg'>{item.totalQty}</TableCell>
+                    <TableCell className='text-right font-black'>{formatCurrency((item.buyPrice || 0) * item.totalQty)}</TableCell>
+                  </TableRow>
+                )) : (
+                    <TableRow><TableCell colSpan={15} className="h-48 text-center">Tidak ada data.</TableCell></TableRow>
+                )}
+              </TableBody>
+              {detailedStockList.length > 0 && (
+                <TableFooter className="bg-slate-50/80">
+                  <TableRow className="font-black text-sm">
+                    <TableCell colSpan={13}>Total</TableCell>
+                    <TableCell className="text-center text-primary">{totals.totalQty}</TableCell>
+                    <TableCell className="text-right text-primary">{formatCurrency(totals.totalBuy)}</TableCell>
+>>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                   </TableRow>
                 </TableFooter>
               )}
