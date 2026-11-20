@@ -175,7 +175,6 @@ export default function StockTokoBPage() {
   };
 
   return (
-<<<<<<< HEAD
     <div className="space-y-4 sm:space-y-5">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
@@ -185,22 +184,10 @@ export default function StockTokoBPage() {
         <div className="flex gap-2 w-full sm:w-auto">
           <Button variant="outline" onClick={handleExportExcel} className="h-9 sm:h-10 rounded-full border-neutral-200 bg-white font-bold text-[11px] sm:text-xs flex-1 sm:flex-none"><FileSpreadsheet className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 text-emerald-600" /> Excel</Button>
           <Button variant="outline" onClick={exportToPDF} className="h-9 sm:h-10 rounded-full border-neutral-200 bg-white font-bold text-[11px] sm:text-xs flex-1 sm:flex-none"><FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 text-[#C82368]" /> PDF</Button>
-=======
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold font-headline tracking-tight text-foreground">Stok {sourceDisplayName}</h1>
-          <p className="text-muted-foreground text-sm">Monitoring inventaris di Cabang {sourceDisplayName}.</p>
-        </div>
-        <div className="flex gap-2 w-full sm:w-auto">
-          <Button variant="outline" onClick={handleExportExcel} className="h-9"><FileSpreadsheet className="h-4 w-4 mr-2 text-emerald-600" /> Excel</Button>
-          <Button variant="outline" onClick={exportToPDF} className="h-9"><FileText className="h-4 w-4 mr-2 text-rose-600" /> PDF</Button>
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
         </div>
       </div>
 
       <div className="relative max-w-md">
-<<<<<<< HEAD
         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-neutral-400" />
         <Input placeholder="Cari Nama, Merk, Kategori, Warna, Size..." className="pl-9 sm:pl-10 h-9 sm:h-10 bg-white border-neutral-200 rounded-full shadow-sm text-xs" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
       </div>
@@ -290,43 +277,10 @@ export default function StockTokoBPage() {
               </TableBody>
             </Table>
           </div>
-=======
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Cari Nama, Merk, Kategori, Warna, Size..." className="pl-10 h-10 shadow-sm" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-      </div>
-
-      <Card className="soft-shadow border-none overflow-hidden">
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader className="bg-muted/50"><TableRow><TableHead>Nama Barang</TableHead><TableHead>Merk</TableHead><TableHead className="text-center">Stok</TableHead><TableHead className="text-right">Harga Jual</TableHead><TableHead className="text-right">Aksi</TableHead></TableRow></TableHeader>
-            <TableBody>{flattenedVariants.length > 0 ? flattenedVariants.map((item, idx) => (
-                  <TableRow key={idx} className="hover:bg-muted/20">
-                    <TableCell className="font-medium text-sm"><b>{item.productName}</b><br/><span className="text-[10px]">{item.category}</span></TableCell>
-                    <TableCell className="text-xs uppercase">{item.brand}</TableCell>
-                    <TableCell className="text-center font-black">{item.stock}</TableCell>
-                    <TableCell className="text-right font-bold">Rp {item.price.toLocaleString('id-ID')}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
-                        <Button 
-                          variant="ghost" size="icon" className="h-8 w-8 text-primary"
-                          onClick={() => { setSelectedVariant(item); setMigrateQty("1"); setIsMigrateOpen(true); }}
-                        >
-                          <ArrowRightLeft className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleSetZero(item.productId, item.id)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>)) : (<TableRow><TableCell colSpan={5} className="h-32 text-center text-muted-foreground">Kosong.</TableCell></TableRow>)}
-            </TableBody>
-          </Table>
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
         </CardContent>
       </Card>
 
       <Dialog open={isMigrateOpen} onOpenChange={setIsMigrateOpen}>
-<<<<<<< HEAD
         <DialogContent className="max-w-md w-[95vw] rounded-3xl p-0 overflow-hidden border-none shadow-2xl">
           <DialogHeader className="p-6 bg-neutral-950 text-white"><DialogTitle className="font-serif text-xl font-bold flex items-center gap-2"><ArrowRightLeft className="h-5 w-5 text-[#C82368]" /> Migrasi Stok Cabang</DialogTitle></DialogHeader>
           <div className="p-6 space-y-4 bg-[#F5F3F0]">
@@ -339,20 +293,6 @@ export default function StockTokoBPage() {
               <Label className="text-xs font-bold uppercase text-neutral-600">Pilih Toko Tujuan</Label>
               <Select value={targetStoreId} onValueChange={setTargetStoreId}>
                 <SelectTrigger className="h-11 font-bold bg-white rounded-xl"><SelectValue /></SelectTrigger>
-=======
-        <DialogContent className="max-w-md rounded-2xl">
-          <DialogHeader><DialogTitle className="flex items-center gap-2"><ArrowRightLeft className="h-5 w-5" /> Migrasi Stok Cabang</DialogTitle></DialogHeader>
-          <div className="py-4 space-y-4">
-            <div className="bg-muted/30 p-4 rounded-xl space-y-1">
-              <p className="text-xs font-bold text-muted-foreground uppercase">Barang Asal ({sourceDisplayName})</p>
-              <p className="font-black text-sm">{selectedVariant?.productName}</p>
-              <p className="text-xs font-medium">Sisa Stok: {selectedVariant?.stock} unit</p>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-bold uppercase">Pilih Toko Tujuan</Label>
-              <Select value={targetStoreId} onValueChange={setTargetStoreId}>
-                <SelectTrigger className="h-11 font-bold"><SelectValue /></SelectTrigger>
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                 <SelectContent>
                   <SelectItem value="TOKO_A">NHS KWT</SelectItem>
                   <SelectItem value="TOKO_C">NHS GDM</SelectItem>
@@ -360,19 +300,11 @@ export default function StockTokoBPage() {
               </Select>
             </div>
             <div className="space-y-2">
-<<<<<<< HEAD
               <Label className="text-xs font-bold uppercase text-neutral-600">Jumlah Pindah</Label>
               <Input type="number" value={migrateQty} onChange={e => setMigrateQty(e.target.value)} max={selectedVariant?.stock} min="1" className="h-11 font-bold text-lg bg-white rounded-xl" />
             </div>
           </div>
           <DialogFooter className="p-5 bg-white border-t"><Button className="w-full font-bold h-12 rounded-full bg-neutral-950 hover:bg-[#C82368] text-white transition-colors" onClick={handleMigrate}>KONFIRMASI PINDAH STOK</Button></DialogFooter>
-=======
-              <Label className="text-xs font-bold uppercase">Jumlah Pindah</Label>
-              <Input type="number" value={migrateQty} onChange={e => setMigrateQty(e.target.value)} max={selectedVariant?.stock} min="1" className="h-11 font-bold" />
-            </div>
-          </div>
-          <DialogFooter><Button className="w-full font-black h-12 rounded-xl" onClick={handleMigrate}>KONFIRMASI PINDAH STOK</Button></DialogFooter>
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
         </DialogContent>
       </Dialog>
     </div>

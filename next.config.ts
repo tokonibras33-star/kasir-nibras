@@ -2,7 +2,6 @@ import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
   /* config options here */
-<<<<<<< HEAD
   poweredByHeader: false,
   typescript: {
     ignoreBuildErrors: true,
@@ -39,13 +38,6 @@ const nextConfig: NextConfig = {
         ],
       },
     ];
-=======
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
   },
   images: {
     remotePatterns: [

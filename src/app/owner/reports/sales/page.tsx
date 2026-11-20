@@ -4,11 +4,7 @@ import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-<<<<<<< HEAD
 import { Search, Download, FileSpreadsheet, FileText, Calendar, Filter, Store, TrendingUp, TrendingDown, DollarSign, X, RotateCcw } from "lucide-react";
-=======
-import { Search, Download, FileSpreadsheet, FileText, Calendar, Filter, Store, TrendingUp, TrendingDown, DollarSign, X } from "lucide-react";
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -21,10 +17,7 @@ import { toast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
-<<<<<<< HEAD
 import { getTrxReturnSummary, TrxReturnSummary, getItemUnitNetPrice } from "@/components/cashier/types";
-=======
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
 
 const BRAND_DATABASE = [
   'Aden', 'AHSAN', 'Ainun', 'Ajwa', 'ALFASA', 'Alfira', 'Aqlan', 'AR', 'ARSELLE', 'ARUMY', 'AS MOESLEM', 'Aysila', 'Dafeena', 'DENIZER', 'Elzatta', 'EMILY DAILY', 'ETHICA', 'FeeFashion', 'Gabia', 'Ghiina', 'HIJABI OFFICIAL', 'Hunny Label', 'IMIDY', 'Journey', 'Kaen', 'KAMSA', 'Kazami', 'Keke', 'Latanza', 'LUBI', 'MALIHA', 'MOSLEM DAILY', 'Nadheera Luxury', 'NARARYA', 'Nata Id', 'NIARA', 'NIBRAS', 'NIRMALA', 'Non Branded', 'Poeti', 'Rabbani', 'Raisakey', 'Ratu Bilqis', 'RAYYA', 'Rivantie', 'SALVINA', 'SAV KIDS', 'Seply', 'Ss Hijab', 'SYIFA OFFICIAL', 'Urfimutiyaro', 'Yukio', 'ZAMEERA', 'Zz Homey'
@@ -34,7 +27,6 @@ const CATEGORY_DATABASE = [
   'Accesories', 'Atasan', 'Blouse', 'Bros', 'Celana', 'Ciput', 'Dompet', 'DRESS', 'GAMIS', 'GAMIS ANAK', 'Jilbab Instan', 'Jilbab Segi_4', 'Jilbab Segi_5', 'Jilbab Segi_6', 'Jilbab Segi_7', 'KOKO', 'KOKO ANAK', 'MIDI DRESS', 'Mukena', 'Mukena Anak', 'Oneset', 'Pashmina', 'Sandal', 'Sarung', 'Tas', 'Tunik'
 ];
 
-<<<<<<< HEAD
 const CUSTOMER_TYPES = ["UMUM", "MEMBER", "AGEN", "ONLINE", "RESELLER"];
 
 const safeFormatDate = (rawDate: any): string => {
@@ -52,9 +44,6 @@ const safeFormatDate = (rawDate: any): string => {
   }
   return "-";
 };
-=======
-const CUSTOMER_TYPES = ["UMUM", "MEMBER", "AGEN", "ONLINE"];
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
 
 export default function SalesReportPage() {
   const db = useFirestore();
@@ -95,7 +84,6 @@ export default function SalesReportPage() {
 
   const allTransactions = useMemo(() => {
     const list: any[] = [];
-<<<<<<< HEAD
     if (storeFilter === "ALL" || storeFilter === "TOKO_A") (trxKWT || []).forEach(t => list.push({ ...t, storeId: "TOKO_A", storeName: "NHS KWT" }));
     if (storeFilter === "ALL" || storeFilter === "TOKO_B") (trxIND || []).forEach(t => list.push({ ...t, storeId: "TOKO_B", storeName: "IND CO" }));
     if (storeFilter === "ALL" || storeFilter === "TOKO_C") (trxGDM || []).forEach(t => list.push({ ...t, storeId: "TOKO_C", storeName: "NHS GDM" }));
@@ -105,19 +93,11 @@ export default function SalesReportPage() {
       const dateB = b.date?.toDate?.()?.getTime() || 0;
       return dateB - dateA;
     });
-=======
-    if (storeFilter === "ALL" || storeFilter === "TOKO_A") (trxKWT || []).forEach(t => list.push({ ...t, storeName: "NHS KWT" }));
-    if (storeFilter === "ALL" || storeFilter === "TOKO_B") (trxIND || []).forEach(t => list.push({ ...t, storeName: "IND CO" }));
-    if (storeFilter === "ALL" || storeFilter === "TOKO_C") (trxGDM || []).forEach(t => list.push({ ...t, storeName: "NHS GDM" }));
-    
-    return list.sort((a, b) => (b.date?.toDate()?.getTime() || 0) - (a.date?.toDate()?.getTime() || 0));
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
   }, [trxKWT, trxIND, trxGDM, storeFilter]);
 
   const flattenedItems = useMemo(() => {
     let items: any[] = [];
     allTransactions.forEach(trx => {
-<<<<<<< HEAD
       const summary = getTrxReturnSummary(trx);
       const isDP = trx.status === "DP" || summary.effectiveStatus === "DP";
       const isSettledDP = trx.settledAt != null;
@@ -153,21 +133,6 @@ export default function SalesReportPage() {
 
         items.push({
           date: safeFormatDate(trx.date),
-=======
-      (trx.items || []).forEach((item: any) => {
-        const hargaSatuan = item.labelPrice || item.price;
-        const hargaJualSatuan = item.price;
-        
-        const diskonJualNominal = (hargaSatuan - hargaJualSatuan) * (item.quantity || 0);
-        const diskonJualPersen = hargaSatuan > 0 ? ((hargaSatuan - hargaJualSatuan) / hargaSatuan) * 100 : 0;
-
-        const itemTotal = hargaJualSatuan * (item.quantity || 0);
-        const itemBuyTotal = (item.buyPrice || 0) * (item.quantity || 0);
-        const margin = itemTotal - itemBuyTotal;
-
-        items.push({
-          date: trx.date?.toDate() ? format(trx.date.toDate(), "dd/MM/yyyy HH:mm") : "-",
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
           trxId: trx.id,
           storeName: trx.storeName,
           customer: trx.customerName || "UMUM",
@@ -175,7 +140,6 @@ export default function SalesReportPage() {
           itemName: item.name,
           brand: item.brand || '-',
           category: item.category || '-',
-<<<<<<< HEAD
           size: item.size || '-',
           color: item.color || '-',
           origQty: origQty,
@@ -191,18 +155,6 @@ export default function SalesReportPage() {
           margin: margin,
           payment: isDP ? `${trx.paymentMethod || "CASH"} (DP)` : (trx.paymentMethod || "CASH"),
           statusStr: statusStr,
-=======
-          size: item.size,
-          color: item.color,
-          qty: item.quantity,
-          sellPrice: hargaSatuan,
-          discount: diskonJualPersen,
-          discountNominal: diskonJualNominal,
-          total: itemTotal,
-          buyPrice: item.buyPrice || 0,
-          margin: margin,
-          payment: trx.paymentMethod || "CASH",
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
         });
       });
     });
@@ -242,15 +194,9 @@ export default function SalesReportPage() {
 
   const handleExportExcel = () => {
     if (flattenedItems.length === 0) return;
-<<<<<<< HEAD
     const headers = ["Tanggal", "No Transaksi", "Cabang", "Customer", "Tipe", "Nama Barang", "Merk", "Kategori", "Size", "Warna", "Qty Net", "Qty Retur", "Harga Satuan", "Harga Net", "Diskon Jual (%)", "Total Net", "Harga Beli", "Margin Net", "Metode Bayar", "Status"];
     const data = flattenedItems.map(i => [
       i.date, i.trxId, i.storeName, i.customer, i.customerType, i.itemName, i.brand, i.category, i.size, i.color, i.qty, i.returnedQty, i.sellPrice, i.unitNetPrice, i.discount, i.total, i.buyPrice, i.margin, i.payment, i.statusStr
-=======
-    const headers = ["Tanggal", "No Transaksi", "Cabang", "Customer", "Tipe", "Nama Barang", "Merk", "Kategori", "Size", "Warna", "Qty", "Harga Satuan", "Diskon Jual (%) ", "Total", "Harga Beli", "Margin", "Metode Bayar"];
-    const data = flattenedItems.map(i => [
-      i.date, i.trxId, i.storeName, i.customer, i.customerType, i.itemName, i.brand, i.category, i.size, i.color, i.qty, i.sellPrice, i.discount, i.total, i.buyPrice, i.margin, i.payment
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
     ]);
     const ws = XLSX.utils.aoa_to_sheet([headers, ...data]);
     const wb = XLSX.utils.book_new();
@@ -268,29 +214,17 @@ export default function SalesReportPage() {
 
     const tableData = flattenedItems.map(i => [
       i.date, i.trxId, i.itemName, i.brand, i.category, i.size, i.qty, 
-<<<<<<< HEAD
       `Rp ${i.unitNetPrice.toLocaleString('id-ID')}`,
-=======
-      `Rp ${i.sellPrice.toLocaleString('id-ID')}`,
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
       `${i.discount.toFixed(1)}%`,
       `Rp ${i.total.toLocaleString('id-ID')}`, 
       i.payment,
       `Rp ${i.buyPrice.toLocaleString('id-ID')}`,
       `Rp ${i.margin.toLocaleString('id-ID')}`,
-<<<<<<< HEAD
       i.statusStr
     ]);
 
     (doc as any).autoTable({
       head: [['Tanggal', 'No Trx', 'Nama Barang', 'Merk', 'Kategori', 'Size', 'Qty', 'H. Net', 'Diskon','Total', 'Bayar', 'H. Beli', 'Margin', 'Status']],
-=======
-      `${i.customer} (${i.customerType})`
-    ]);
-
-    (doc as any).autoTable({
-      head: [['Tanggal', 'No Trx', 'Nama Barang', 'Merk', 'Kategori', 'Size', 'Qty', 'H. Jual', 'Diskon','Total', 'Bayar', 'H. Beli', 'Margin', 'Customer']],
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
       body: tableData,
       startY: 25,
       theme: 'grid',
@@ -303,7 +237,6 @@ export default function SalesReportPage() {
   };
 
   return (
-<<<<<<< HEAD
     <div className="space-y-4 sm:space-y-5 pb-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
@@ -317,25 +250,10 @@ export default function SalesReportPage() {
           </Button>
           <Button variant="outline" onClick={handleExportPDF} className="h-8 sm:h-9 rounded-full px-3.5 sm:px-4 font-bold text-[11px] sm:text-xs border-neutral-200 bg-white hover:bg-neutral-50 flex-1 sm:flex-none">
             <FileText className="h-3.5 w-3.5 mr-1.5 text-[#C82368]" /> PDF A4
-=======
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-black text-primary uppercase">Laporan Penjualan Detail</h1>
-          <p className="text-muted-foreground text-sm">Monitoring profitibilitas dan rincian transaksi harian/bulanan.</p>
-        </div>
-        <div className="flex gap-2 w-full sm:w-auto">
-          <Button variant="outline" onClick={handleExportExcel} className="h-10 font-bold border-emerald-200 text-emerald-700 hover:bg-emerald-50">
-            <FileSpreadsheet className="h-4 w-4 mr-2" /> EXCEL
-          </Button>
-          <Button variant="outline" onClick={handleExportPDF} className="h-10 font-bold border-rose-200 text-rose-700 hover:bg-rose-50">
-            <FileText className="h-4 w-4 mr-2" /> PDF A4
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
           </Button>
         </div>
       </div>
 
-<<<<<<< HEAD
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-2.5 sm:gap-3.5 bg-white p-3 sm:p-4 rounded-2xl sm:rounded-3xl shadow-sm border border-neutral-200/70">
         {/* Periode */}
         <div className="lg:col-span-3 grid grid-cols-2 gap-2 sm:gap-3">
@@ -352,30 +270,11 @@ export default function SalesReportPage() {
               <Input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} className="h-9 rounded-full bg-[#F5F3F0] border border-neutral-200/70 font-bold text-[11px] sm:text-xs px-3" />
             ) : (
               <Input type="month" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="h-9 rounded-full bg-[#F5F3F0] border border-neutral-200/70 font-bold text-[11px] sm:text-xs px-3" />
-=======
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 bg-white p-5 rounded-3xl soft-shadow border">
-        {/* Periode */}
-        <div className="lg:col-span-3 grid grid-cols-2 gap-3">
-          <div className="space-y-2">
-            <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Jenis Laporan</Label>
-            <div className="flex bg-slate-100 p-1 rounded-xl">
-              <button onClick={() => setFilterMode("daily")} className={cn("flex-1 py-2 text-[9px] md:text-[10px] font-black rounded-lg transition-all", filterMode === "daily" ? "bg-white text-primary shadow-sm" : "text-slate-500")}>HARIAN</button>
-              <button onClick={() => setFilterMode("monthly")} className={cn("flex-1 py-2 text-[9px] md:text-[10px] font-black rounded-lg transition-all", filterMode === "monthly" ? "bg-white text-primary shadow-sm" : "text-slate-500")}>BULANAN</button>
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Waktu</Label>
-            {filterMode === "daily" ? (
-              <Input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} className="h-11 rounded-xl bg-slate-50 border-none font-bold text-xs" />
-            ) : (
-              <Input type="month" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="h-11 rounded-xl bg-slate-50 border-none font-bold text-xs" />
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
             )}
           </div>
         </div>
 
         {/* Brand & Kategori & Tipe Pelanggan */}
-<<<<<<< HEAD
         <div className="lg:col-span-6 grid grid-cols-3 gap-2 sm:gap-3">
           <div className="space-y-1">
             <Label className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-2">Merek</Label>
@@ -389,26 +288,10 @@ export default function SalesReportPage() {
                 </div>
                 <SelectItem value="ALL" className="text-xs">SEMUA MEREK</SelectItem>
                 {BRAND_DATABASE.filter(brand => brand.toLowerCase().includes(brandSearch.toLowerCase())).map(brand => <SelectItem key={brand} value={brand} className="text-xs">{brand}</SelectItem>)}
-=======
-        <div className="lg:col-span-6 grid grid-cols-3 gap-2">
-          <div className="space-y-2">
-            <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Merek</Label>
-            <Select value={brandFilter} onValueChange={setBrandFilter}>
-              <SelectTrigger className="h-11 rounded-xl bg-slate-50 border-none font-bold text-[9px] md:text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="rounded-xl max-h-96">
-                <div className="p-2 sticky top-0 bg-white">
-                  <Input placeholder="Cari Merek..." value={brandSearch} onChange={(e) => setBrandSearch(e.target.value)} onMouseDown={(e) => e.stopPropagation()} className="h-9" />
-                </div>
-                <SelectItem value="ALL">SEMUA MEREK</SelectItem>
-                {BRAND_DATABASE.filter(brand => brand.toLowerCase().includes(brandSearch.toLowerCase())).map(brand => <SelectItem key={brand} value={brand}>{brand}</SelectItem>)}
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
               </SelectContent>
             </Select>
           </div>
 
-<<<<<<< HEAD
           <div className="space-y-1">
             <Label className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-2">Kategori</Label>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
@@ -421,25 +304,10 @@ export default function SalesReportPage() {
                 </div>
                 <SelectItem value="ALL" className="text-xs">SEMUA KATEGORI</SelectItem>
                 {CATEGORY_DATABASE.filter(cat => cat.toLowerCase().includes(categorySearch.toLowerCase())).map(cat => <SelectItem key={cat} value={cat} className="text-xs">{cat}</SelectItem>)}
-=======
-          <div className="space-y-2">
-            <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Kategori</Label>
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="h-11 rounded-xl bg-slate-50 border-none font-bold text-[9px] md:text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="rounded-xl max-h-96">
-                <div className="p-2 sticky top-0 bg-white">
-                  <Input placeholder="Cari Kategori..." value={categorySearch} onChange={(e) => setCategorySearch(e.target.value)} onMouseDown={(e) => e.stopPropagation()} className="h-9" />
-                </div>
-                <SelectItem value="ALL">SEMUA KATEGORI</SelectItem>
-                {CATEGORY_DATABASE.filter(cat => cat.toLowerCase().includes(categorySearch.toLowerCase())).map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
               </SelectContent>
             </Select>
           </div>
 
-<<<<<<< HEAD
           <div className="space-y-1">
             <Label className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-2">Tipe</Label>
             <Select value={customerTypeFilter} onValueChange={setCustomerTypeFilter}>
@@ -449,24 +317,12 @@ export default function SalesReportPage() {
               <SelectContent className="rounded-2xl">
                 <SelectItem value="ALL" className="text-xs">SEMUA TIPE</SelectItem>
                 {CUSTOMER_TYPES.map(type => <SelectItem key={type} value={type} className="text-xs">{type}</SelectItem>)}
-=======
-          <div className="space-y-2">
-            <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Tipe Pelanggan</Label>
-            <Select value={customerTypeFilter} onValueChange={setCustomerTypeFilter}>
-              <SelectTrigger className="h-11 rounded-xl bg-slate-50 border-none font-bold text-[9px] md:text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="rounded-xl">
-                <SelectItem value="ALL">SEMUA TIPE</SelectItem>
-                {CUSTOMER_TYPES.map(type => <SelectItem key={type} value={type}>{type}</SelectItem>)}
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
               </SelectContent>
             </Select>
           </div>
         </div>
 
         {/* Cabang & Search */}
-<<<<<<< HEAD
         <div className="lg:col-span-3 grid grid-cols-2 gap-2 sm:gap-3">
           <div className="space-y-1">
             <Label className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-2">Cabang</Label>
@@ -485,32 +341,11 @@ export default function SalesReportPage() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-400" />
               <Input placeholder="ID/Barang..." className="pl-8 h-9 rounded-full bg-[#F5F3F0] border border-neutral-200/70 text-[11px] sm:text-xs" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
-=======
-        <div className="lg:col-span-3 grid grid-cols-2 gap-3">
-          <div className="space-y-2">
-            <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Cabang</Label>
-            <Select value={storeFilter} onValueChange={setStoreFilter}>
-              <SelectTrigger className="h-11 rounded-xl bg-slate-50 border-none font-bold text-[9px] md:text-xs"><SelectValue /></SelectTrigger>
-              <SelectContent className="rounded-xl">
-                <SelectItem value="ALL">SEMUA</SelectItem>
-                <SelectItem value="TOKO_A">NHS KWT</SelectItem>
-                <SelectItem value="TOKO_B">IND CO</SelectItem>
-                <SelectItem value="TOKO_C">NHS GDM</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Cari Global</Label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="ID/Barang/Nama..." className="pl-10 h-11 rounded-xl bg-slate-50 border-none text-xs" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
             </div>
           </div>
         </div>
       </div>
 
-<<<<<<< HEAD
       <div className="grid grid-cols-3 gap-2 sm:gap-4">
         <Card className="border-none shadow-sm bg-neutral-950 text-white rounded-2xl sm:rounded-3xl">
           <CardHeader className="p-2.5 sm:p-5">
@@ -528,30 +363,10 @@ export default function SalesReportPage() {
           <CardHeader className="p-2.5 sm:p-5">
             <p className="text-[8px] sm:text-[10px] font-bold uppercase text-neutral-400 tracking-wider mb-0.5 truncate">Terjual</p>
             <CardTitle className="text-xs sm:text-xl md:text-2xl font-serif truncate">{totals.qty} PCS</CardTitle>
-=======
-      <div className="grid grid-cols-3 md:grid-cols-3 gap-2 md:gap-4">
-        <Card className="border-none soft-shadow bg-primary text-white rounded-xl md:rounded-[2rem]">
-          <CardHeader className="p-2 md:p-6">
-            <p className="text-[7px] md:text-[10px] font-black uppercase opacity-70 tracking-widest mb-0.5 md:mb-1">Omzet Penjualan</p>
-            <CardTitle className="text-[10px] md:text-2xl font-black">Rp {totals.total.toLocaleString('id-ID')}</CardTitle>
-          </CardHeader>
-        </Card>
-        <Card className="border-none soft-shadow bg-emerald-600 text-white rounded-xl md:rounded-[2rem]">
-          <CardHeader className="p-2 md:p-6">
-            <p className="text-[7px] md:text-[10px] font-black uppercase opacity-70 tracking-widest mb-0.5 md:mb-1">Laba Kotor (Margin)</p>
-            <CardTitle className="text-[10px] md:text-2xl font-black">Rp {totals.margin.toLocaleString('id-ID')}</CardTitle>
-          </CardHeader>
-        </Card>
-        <Card className="border-none soft-shadow bg-blue-600 text-white rounded-xl md:rounded-[2rem]">
-          <CardHeader className="p-2 md:p-6">
-            <p className="text-[7px] md:text-[10px] font-black uppercase opacity-70 tracking-widest mb-0.5 md:mb-1">Item Terjual</p>
-            <CardTitle className="text-[10px] md:text-2xl font-black">{totals.qty} PCS</CardTitle>
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
           </CardHeader>
         </Card>
       </div>
 
-<<<<<<< HEAD
       <Card className="border border-neutral-200/70 shadow-sm bg-white rounded-2xl sm:rounded-3xl overflow-hidden">
         <CardContent className="p-0">
           {/* Mobile Compact Cards (Zero Horizontal Scroll) */}
@@ -627,33 +442,10 @@ export default function SalesReportPage() {
                   <TableHead className="text-right text-neutral-300">Harga Beli</TableHead>
                   <TableHead className="text-right text-neutral-300">Margin</TableHead>
                   <TableHead className="pr-6 text-neutral-300">Customer &amp; Status</TableHead>
-=======
-      <Card className="border-none soft-shadow rounded-3xl overflow-hidden">
-        <CardContent className="p-0">
-          <div className="w-full overflow-x-auto">
-            <Table>
-              <TableHeader className="bg-muted/50">
-                <TableRow className="text-[10px] font-black uppercase">
-                  <TableHead className="pl-6">Tanggal</TableHead>
-                  <TableHead>No Trx</TableHead>
-                  <TableHead className="min-w-[300px]">Nama Barang</TableHead>
-                  <TableHead>Merk</TableHead>
-                  <TableHead>Kategori</TableHead>
-                  <TableHead className="text-center">Size</TableHead>
-                  <TableHead className="text-center">Qty</TableHead>
-                  <TableHead className="text-right">Harga Satuan</TableHead>
-                  <TableHead className="text-right">Diskon Jual</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                  <TableHead>Metode</TableHead>
-                  <TableHead className="text-right">Harga Beli</TableHead>
-                  <TableHead className="text-right">Margin</TableHead>
-                  <TableHead className="pr-6">Customer &amp; Tipe</TableHead>
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {flattenedItems.length > 0 ? flattenedItems.map((item, idx) => (
-<<<<<<< HEAD
                   <TableRow key={idx} className={cn("hover:bg-[#F5F3F0]/60 border-b border-neutral-100 text-[11px]", item.isFullyReturned && "bg-rose-50/40 opacity-75")}>
                     <TableCell className="pl-6 whitespace-nowrap text-neutral-500">{item.date}</TableCell>
                     <TableCell className="font-mono font-bold text-[#C82368] whitespace-nowrap">
@@ -682,20 +474,6 @@ export default function SalesReportPage() {
                       Rp {item.sellPrice.toLocaleString('id-ID')}
                     </TableCell>
                     <TableCell className="text-right text-rose-600">
-=======
-                  <TableRow key={idx} className="hover:bg-muted/30 border-b border-muted/50 text-[11px]">
-                    <TableCell className="pl-6 whitespace-nowrap">{item.date}</TableCell>
-                    <TableCell className="font-mono font-bold text-primary">{item.trxId}</TableCell>
-                    <TableCell className="min-w-[300px]">
-                      <p className="font-bold uppercase leading-tight">{item.itemName}</p>
-                    </TableCell>
-                    <TableCell>{item.brand}</TableCell>
-                    <TableCell>{item.category}</TableCell>
-                    <TableCell className="text-center font-black">{item.size}</TableCell>
-                    <TableCell className="text-center font-black">{item.qty}</TableCell>
-                    <TableCell className="text-right">Rp {item.sellPrice.toLocaleString('id-ID')}</TableCell>
-                    <TableCell className="text-right text-destructive">
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                       {item.discount > 0 && (
                         <div className="flex flex-col items-end">
                           <span className="font-bold">{item.discount.toFixed(1)}%</span>
@@ -703,7 +481,6 @@ export default function SalesReportPage() {
                         </div>
                       )}
                     </TableCell>
-<<<<<<< HEAD
                     <TableCell className="text-right font-bold text-neutral-900 whitespace-nowrap">
                       Rp {item.total.toLocaleString('id-ID')}
                     </TableCell>
@@ -721,31 +498,16 @@ export default function SalesReportPage() {
                             {item.statusStr}
                           </Badge>
                         </div>
-=======
-                    <TableCell className="text-right font-bold">Rp {item.total.toLocaleString('id-ID')}</TableCell>
-                    <TableCell><Badge variant="outline" className="text-[9px] font-black border-none bg-slate-100">{item.payment}</Badge></TableCell>
-                    <TableCell className="text-right opacity-60">Rp {item.buyPrice.toLocaleString('id-ID')}</TableCell>
-                    <TableCell className="text-right font-black text-emerald-600">Rp {item.margin.toLocaleString('id-ID')}</TableCell>
-                    <TableCell className="pr-6">
-                      <div className="flex flex-col">
-                        <p className="font-bold uppercase leading-tight text-slate-800">{item.customer}</p>
-                        <p className="text-[9px] text-muted-foreground uppercase font-black">{item.customerType}</p>
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                       </div>
                     </TableCell>
                   </TableRow>
                 )) : (
                   <TableRow>
-<<<<<<< HEAD
                     <TableCell colSpan={14} className="h-48 text-center text-neutral-400 italic">Tidak ada data penjualan pada periode ini.</TableCell>
-=======
-                    <TableCell colSpan={14} className="h-48 text-center text-muted-foreground italic">Tidak ada data penjualan pada periode ini.</TableCell>
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                   </TableRow>
                 )}
               </TableBody>
               {flattenedItems.length > 0 && (
-<<<<<<< HEAD
                 <TableFooter className="bg-[#F5F3F0] border-t border-neutral-200">
                   <TableRow className="font-bold uppercase text-[10px]">
                     <TableCell colSpan={6} className="pl-6 py-4 text-neutral-500 tracking-widest">Total Penjualan Bersih (Net)</TableCell>
@@ -755,17 +517,6 @@ export default function SalesReportPage() {
                     <TableCell />
                     <TableCell />
                     <TableCell className="text-right text-emerald-700 text-base font-serif whitespace-nowrap">Rp {totals.margin.toLocaleString('id-ID')}</TableCell>
-=======
-                <TableFooter className="bg-slate-50/80">
-                  <TableRow className="font-black uppercase text-[10px]">
-                    <TableCell colSpan={6} className="pl-6 py-4">Total Keseluruhan</TableCell>
-                    <TableCell className="text-center text-primary text-sm">{totals.qty}</TableCell>
-                    <TableCell colSpan={2} />
-                    <TableCell className="text-right text-primary text-sm">Rp {totals.total.toLocaleString('id-ID')}</TableCell>
-                    <TableCell />
-                    <TableCell />
-                    <TableCell className="text-right text-emerald-700 text-sm">Rp {totals.margin.toLocaleString('id-ID')}</TableCell>
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                     <TableCell className="pr-6" />
                   </TableRow>
                 </TableFooter>

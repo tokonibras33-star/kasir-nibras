@@ -182,7 +182,6 @@ export function StockManagementDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-<<<<<<< HEAD
         <DialogContent aria-describedby={undefined} className="max-w-7xl w-[98vw] h-[92vh] p-0 flex flex-col rounded-[2.25rem] overflow-hidden border border-neutral-200 shadow-2xl">
           <DialogHeader className="p-6 md:p-7 bg-neutral-950 text-white shrink-0">
             <div className="flex items-center gap-4">
@@ -190,21 +189,11 @@ export function StockManagementDialog({
               <div>
                 <DialogTitle className="font-serif text-xl md:text-2xl font-bold tracking-wide">Manajemen Stok & Mutasi</DialogTitle>
                 <p className="text-[10px] font-bold text-[#F48FB1] uppercase tracking-widest mt-0.5">Audit Inventaris Cabang</p>
-=======
-        <DialogContent className="max-w-7xl w-[98vw] h-[92vh] p-0 flex flex-col rounded-[2.5rem] overflow-hidden border-none shadow-2xl">
-          <DialogHeader className="p-6 md:p-8 bg-[#1F7A63] text-white shrink-0">
-            <div className="flex items-center gap-4">
-              <div className="bg-white/10 p-3 rounded-2xl"><GitMerge className="h-6 w-6 text-white" /></div>
-              <div>
-                <DialogTitle className="text-xl md:text-2xl font-black uppercase">Manajemen Stok & Mutasi</DialogTitle>
-                <p className="text-[10px] font-bold opacity-70 uppercase tracking-widest mt-0.5">Audit Inventaris Cabang</p>
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
               </div>
             </div>
           </DialogHeader>
           
           <Tabs defaultValue="data-stok" className="bg-white flex-1 flex flex-col overflow-hidden">
-<<<<<<< HEAD
             <div className="px-6 md:px-8 border-b border-neutral-200/70">
               <TabsList className="h-14 bg-transparent border-none w-full justify-start gap-8">
                 <TabsTrigger value="data-stok" className="data-[state=active]:border-b-4 data-[state=active]:border-[#C82368] data-[state=active]:text-[#C82368] h-full rounded-none px-0 font-black text-[10px] uppercase tracking-widest">1. Data Stok</TabsTrigger>
@@ -220,23 +209,6 @@ export function StockManagementDialog({
                     <Select value={stockViewingStoreId} onValueChange={setStockViewingStoreId}>
                       <SelectTrigger className="h-11 rounded-2xl bg-[#F5F3F0] border-transparent font-black text-sm"><SelectValue /></SelectTrigger>
                       <SelectContent className="rounded-2xl">
-=======
-            <div className="px-8 border-b">
-              <TabsList className="h-14 bg-transparent border-none w-full justify-start gap-8">
-                <TabsTrigger value="data-stok" className="data-[state=active]:border-b-4 data-[state=active]:border-primary h-full rounded-none px-0 font-black text-[10px] uppercase tracking-widest">1. Data Stok</TabsTrigger>
-                <TabsTrigger value="status-pengajuan" className="data-[state=active]:border-b-4 data-[state=active]:border-primary h-full rounded-none px-0 font-black text-[10px] uppercase tracking-widest">2. Status Pengajuan</TabsTrigger>
-                <TabsTrigger value="konfirmasi" className="data-[state=active]:border-b-4 data-[state=active]:border-primary h-full rounded-none px-0 font-black text-[10px] uppercase tracking-widest">3. Konfirmasi Penerimaan</TabsTrigger>
-              </TabsList>
-            </div>
-
-            <div className="flex-1 overflow-y-auto bg-slate-50/50">
-              <TabsContent value="data-stok" className="m-0 p-0 focus-visible:ring-0">
-                <div className="p-4 md:p-6 border-b bg-white flex flex-col md:flex-row gap-4 sticky top-0 z-10 shadow-sm">
-                  <div className="w-full md:w-64">
-                    <Select value={stockViewingStoreId} onValueChange={setStockViewingStoreId}>
-                      <SelectTrigger className="h-11 rounded-xl bg-slate-50 border-none font-black text-sm"><SelectValue /></SelectTrigger>
-                      <SelectContent className="rounded-xl">
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                         <SelectItem value="ALL" className="font-bold">SEMUA TOKO</SelectItem>
                         <SelectItem value="TOKO_A" className="font-bold">NHS KWT</SelectItem>
                         <SelectItem value="TOKO_B" className="font-bold">IND CO</SelectItem>
@@ -245,7 +217,6 @@ export function StockManagementDialog({
                     </Select>
                   </div>
                   <div className="relative flex-1">
-<<<<<<< HEAD
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
                     <Input placeholder="Cari barang..." className="h-11 pl-11 rounded-full bg-[#F5F3F0] border-transparent font-black text-sm focus-visible:ring-1 focus-visible:ring-[#C82368]" value={stockSearch} onChange={e => setStockSearch(e.target.value)} />
                   </div>
@@ -254,16 +225,6 @@ export function StockManagementDialog({
                   <Card className="bg-white rounded-3xl shadow-sm border border-neutral-200/70 overflow-hidden">
                     <Table>
                       <TableHeader className="bg-[#F5F3F0]/60">
-=======
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                    <Input placeholder="Cari barang..." className="h-11 pl-11 rounded-xl bg-slate-50 border-none font-black text-sm" value={stockSearch} onChange={e => setStockSearch(e.target.value)} />
-                  </div>
-                </div>
-                <div className="p-4 md:p-6">
-                  <Card className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-                    <Table>
-                      <TableHeader className="bg-slate-50/80">
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                         <TableRow className="text-[10px] font-black uppercase">
                           <TableHead className="pl-6 py-5">Merek</TableHead>
                           <TableHead>Produk</TableHead>
@@ -276,7 +237,6 @@ export function StockManagementDialog({
                       </TableHeader>
                       <TableBody>
                         {isStockLoading ? (
-<<<<<<< HEAD
                           <TableRow><TableCell colSpan={7} className="h-48 text-center font-black animate-pulse text-neutral-400">Memuat Data Inventaris...</TableCell></TableRow>
                         ) : filtered.map((v: any) => (
                           <TableRow key={`${v.productId}-${v.variantId}-${v.storeId}`} className="hover:bg-[#C82368]/5 transition-colors border-b border-neutral-100 last:border-none text-[11px] group">
@@ -295,26 +255,6 @@ export function StockManagementDialog({
                                 </Button>
                               ) : (
                                 <span className="text-[9px] font-bold text-neutral-300 italic uppercase">CABANG INI</span>
-=======
-                          <TableRow><TableCell colSpan={7} className="h-48 text-center font-black animate-pulse text-slate-400">Memuat Data Inventaris...</TableCell></TableRow>
-                        ) : filtered.map((v: any) => (
-                          <TableRow key={`${v.productId}-${v.variantId}-${v.storeId}`} className="hover:bg-primary/5 transition-colors border-b last:border-none text-[11px] group">
-                            <TableCell className="pl-6 font-bold uppercase">{v.brand}</TableCell>
-                            <TableCell className="font-black uppercase text-slate-800">{v.baseName}</TableCell>
-                            <TableCell className="text-center font-black">{v.size}</TableCell>
-                            <TableCell className="uppercase">{v.color}</TableCell>
-                            <TableCell className="text-center"><Badge className={cn("text-[10px] font-black border-none", v.stock < 5 ? "bg-rose-100 text-rose-600" : "bg-primary/10 text-primary")}>{v.stock} PCS</Badge></TableCell>
-                            <TableCell className="text-right font-black">Rp{v.price.toLocaleString('id-ID')}</TableCell>
-                            <TableCell className="text-right pr-6">
-                              {isViewingAllStores ? (
-                                <Badge variant="outline" className="bg-slate-100 text-slate-600 border-none font-black text-[9px] uppercase px-2">{v.storeId === 'TOKO_A' ? 'KWT' : v.storeId === 'TOKO_B' ? 'IND' : 'GDM'}</Badge>
-                              ) : !isViewingOwnStore ? (
-                                <Button size="sm" variant="outline" className="rounded-xl font-black border-primary text-primary h-8 gap-2 group-hover:bg-primary group-hover:text-white" onClick={() => { setSelectedVariantForMutation(v); setIsMutationRequestOpen(true); }}>
-                                  <ArrowRightLeft className="h-3 w-3" /> MUTASI
-                                </Button>
-                              ) : (
-                                <span className="text-[9px] font-bold text-slate-300 italic uppercase">CABANG INI</span>
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                               )}
                             </TableCell>
                           </TableRow>
@@ -326,15 +266,9 @@ export function StockManagementDialog({
               </TabsContent>
 
               <TabsContent value="status-pengajuan" className="m-0 p-6 focus-visible:ring-0">
-<<<<<<< HEAD
                 <Card className="rounded-3xl border border-neutral-200/70 shadow-sm overflow-hidden bg-white">
                   <Table>
                     <TableHeader className="bg-[#F5F3F0]/60">
-=======
-                <Card className="rounded-3xl border-none shadow-sm overflow-hidden bg-white">
-                  <Table>
-                    <TableHeader className="bg-slate-50/80">
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                       <TableRow className="text-[10px] font-black uppercase">
                         <TableHead className="pl-6 py-5">Barang</TableHead>
                         <TableHead>Dari Cabang</TableHead>
@@ -345,7 +279,6 @@ export function StockManagementDialog({
                     </TableHeader>
                     <TableBody>
                       {statusPengajuan.map((m: any) => (
-<<<<<<< HEAD
                         <TableRow key={m.id} className="border-b border-neutral-100 last:border-none text-[11px]">
                           <TableCell className="pl-6 py-5">
                             <p className="font-black uppercase text-neutral-900">{m.productName}</p>
@@ -363,25 +296,6 @@ export function StockManagementDialog({
                       ))}
                       {statusPengajuan.length === 0 && (
                         <TableRow><TableCell colSpan={5} className="h-32 text-center text-neutral-400 italic">Belum ada pengajuan mutasi.</TableCell></TableRow>
-=======
-                        <TableRow key={m.id} className="border-b last:border-none text-[11px]">
-                          <TableCell className="pl-6 py-5">
-                            <p className="font-black uppercase">{m.productName}</p>
-                            <p className="text-[9px] text-slate-400">{m.color} | {m.size}</p>
-                          </TableCell>
-                          <TableCell><Badge variant="outline" className="bg-primary/5 text-primary border-none font-black text-[10px] uppercase">{m.fromStore}</Badge></TableCell>
-                          <TableCell className="text-center font-black">{m.quantity} PCS</TableCell>
-                          <TableCell className="text-center">
-                            <Badge className={cn("text-[9px] font-black border-none px-3", m.status === 'PENDING' ? "bg-orange-100 text-orange-600" : "bg-emerald-100 text-emerald-600")}>
-                              {m.status === 'PENDING' ? 'MENUNGGU KONFIRMASI' : 'BERHASIL DIMUTASI'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right pr-6 font-bold text-slate-400">{format(new Date(m.requestedAt), "dd/MM/yyyy")}</TableCell>
-                        </TableRow>
-                      ))}
-                      {statusPengajuan.length === 0 && (
-                        <TableRow><TableCell colSpan={5} className="h-32 text-center text-slate-400 italic">Belum ada pengajuan mutasi.</TableCell></TableRow>
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                       )}
                     </TableBody>
                   </Table>
@@ -389,15 +303,9 @@ export function StockManagementDialog({
               </TabsContent>
 
               <TabsContent value="konfirmasi" className="m-0 p-6 focus-visible:ring-0">
-<<<<<<< HEAD
                 <Card className="rounded-3xl border border-neutral-200/70 shadow-sm overflow-hidden bg-white">
                   <Table>
                     <TableHeader className="bg-[#F5F3F0]/60">
-=======
-                <Card className="rounded-3xl border-none shadow-sm overflow-hidden bg-white">
-                  <Table>
-                    <TableHeader className="bg-slate-50">
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                       <TableRow className="text-[10px] font-black uppercase">
                         <TableHead className="pl-6 py-5">Barang</TableHead>
                         <TableHead>Dari Cabang</TableHead>
@@ -409,7 +317,6 @@ export function StockManagementDialog({
                     </TableHeader>
                     <TableBody>
                       {konfirmasiPenerimaan.map((m: any) => (
-<<<<<<< HEAD
                         <TableRow key={m.id} className="border-b border-neutral-100 last:border-none text-[11px]">
                           <TableCell className="pl-6 py-5">
                             <p className="font-black uppercase text-neutral-900">{m.productName}</p>
@@ -421,30 +328,13 @@ export function StockManagementDialog({
                           <TableCell className="text-center font-black text-[#C82368]">{m.quantity} PCS</TableCell>
                           <TableCell className="text-right pr-6">
                             <Button size="sm" className="bg-neutral-950 hover:bg-[#C82368] text-white font-black h-9 px-6 rounded-full transition-colors" onClick={() => handleApproveMutation(m)} disabled={isProcessing}>
-=======
-                        <TableRow key={m.id} className="border-b last:border-none text-[11px]">
-                          <TableCell className="pl-6 py-5">
-                            <p className="font-black uppercase">{m.productName}</p>
-                            <p className="text-[9px] text-slate-400 font-bold uppercase">{m.color} | {m.size}</p>
-                          </TableCell>
-                          <TableCell className="font-bold">{m.fromStore}</TableCell>
-                          <TableCell><Badge className="bg-blue-100 text-blue-700 border-none font-black text-[10px] uppercase px-3">{m.targetStore}</Badge></TableCell>
-                          <TableCell className="font-bold text-slate-400">{format(new Date(m.requestedAt), "dd/MM/yyyy")}</TableCell>
-                          <TableCell className="text-center font-black text-primary">{m.quantity} PCS</TableCell>
-                          <TableCell className="text-right pr-6">
-                            <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 font-black h-9 px-6 rounded-xl" onClick={() => handleApproveMutation(m)} disabled={isProcessing}>
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                               {isProcessing ? <Loader2 className="animate-spin h-3.5 w-3.5" /> : "KONFIRMASI"}
                             </Button>
                           </TableCell>
                         </TableRow>
                       ))}
                       {konfirmasiPenerimaan.length === 0 && (
-<<<<<<< HEAD
                         <TableRow><TableCell colSpan={6} className="h-32 text-center text-neutral-400 italic">Tidak ada permintaan mutasi keluar.</TableCell></TableRow>
-=======
-                        <TableRow><TableCell colSpan={6} className="h-32 text-center text-slate-400 italic">Tidak ada permintaan mutasi keluar.</TableCell></TableRow>
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                       )}
                     </TableBody>
                   </Table>
@@ -452,19 +342,13 @@ export function StockManagementDialog({
               </TabsContent>
             </div>
           </Tabs>
-<<<<<<< HEAD
           <DialogFooter className="p-6 bg-white border-t border-neutral-200/70 shrink-0">
             <Button className="w-full h-12 rounded-full bg-neutral-950 hover:bg-[#C82368] text-white font-black uppercase tracking-widest text-xs transition-all" onClick={() => onOpenChange(false)}>TUTUP PANEL</Button>
-=======
-          <DialogFooter className="p-6 bg-white border-t shrink-0">
-            <Button className="w-full h-12 rounded-xl bg-slate-800 text-white font-black" onClick={() => onOpenChange(false)}>TUTUP PANEL</Button>
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
           </DialogFooter>
         </DialogContent>
       </Dialog>
       
       <Dialog open={isMutationRequestOpen} onOpenChange={setIsMutationRequestOpen}>
-<<<<<<< HEAD
         <DialogContent aria-describedby={undefined} className="max-w-md rounded-[2.25rem] p-0 overflow-hidden border border-neutral-200 shadow-2xl">
           <DialogHeader className="p-6 bg-neutral-950 text-white"><DialogTitle className="font-serif text-xl font-bold flex items-center gap-3"><ArrowRightLeft className="h-5 w-5 text-[#F48FB1]" /> Ajukan Mutasi</DialogTitle></DialogHeader>
           <div className="space-y-5 p-7 bg-white">
@@ -481,24 +365,6 @@ export function StockManagementDialog({
           </div>
           <DialogFooter className="p-6 pt-0 bg-white">
             <Button className="w-full h-12 rounded-full bg-neutral-950 hover:bg-[#C82368] text-white font-black shadow-xl uppercase tracking-widest text-xs transition-all" onClick={handleRequestMutation}>KIRIM PENGAJUAN</Button>
-=======
-        <DialogContent className="max-w-md rounded-[2.5rem] p-8 border-none shadow-2xl">
-          <DialogHeader><DialogTitle className="text-xl font-black uppercase flex items-center gap-3"><ArrowRightLeft className="h-6 w-6 text-primary" /> Ajukan Mutasi</DialogTitle></DialogHeader>
-          <div className="space-y-6 py-6">
-            <Card className="p-5 rounded-3xl bg-primary/5 border-none space-y-1">
-              <p className="font-black text-sm uppercase leading-tight">{selectedVariantForMutation?.baseName}</p>
-              <p className="text-[10px] font-bold text-slate-400 uppercase">{selectedVariantForMutation?.color} | {selectedVariantForMutation?.size}</p>
-              <p className="text-[9px] font-black bg-primary/10 text-primary px-2 rounded w-fit uppercase mt-2">Cabang Asal: {selectedVariantForMutation?.storeId}</p>
-            </Card>
-            <div className="space-y-2">
-              <Label className="text-[10px] font-black uppercase text-slate-400 ml-1">Jumlah Mutasi (PCS)</Label>
-              <Input type="number" value={mutationQty} onChange={e => setMutationQty(e.target.value)} className="h-16 text-4xl font-black text-center border-none bg-slate-100 rounded-2xl shadow-inner text-primary" />
-              <p className="text-[9px] text-center font-bold text-slate-400 uppercase">Tersedia: {selectedVariantForMutation?.stock} PCS</p>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button className="w-full h-14 rounded-2xl font-black shadow-xl" onClick={handleRequestMutation}>KIRIM PENGAJUAN</Button>
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
           </DialogFooter>
         </DialogContent>
       </Dialog>

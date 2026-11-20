@@ -12,11 +12,8 @@ export default {
       fontFamily: {
         body: ['Inter', 'sans-serif'],
         headline: ['Inter', 'sans-serif'],
-<<<<<<< HEAD
         serif: ['Playfair Display', 'Cormorant Garamond', 'Georgia', 'serif'],
         editorial: ['Cormorant Garamond', 'Playfair Display', 'Georgia', 'serif'],
-=======
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
         code: ['monospace'],
       },
       colors: {

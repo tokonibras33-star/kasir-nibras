@@ -17,12 +17,8 @@ import {
   Settings,
   Wallet,
   RotateCcw,
-<<<<<<< HEAD
   Clock,
   Store
-=======
-  Clock
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -49,16 +45,10 @@ interface NavItem {
   allowedRoles: string[];
 }
 
-<<<<<<< HEAD
 const LOGO_URL = "/hero/nibras-logo.jpg";
 
 const navItems: NavItem[] = [
   { label: "Terminal Kasir (POS)", icon: Store, href: "/cashier", allowedRoles: ["KASIR_TOKO_A", "KASIR_TOKO_B", "KASIR_TOKO_C"] },
-=======
-const LOGO_URL = "https://res.cloudinary.com/dqujkgwah/image/upload/v1775115570/nibras_house-removebg-preview_gwdzut.png";
-
-const navItems: NavItem[] = [
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
   { label: "Dashboard", icon: LayoutDashboard, href: "/admin/dashboard", allowedRoles: ["ADMIN", "OWNER"] },
   { label: "Katalog Produk", icon: Package, href: "/admin/products", allowedRoles: ["ADMIN", "OWNER"] },
   { 
@@ -154,10 +144,7 @@ const navItems: NavItem[] = [
       { label: "Laporan Pembelian", href: "/admin/reports/purchases" },
     ]
   },
-<<<<<<< HEAD
   { label: "Absensi Karyawan", icon: Clock, href: "/owner/absensi", allowedRoles: ["OWNER"] },
-=======
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
   { label: "Seting", icon: Settings, href: "/owner/settings", allowedRoles: ["OWNER"] },
 ];
 
@@ -181,7 +168,6 @@ export function AdminSidebar({ onNavItemClick }: AdminSidebarProps) {
   });
 
   return (
-<<<<<<< HEAD
     <div className="h-full w-full bg-white/95 backdrop-blur-xl border-r border-neutral-200/70 flex flex-col">
       <div className="p-6 border-b border-neutral-200/60">
         <div className="flex items-center gap-3.5">
@@ -284,32 +270,6 @@ export function AdminSidebar({ onNavItemClick }: AdminSidebarProps) {
           <LogOut className="h-3.5 w-3.5 mr-2" /> Keluar Sesi
         </Button>
       </div>
-=======
-    <div className="h-full w-full bg-sidebar border-r flex flex-col">
-      <div className="p-6 hidden md:block">
-        <div className="flex items-center gap-3">
-          <div className="bg-primary/5 p-1 rounded-lg overflow-hidden flex items-center justify-center min-w-[40px] min-h-[40px] border border-primary/10 relative">
-            <Image src={LOGO_URL} alt="Logo" width={36} height={36} className="object-contain" />
-          </div>
-          <div className="flex flex-col"><span className="font-bold text-xl font-headline tracking-tight">Nibras House</span><span className="text-[10px] font-black text-primary uppercase tracking-widest">{user?.role.replace('_', ' ')}</span></div>
-        </div>
-      </div>
-      <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
-        {filteredNavItems.map((item) => {
-          if (item.isExpandable) {
-            const isOpen = openMenus[item.stateKey!];
-            return (
-              <Collapsible key={item.href} open={isOpen} onOpenChange={v => setOpenMenus({...openMenus, [item.stateKey!]: v})}>
-                <CollapsibleTrigger asChild><Button variant="ghost" className={cn("w-full justify-between h-auto py-2.5 font-medium", pathname.startsWith(item.href) && "bg-primary/10 text-primary")}><div className="flex items-center gap-3"><item.icon className="h-4 w-4" />{item.label}</div><ChevronDown className={cn("h-4 w-4 transition-transform", isOpen && "rotate-180")} /></Button></CollapsibleTrigger>
-                <CollapsibleContent className="space-y-1 mt-1">{item.subItems?.map(sub => (<Link key={sub.href} href={sub.href} className={cn("flex items-center pl-10 pr-3 py-2 rounded-lg text-sm font-medium transition-colors", pathname === sub.href ? "text-primary bg-primary/5" : "text-muted-foreground hover:bg-muted")}>{sub.label}</Link>))}</CollapsibleContent>
-              </Collapsible>
-            );
-          }
-          return (<Link key={item.href} href={item.href} className={cn("flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors", pathname === item.href ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted")}><item.icon className="h-4 w-4" />{item.label}</Link>);
-        })}
-      </nav>
-      <div className="p-4 border-t"><Button variant="ghost" className="w-full justify-start text-muted-foreground" onClick={() => logout()}><LogOut className="h-4 w-4 mr-3" /> Keluar</Button></div>
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
     </div>
   );
 }

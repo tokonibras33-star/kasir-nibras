@@ -343,7 +343,6 @@ export default function OperationalExpensesPage() {
   };
 
   return (
-<<<<<<< HEAD
     <div className="space-y-4 sm:space-y-6 pb-10">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
@@ -393,63 +392,12 @@ export default function OperationalExpensesPage() {
                     <SelectItem value="ALL" className="font-bold text-xs">SEMUA SUMBER</SelectItem>
                     <SelectItem value="OWNER" className="font-bold text-xs">OWNER PUSAT</SelectItem>
                     {STORES.map(s => <SelectItem key={s.id} value={s.id} className="font-bold text-xs">{s.name}</SelectItem>)}
-=======
-    <div className="space-y-6 md:space-y-8 pb-20">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-black text-primary uppercase flex items-center gap-3">
-            <ArrowDownToLine className="h-8 w-8 text-rose-600" /> Operasional Pengeluaran Toko
-          </h1>
-          <p className="text-muted-foreground text-sm">Rekapitulasi biaya operasional cabang dan pengeluaran owner pusat.</p>
-        </div>
-        <Button variant="outline" onClick={exportPDF} className="h-11 rounded-xl font-bold border-emerald-200 text-emerald-700 hover:bg-emerald-50">
-          <Download className="h-4 w-4 mr-2" /> PDF REKAP
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Sidebar Filter & Input Owner */}
-        <div className="lg:col-span-1 space-y-6">
-          <Card className="rounded-3xl border-none soft-shadow bg-white overflow-hidden">
-            <CardHeader className="bg-slate-50 border-b p-5">
-              <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
-                <Filter className="h-4 w-4 text-primary" /> Filter Laporan
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-5 space-y-4">
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-slate-400">Mode Tampilan</Label>
-                <div className="flex bg-slate-100 p-1 rounded-xl">
-                  <button onClick={() => setFilterMode("daily")} className={cn("flex-1 py-2 text-[10px] font-black rounded-lg transition-all", filterMode === "daily" ? "bg-white text-primary shadow-sm" : "text-slate-500")}>HARIAN</button>
-                  <button onClick={() => setFilterMode("monthly")} className={cn("flex-1 py-2 text-[10px] font-black rounded-lg transition-all", filterMode === "monthly" ? "bg-white text-primary shadow-sm" : "text-slate-500")}>BULANAN</button>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-slate-400">Pilih Waktu</Label>
-                {filterMode === "daily" ? (
-                  <Input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} className="h-11 rounded-xl bg-slate-50 border-none font-bold text-xs" />
-                ) : (
-                  <Input type="month" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="h-11 rounded-xl bg-slate-50 border-none font-bold text-xs" />
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-slate-400">Sumber Kas</Label>
-                <Select value={storeFilter} onValueChange={setStoreFilter}>
-                  <SelectTrigger className="h-11 rounded-xl bg-slate-50 border-none font-bold text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl">
-                    <SelectItem value="ALL" className="font-bold">SEMUA SUMBER</SelectItem>
-                    <SelectItem value="OWNER" className="font-bold">OWNER PUSAT</SelectItem>
-                    {STORES.map(s => <SelectItem key={s.id} value={s.id} className="font-bold">{s.name}</SelectItem>)}
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                   </SelectContent>
                 </Select>
               </div>
             </CardContent>
           </Card>
 
-<<<<<<< HEAD
           <Card className="rounded-2xl sm:rounded-3xl border-none shadow-lg bg-neutral-950 text-white overflow-hidden">
             <CardHeader className="border-b border-white/10 p-3.5 sm:p-4">
               <CardTitle className="text-[11px] sm:text-xs font-bold uppercase tracking-widest flex items-center gap-2 text-neutral-200">
@@ -483,45 +431,11 @@ export default function OperationalExpensesPage() {
                   </div>
                   <div className="space-y-1">
                     <Label className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Nominal Rp</Label>
-=======
-          <Card className="rounded-3xl border-none shadow-2xl bg-slate-900 text-white overflow-hidden">
-            <CardHeader className="bg-white/5 border-b border-white/5 p-5">
-              <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
-                <Plus className="h-4 w-4 text-rose-400" /> Input Pengeluaran Owner
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-5 space-y-4">
-              <div className="space-y-3">
-                <div className="space-y-1">
-                  <Label className="text-[9px] font-black uppercase text-slate-400">Untuk Siapa / Cabang Mana?</Label>
-                  <Select value={expenseTarget} onValueChange={setExpenseTarget}>
-                    <SelectTrigger className="h-10 bg-white/10 border-none text-white text-xs font-bold rounded-xl">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl">
-                      <SelectItem value="OWNER" className="font-bold">OWNER PUSAT</SelectItem>
-                      {STORES.map(s => <SelectItem key={s.id} value={s.id} className="font-bold">{s.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-[9px] font-black uppercase text-slate-400">Jenis Pembelian</Label>
-                  <Input value={expenseType} onChange={e => setExpenseType(e.target.value)} placeholder="Mis: Gaji, Listrik.." className="h-10 bg-white/10 border-none text-white text-xs font-bold rounded-xl" />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <Label className="text-[9px] font-black uppercase text-slate-400">Qty</Label>
-                    <Input value={expenseQty} onChange={e => setExpenseQty(e.target.value)} placeholder="1" className="h-10 bg-white/10 border-none text-white text-xs font-bold text-center rounded-xl" />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-[9px] font-black uppercase text-slate-400">Nominal Rp</Label>
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                     <Input 
                       type="text" 
                       value={formatCurrencyInput(expenseAmount)} 
                       onChange={e => setExpenseAmount(parseCurrencyInput(e.target.value))} 
                       placeholder="Rp 0" 
-<<<<<<< HEAD
                       className="h-9 bg-white/10 border border-white/10 text-white placeholder:text-white/40 text-[11px] sm:text-xs font-bold rounded-full px-3" 
                     />
                   </div>
@@ -543,27 +457,6 @@ export default function OperationalExpensesPage() {
                   </div>
                 </div>
                 <Button onClick={handleAddOwnerExpense} disabled={isProcessing || isUploading} className="w-full h-9 sm:h-10 rounded-full bg-[#C82368] hover:bg-[#a61c55] text-white font-bold text-[11px] sm:text-xs uppercase tracking-widest mt-1">
-=======
-                      className="h-10 bg-white/10 border-none text-white text-xs font-bold rounded-xl" 
-                    />
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-[9px] font-black uppercase text-slate-400">Keterangan</Label>
-                  <Input value={expenseNote} onChange={e => setExpenseNote(e.target.value)} placeholder="Opsional.." className="h-10 bg-white/10 border-none text-white text-xs font-bold rounded-xl" />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-[9px] font-black uppercase text-slate-400">Bukti Struk</Label>
-                  <div className="relative group h-10">
-                    <Input type="file" accept="image/*" onChange={(e) => handleImageUpload(e)} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
-                    <div className="h-full w-full bg-white/10 rounded-xl flex items-center justify-between px-3">
-                      <span className="text-[10px] text-white/40">{isUploading ? "Uploading..." : expenseImage ? "Gambar Terpilih" : "Upload Foto"}</span>
-                      {expenseImage ? <CheckCircle2 className="h-4 w-4 text-emerald-400" /> : <Camera className="h-4 w-4 text-white/40" />}
-                    </div>
-                  </div>
-                </div>
-                <Button onClick={handleAddOwnerExpense} disabled={isProcessing || isUploading} className="w-full h-12 rounded-2xl bg-rose-600 hover:bg-rose-700 font-black uppercase tracking-widest shadow-lg shadow-rose-600/20 mt-2">
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                   {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : "CATAT PENGELUARAN"}
                 </Button>
               </div>
@@ -572,7 +465,6 @@ export default function OperationalExpensesPage() {
         </div>
 
         {/* Main List Area */}
-<<<<<<< HEAD
         <div className="lg:col-span-3 space-y-4">
           <div className="grid grid-cols-2 gap-2.5 sm:gap-4">
             <Card className="rounded-2xl sm:rounded-3xl border-none shadow-sm bg-[#C82368] text-white p-3.5 sm:p-5">
@@ -595,35 +487,10 @@ export default function OperationalExpensesPage() {
                 <Input placeholder="Cari jenis, sumber, atau catatan..." value={search} onChange={e => setSearch(e.target.value)} className="h-9 pl-10 rounded-full bg-[#F5F3F0] border border-neutral-200/70 font-medium text-xs" />
               </div>
               <Badge variant="outline" className="h-8 sm:h-9 px-4 rounded-full bg-[#F5F3F0] border border-neutral-200/70 font-bold text-[9px] sm:text-[10px] tracking-widest text-neutral-500 uppercase flex items-center justify-center">
-=======
-        <div className="lg:col-span-3 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card className="rounded-3xl border-none soft-shadow bg-rose-600 text-white p-6">
-              <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-1">Total Pengeluaran Periode Ini</p>
-              <h3 className="text-3xl font-black">Rp {totalAmount.toLocaleString('id-ID')}</h3>
-            </Card>
-            <Card className="rounded-3xl border-none soft-shadow bg-white p-6 flex items-center justify-between">
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Jumlah Transaksi</p>
-                <h3 className="text-3xl font-black text-slate-800">{aggregatedExpenses.length} <span className="text-xs opacity-40">TRX</span></h3>
-              </div>
-              <div className="bg-slate-100 p-4 rounded-[2rem]"><ArrowDownToLine className="h-8 w-8 text-rose-600" /></div>
-            </Card>
-          </div>
-
-          <Card className="rounded-[2.5rem] border-none soft-shadow bg-white overflow-hidden">
-            <CardHeader className="p-6 border-b flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="relative flex-1 w-full max-w-sm">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <Input placeholder="Cari jenis, sumber, atau catatan..." value={search} onChange={e => setSearch(e.target.value)} className="h-11 pl-11 rounded-2xl bg-slate-50 border-none font-bold text-xs" />
-              </div>
-              <Badge variant="outline" className="h-11 px-6 rounded-2xl bg-slate-50 border-none font-black text-[10px] tracking-widest text-slate-400 uppercase">
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                 HASIL FILTER: {aggregatedExpenses.length} DATA
               </Badge>
             </CardHeader>
             <CardContent className="p-0">
-<<<<<<< HEAD
               {/* Mobile Compact Cards (Zero Horizontal Scroll) */}
               <div className="md:hidden divide-y divide-neutral-100">
                 {aggregatedExpenses.length > 0 ? aggregatedExpenses.map((exp, idx) => (
@@ -742,79 +609,6 @@ export default function OperationalExpensesPage() {
                   </Table>
                 </ScrollArea>
               </div>
-=======
-              <ScrollArea className="h-[60vh]">
-                <Table>
-                  <TableHeader className="bg-slate-50/50 sticky top-0 z-10 shadow-sm">
-                    <TableRow className="border-none">
-                      <TableHead className="pl-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Waktu & Sumber</TableHead>
-                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">Jenis & Qty</TableHead>
-                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">Nominal</TableHead>
-                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">Bukti</TableHead>
-                      <TableHead className="text-right pr-8 text-[10px] font-black uppercase tracking-widest text-slate-400">Aksi</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {aggregatedExpenses.map((exp, idx) => (
-                      <TableRow key={idx} className="hover:bg-slate-50/50 transition-colors border-b last:border-none">
-                        <TableCell className="pl-8 py-5">
-                          <div className="flex flex-col">
-                            <span className="text-[11px] font-black text-slate-800">{format(new Date(exp.timestamp), "dd/MM/yyyy HH:mm:ss")}</span>
-                            <Badge className={cn("w-fit mt-1 text-[8px] font-black border-none px-2", exp.sourceId === 'OWNER' ? "bg-slate-800 text-white" : "bg-primary/10 text-primary")}>
-                              {exp.source}
-                            </Badge>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-col">
-                            <span className="text-xs font-black uppercase text-slate-700">{exp.type}</span>
-                            <span className="text-[10px] font-bold text-slate-400">{exp.qty ? `${exp.qty} Unit` : "-"}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-sm font-black text-rose-600">Rp {exp.amount.toLocaleString('id-ID')}</span>
-                        </TableCell>
-                        <TableCell>
-                          {exp.image ? (
-                            <button onClick={() => window.open(exp.image, '_blank')} className="h-9 w-9 rounded-xl bg-slate-100 flex items-center justify-center hover:bg-primary/10 text-slate-400 hover:text-primary transition-all">
-                              <FileSearch className="h-4 w-4" />
-                            </button>
-                          ) : (
-                            <span className="text-[10px] font-bold text-slate-300 italic">Tanpa Bukti</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right pr-8">
-                          <div className="flex justify-end gap-1">
-                            <button 
-                              onClick={() => { setEditingExpense(exp); setIsEditOpen(true); }}
-                              className="p-2.5 rounded-xl hover:bg-blue-50 text-slate-400 hover:text-blue-600 transition-all"
-                            >
-                              <Edit2 className="h-4 w-4" />
-                            </button>
-                            <button 
-                              onClick={() => handleDeleteExpense(exp)}
-                              className="p-2.5 rounded-xl hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition-all"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    {aggregatedExpenses.length === 0 && (
-                      <TableRow>
-                        <TableCell colSpan={5} className="h-64 text-center">
-                          <div className="flex flex-col items-center justify-center opacity-20">
-                            <FileText className="h-16 w-16 mb-4" />
-                            <p className="font-black uppercase tracking-widest">Tidak ada data pengeluaran</p>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </ScrollArea>
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
             </CardContent>
           </Card>
         </div>
@@ -822,7 +616,6 @@ export default function OperationalExpensesPage() {
 
       {/* Edit Expense Dialog */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-<<<<<<< HEAD
         <DialogContent className="w-[95vw] max-w-md rounded-3xl p-0 overflow-hidden border-none shadow-2xl">
           <DialogHeader className="p-5 md:p-6 bg-neutral-950 text-white shrink-0">
             <div className="flex justify-between items-center">
@@ -855,54 +648,15 @@ export default function OperationalExpensesPage() {
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 ml-2">Nominal (Rp)</Label>
-=======
-        <DialogContent className="max-w-md rounded-[2.5rem] p-0 overflow-hidden border-none shadow-2xl">
-          <DialogHeader className="p-4 md:p-8 bg-primary text-white shrink-0">
-            <div className="flex justify-between items-center">
-              <DialogTitle className="text-xl font-black uppercase flex items-center gap-3">
-                <Edit2 className="h-5 w-5" /> Edit Pengeluaran
-              </DialogTitle>
-              <button onClick={() => setIsEditOpen(false)} className="text-white/50 hover:text-white"><X className="h-5 w-5" /></button>
-            </div>
-            <DialogDescription className="text-white/70 mt-1">Sesuaikan rincian operasional.</DialogDescription>
-          </DialogHeader>
-          
-          <div className="p-8 space-y-5 bg-slate-50/50">
-            <div className="grid gap-4">
-              <div className="space-y-1.5">
-                <Label className="text-[10px] font-black uppercase text-slate-400 ml-1">Jenis Pembelian</Label>
-                <Input 
-                  value={editingExpense?.type || ""} 
-                  onChange={e => setEditingExpense({...editingExpense, type: e.target.value})}
-                  className="h-12 rounded-xl bg-white border-none font-bold shadow-sm"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label className="text-[10px] font-black uppercase text-slate-400 ml-1">Qty</Label>
-                  <Input 
-                    value={editingExpense?.qty || ""} 
-                    onChange={e => setEditingExpense({...editingExpense, qty: e.target.value})}
-                    className="h-12 rounded-xl bg-white border-none font-bold text-center shadow-sm"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-[10px] font-black uppercase text-slate-400 ml-1">Nominal (Rp)</Label>
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                   <Input 
                     type="text"
                     value={formatCurrencyInput(editingExpense?.amount || "")} 
                     onChange={e => setEditingExpense({...editingExpense, amount: parseCurrencyInput(e.target.value)})}
-<<<<<<< HEAD
                     className="h-11 rounded-full bg-white border border-neutral-200/70 font-bold text-[#C82368] text-xs px-4"
-=======
-                    className="h-12 rounded-xl bg-white border-none font-black text-primary shadow-sm"
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                   />
                 </div>
               </div>
               <div className="space-y-1.5">
-<<<<<<< HEAD
                 <Label className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 ml-2">Keterangan</Label>
                 <Input 
                   value={editingExpense?.note || ""} 
@@ -913,18 +667,6 @@ export default function OperationalExpensesPage() {
               <div className="space-y-1.5">
                 <Label className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 ml-2">Bukti Struk</Label>
                 <div className="relative group h-11">
-=======
-                <Label className="text-[10px] font-black uppercase text-slate-400 ml-1">Keterangan</Label>
-                <Input 
-                  value={editingExpense?.note || ""} 
-                  onChange={e => setEditingExpense({...editingExpense, note: e.target.value})}
-                  className="h-12 rounded-xl bg-white border-none font-bold shadow-sm"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-[10px] font-black uppercase text-slate-400 ml-1">Bukti Struk</Label>
-                <div className="relative group h-12">
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                   <Input 
                     type="file" 
                     accept="image/*" 
@@ -932,34 +674,22 @@ export default function OperationalExpensesPage() {
                     className="absolute inset-0 opacity-0 cursor-pointer z-10" 
                     disabled={isUploading}
                   />
-<<<<<<< HEAD
                   <div className="h-full w-full bg-white border border-neutral-200/70 rounded-full flex items-center justify-between px-4">
                     <span className="text-xs font-bold text-neutral-500">
-=======
-                  <div className="h-full w-full bg-white border-none rounded-xl shadow-sm flex items-center justify-between px-4">
-                    <span className="text-xs font-bold text-slate-400">
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                       {isUploading ? "Uploading..." : editingExpense?.image ? "Gambar Tersedia" : "Upload Baru"}
                     </span>
                     {editingExpense?.image ? (
                       <div className="flex items-center gap-2">
                         <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-<<<<<<< HEAD
                         <div className="h-6 w-6 rounded-full overflow-hidden border"><img src={editingExpense.image} className="w-full h-full object-cover" /></div>
                       </div>
                     ) : <Camera className="h-4 w-4 text-neutral-400" />}
-=======
-                        <div className="h-6 w-6 rounded overflow-hidden border"><img src={editingExpense.image} className="w-full h-full object-cover" /></div>
-                      </div>
-                    ) : <Camera className="h-4 w-4 text-slate-300" />}
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-<<<<<<< HEAD
           <DialogFooter className="p-5 bg-white border-t border-neutral-100">
             <Button 
               className="w-full h-11 rounded-full bg-[#C82368] hover:bg-[#a61c55] text-white font-bold text-xs uppercase tracking-widest" 
@@ -967,15 +697,6 @@ export default function OperationalExpensesPage() {
               disabled={isProcessing || isUploading}
             >
               {isProcessing ? <Loader2 className="animate-spin h-4 w-4" /> : <><Save className="h-4 w-4 mr-2" /> SIMPAN PERUBAHAN</>}
-=======
-          <DialogFooter className="p-6 bg-white border-t">
-            <Button 
-              className="w-full h-14 rounded-2xl font-black shadow-xl shadow-primary/20 text-sm uppercase tracking-widest" 
-              onClick={handleUpdateExpense}
-              disabled={isProcessing || isUploading}
-            >
-              {isProcessing ? <Loader2 className="animate-spin h-5 w-5" /> : <><Save className="h-4 w-4 mr-2" /> SIMPAN PERUBAHAN</>}
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -26,16 +26,9 @@ export function initializeFirebase() {
 export function getSdks(firebaseApp: FirebaseApp) {
   if (!firestoreInstance) {
     try {
-<<<<<<< HEAD
       // Mengaktifkan long polling untuk stabilitas maksimal di lingkungan cloud/proxy
       firestoreInstance = initializeFirestore(firebaseApp, {
         experimentalForceLongPolling: true,
-=======
-      // Mengaktifkan long polling dan menonaktifkan streams untuk stabilitas maksimal di lingkungan cloud/proxy
-      firestoreInstance = initializeFirestore(firebaseApp, {
-        experimentalForceLongPolling: true,
-        useFetchStreams: false,
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
       });
     } catch (e) {
       // Fallback jika instance sudah ada atau terjadi kegagalan inisialisasi eksplisit

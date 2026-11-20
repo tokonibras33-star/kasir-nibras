@@ -159,7 +159,6 @@ export function ProductsPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-<<<<<<< HEAD
         <div>
           <h1 className="text-2xl md:text-3xl font-serif font-bold tracking-tight text-neutral-950">Katalog Produk Global</h1>
           <p className="text-neutral-500 text-sm">Manajemen master data produk (NHS KWT, IND CO, dan NHS GDM).</p>
@@ -175,55 +174,25 @@ export function ProductsPage() {
               <DialogHeader className="p-6 bg-neutral-950 text-white"><DialogTitle className="font-serif text-xl font-bold">Registrasi Produk Baru</DialogTitle></DialogHeader>
               <div className="space-y-4 p-6 bg-[#F5F3F0]"><div className="grid gap-2"><Label className="text-xs font-bold uppercase text-neutral-600">Nama Produk</Label><Input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="bg-white rounded-xl" /></div><div className="grid gap-2"><Label className="text-xs font-bold uppercase text-neutral-600">Kategori</Label><Select value={formData.category} onValueChange={v => setFormData({...formData, category: v})}><SelectTrigger className="bg-white rounded-xl"><SelectValue /></SelectTrigger><SelectContent>{["Gamis", "Koko", "Kerudung", "Bawahan", "Atasan", "Anak"].map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select></div><div className="grid gap-2"><Label className="text-xs font-bold uppercase text-neutral-600">Harga Jual Dasar</Label><Input type="number" value={formData.sellPrice} onChange={e => setFormData({...formData, sellPrice: e.target.value})} className="bg-white rounded-xl" /></div></div>
               <DialogFooter className="p-5 bg-white border-t"><Button className="w-full font-bold h-11 rounded-full bg-neutral-950 hover:bg-[#C82368] text-white transition-colors" onClick={handleAddProduct}>DAFTARKAN PRODUK</Button></DialogFooter>
-=======
-        <div><h1 className="text-2xl md:text-3xl font-bold font-headline tracking-tight text-foreground">Katalog Produk Global</h1><p className="text-muted-foreground text-sm">Manajemen master data produk (Toko A, B, dan C).</p></div>
-        <div className="flex gap-2 w-full sm:w-auto">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild><Button variant="outline" className="h-9"><Download className="h-4 w-4 mr-2" /> Export</Button></DropdownMenuTrigger>
-            <DropdownMenuContent align="end"><DropdownMenuItem onClick={exportToExcel} className="cursor-pointer">Excel</DropdownMenuItem><DropdownMenuItem onClick={exportToPDF} className="cursor-pointer">PDF</DropdownMenuItem></DropdownMenuContent>
-          </DropdownMenu>
-          <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-            <DialogTrigger asChild><Button className="font-bold shadow-lg shadow-primary/20 h-9"><Plus className="h-4 w-4 mr-2" /> Tambah Produk</Button></DialogTrigger>
-            <DialogContent className="sm:max-w-md rounded-2xl">
-              <DialogHeader><DialogTitle>Registrasi Produk Baru</DialogTitle></DialogHeader>
-              <div className="space-y-4 py-4"><div className="grid gap-2"><Label>Nama Produk</Label><Input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} /></div><div className="grid gap-2"><Label>Kategori</Label><Select value={formData.category} onValueChange={v => setFormData({...formData, category: v})}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{["Gamis", "Koko", "Kerudung", "Bawahan", "Atasan", "Anak"].map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select></div><div className="grid gap-2"><Label>Harga Jual Dasar</Label><Input type="number" value={formData.sellPrice} onChange={e => setFormData({...formData, sellPrice: e.target.value})} /></div></div>
-              <DialogFooter><Button className="w-full font-black" onClick={handleAddProduct}>DAFTARKAN PRODUK</Button></DialogFooter>
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
             </DialogContent>
           </Dialog>
         </div>
       </div>
 
-<<<<<<< HEAD
       <Card className="border border-neutral-200/70 shadow-sm bg-white overflow-hidden rounded-3xl">
         <CardHeader className="p-5 border-b border-neutral-200/60 bg-[#F5F3F0]/50">
           <div className="relative w-full sm:max-w-sm"><Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" /><Input placeholder="Cari nama produk..." className="pl-10 bg-white border-neutral-200 rounded-full h-10" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
         </CardHeader>
         <CardContent className="p-0">
           <div className="w-full overflow-x-auto"><Table><TableHeader className="bg-neutral-950 text-white"><TableRow className="hover:bg-neutral-950"><TableHead className="text-white text-[10px] uppercase font-bold">Nama Produk</TableHead><TableHead className="text-white text-[10px] uppercase font-bold">Kategori</TableHead><TableHead className="text-right text-white text-[10px] uppercase font-bold">Harga (Min)</TableHead><TableHead className="text-center text-white text-[10px] uppercase font-bold">Stok (A+B+C)</TableHead><TableHead className="text-right text-white text-[10px] uppercase font-bold">Aksi</TableHead></TableRow></TableHeader><TableBody>{filteredProducts.map((product) => (<TableRow key={product.id} className="hover:bg-[#F5F3F0]/60 border-b border-neutral-100"><TableCell className="font-medium"><div className="flex items-center gap-3 cursor-pointer group" onClick={() => setSelectedProductDetails(product)}><div className="h-10 w-10 rounded-xl overflow-hidden bg-neutral-100 shrink-0"><img src={product.image} className="object-cover h-full w-full" /></div><div><p className="font-bold text-neutral-950 group-hover:text-[#C82368] transition-colors">{product.name}</p><p className="text-[10px] text-neutral-400 font-mono">ID: {product.id}</p></div></div></TableCell><TableCell><Badge variant="secondary" className="rounded-full font-bold text-[10px] uppercase bg-[#F5F3F0] text-neutral-700">{product.category}</Badge></TableCell><TableCell className="text-right text-sm font-bold text-[#C82368]">Rp {product.minPrice?.toLocaleString('id-ID')}</TableCell><TableCell className="text-center font-bold text-neutral-950">{product.totalStock}</TableCell><TableCell className="text-right"><div className="flex justify-end gap-1"><Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-neutral-700 hover:text-[#C82368]" onClick={() => setSelectedProductDetails(product)}><Info className="h-4 w-4" /></Button><Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-rose-600" onClick={() => handleDeleteProduct(product.id)}><Trash2 className="h-4 w-4" /></Button></div></TableCell></TableRow>))}</TableBody></Table></div>
-=======
-      <Card className="soft-shadow border-none overflow-hidden">
-        <CardHeader className="pb-4 border-b bg-muted/20">
-          <div className="relative w-full sm:max-w-sm"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Cari..." className="pl-10 bg-white" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="w-full overflow-x-auto"><Table><TableHeader className="bg-muted/50"><TableRow><TableHead>Nama Produk</TableHead><TableHead>Kategori</TableHead><TableHead className="text-right">Harga (Min)</TableHead><TableHead className="text-center">Stok (A+B+C)</TableHead><TableHead className="text-right">Aksi</TableHead></TableRow></TableHeader><TableBody>{filteredProducts.map((product) => (<TableRow key={product.id} className="hover:bg-muted/30"><TableCell className="font-medium"><div className="flex items-center gap-3 cursor-pointer group" onClick={() => setSelectedProductDetails(product)}><div className="h-10 w-10 rounded-lg overflow-hidden bg-muted shrink-0"><img src={product.image} className="object-cover h-full w-full" /></div><div><p className="font-bold">{product.name}</p><p className="text-[10px] text-muted-foreground font-mono">ID: {product.id}</p></div></div></TableCell><TableCell><Badge variant="secondary" className="rounded-md font-normal text-[10px] uppercase">{product.category}</Badge></TableCell><TableCell className="text-right text-sm font-bold text-primary">Rp {product.minPrice?.toLocaleString('id-ID')}</TableCell><TableCell className="text-center font-bold">{product.totalStock}</TableCell><TableCell className="text-right"><div className="flex justify-end gap-1"><Button variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={() => setSelectedProductDetails(product)}><Info className="h-4 w-4" /></Button><Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDeleteProduct(product.id)}><Trash2 className="h-4 w-4" /></Button></div></TableCell></TableRow>))}</TableBody></Table></div>
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
         </CardContent>
       </Card>
 
       <Dialog open={!!selectedProductDetails} onOpenChange={(o) => !o && setSelectedProductDetails(null)}>
-<<<<<<< HEAD
         <DialogContent className="max-w-2xl w-[95vw] rounded-3xl p-0 overflow-hidden border-none shadow-2xl">
           <DialogHeader className="p-6 sm:p-8 bg-neutral-950 text-white flex flex-row items-center gap-5"><div className="h-20 w-20 rounded-2xl overflow-hidden bg-neutral-800 shrink-0 border border-white/10"><img src={selectedProductDetails?.image} className="w-full h-full object-cover" /></div><div className="flex-1"><div className="text-[#C82368] font-bold text-[10px] tracking-widest uppercase mb-1">{selectedProductDetails?.category}</div><DialogTitle className="text-xl sm:text-2xl font-serif font-bold leading-tight">{selectedProductDetails?.name}</DialogTitle></div></DialogHeader>
           <div className="p-6 bg-[#F5F3F0]"><ScrollArea className="max-h-[300px] rounded-2xl border border-neutral-200/70 bg-white"><Table><TableHeader className="bg-neutral-100 sticky top-0"><TableRow className="text-[10px] uppercase font-bold"><TableHead>Warna</TableHead><TableHead className="text-center">Ukuran</TableHead><TableHead className="text-right">Harga</TableHead></TableRow></TableHeader><TableBody>{selectedProductDetails?.variants?.map((v: any, i: number) => (<TableRow key={i}><TableCell className="font-bold">{v.color}</TableCell><TableCell className="text-center font-bold">{v.size}</TableCell><TableCell className="text-right font-bold text-[#C82368]">Rp {v.price.toLocaleString('id-ID')}</TableCell></TableRow>))}</TableBody></Table></ScrollArea></div>
           <DialogFooter className="p-5 bg-white border-t"><Button variant="outline" className="w-full font-bold h-11 rounded-full border-neutral-950 text-neutral-950 hover:bg-neutral-950 hover:text-white transition-colors" onClick={() => setSelectedProductDetails(null)}>TUTUP</Button></DialogFooter>
-=======
-        <DialogContent className="max-w-2xl rounded-3xl p-0 overflow-hidden border-none shadow-2xl">
-          <DialogHeader className="p-8 pb-0 flex flex-row items-center gap-6"><div className="h-24 w-24 rounded-2xl overflow-hidden bg-muted shrink-0"><img src={selectedProductDetails?.image} className="w-full h-full object-cover" /></div><div className="flex-1"><div className="text-primary font-black text-xs uppercase mb-1">{selectedProductDetails?.category}</div><DialogTitle className="text-2xl font-black leading-tight">{selectedProductDetails?.name}</DialogTitle></div></DialogHeader>
-          <div className="p-8"><ScrollArea className="max-h-[300px] rounded-xl border"><Table><TableHeader className="bg-muted/50 sticky top-0"><TableRow><TableHead>Warna</TableHead><TableHead className="text-center">Ukuran</TableHead><TableHead className="text-right">Harga</TableHead></TableRow></TableHeader><TableBody>{selectedProductDetails?.variants?.map((v: any, i: number) => (<TableRow key={i}><TableCell className="font-bold">{v.color}</TableCell><TableCell className="text-center font-black">{v.size}</TableCell><TableCell className="text-right font-bold text-primary">Rp {v.price.toLocaleString('id-ID')}</TableCell></TableRow>))}</TableBody></Table></ScrollArea></div>
-          <DialogFooter className="p-6 bg-muted/20"><Button variant="outline" className="w-full font-bold h-12 rounded-xl" onClick={() => setSelectedProductDetails(null)}>TUTUP</Button></DialogFooter>
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
         </DialogContent>
       </Dialog>
     </div>

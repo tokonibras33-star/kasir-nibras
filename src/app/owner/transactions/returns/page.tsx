@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-=======
-
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
 "use client";
 
 import { useMemo, useState } from "react";
@@ -20,11 +16,7 @@ import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, orderBy, where, Timestamp } from "firebase/firestore";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-<<<<<<< HEAD
 import { getItemUnitNetPrice, getTrxReturnSummary } from "@/components/cashier/types";
-=======
-import { toast } from "@/hooks/use-toast";
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
 
 const STORES = [
   { id: "TOKO_A", name: "NHS KWT" },
@@ -32,7 +24,6 @@ const STORES = [
   { id: "TOKO_C", name: "NHS GDM" },
 ];
 
-<<<<<<< HEAD
 const parseSafeDate = (d: any): Date => {
   if (!d) return new Date();
   if (typeof d?.toDate === "function") return d.toDate();
@@ -45,8 +36,6 @@ const parseSafeDate = (d: any): Date => {
   return new Date();
 };
 
-=======
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
 export default function ReturnsHistoryPage() {
   const db = useFirestore();
   const [selectedMonth, setSelectedMonth] = useState(format(new Date(), "yyyy-MM"));
@@ -59,10 +48,6 @@ export default function ReturnsHistoryPage() {
     const firstDay = new Date(parseInt(year), parseInt(month) - 1, 1);
     const lastDay = new Date(parseInt(year), parseInt(month), 0, 23, 59, 59, 999);
     
-<<<<<<< HEAD
-=======
-    // We fetch all transactions for the month and filter for returns in JS
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
     return query(
       q, 
       where("date", ">=", Timestamp.fromDate(firstDay)), 
@@ -88,7 +73,6 @@ export default function ReturnsHistoryPage() {
     ];
 
     allTrx.forEach(trx => {
-<<<<<<< HEAD
       if (trx.returnLog && Array.isArray(trx.returnLog.items) && trx.returnLog.items.length > 0) {
         if (storeFilter !== "ALL" && trx.storeId !== storeFilter) return;
 
@@ -108,35 +92,17 @@ export default function ReturnsHistoryPage() {
             customerName: trx.customerName || "UMUM",
             customerPhone: trx.customerPhone || "-",
             customerType: trx.customerType || "UMUM",
-=======
-      if (trx.returnLog && trx.returnLog.items) {
-        if (storeFilter !== "ALL" && trx.storeId !== storeFilter) return;
-
-        trx.returnLog.items.forEach((item: any) => {
-          list.push({
-            date: trx.returnLog.returnedAt || trx.date?.toDate(),
-            trxId: trx.id,
-            storeName: STORES.find(s => s.id === trx.storeId)?.name,
-            customerName: trx.customerName || "UMUM",
-            customerPhone: trx.customerPhone || "-",
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
             itemName: item.name,
             itemBrand: item.brand || "-",
             itemCategory: item.category || "-",
             itemColor: item.color || "-",
             itemSize: item.size || "-",
-<<<<<<< HEAD
             quantity: qty,
             price: unitPrice,
             totalRefund: itemRefund,
             reason: item.reason || trx.returnLog.reason || "Retur Konsumen",
             isDP: trx.status === "DP" || trx.settledAt != null || trx.originalStatus === "DP",
             isDeductedFromTotal: Boolean(trx.returnLog.isDeductedFromTotal),
-=======
-            quantity: item.quantity,
-            price: item.price,
-            totalRefund: item.price * item.quantity
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
           });
         });
       }
@@ -146,7 +112,6 @@ export default function ReturnsHistoryPage() {
       .filter(i => 
         i.customerName.toLowerCase().includes(search.toLowerCase()) ||
         i.itemName.toLowerCase().includes(search.toLowerCase()) ||
-<<<<<<< HEAD
         i.trxId.toLowerCase().includes(search.toLowerCase()) ||
         i.customerPhone.includes(search)
       )
@@ -167,13 +132,6 @@ export default function ReturnsHistoryPage() {
     return { totalQty, totalRefund, countTrx: uniqueTrx.size };
   }, [returnedItems]);
 
-=======
-        i.trxId.toLowerCase().includes(search.toLowerCase())
-      )
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [hA, hB, hC, storeFilter, search]);
-
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
   const exportPDF = () => {
     if (returnedItems.length === 0) return;
     const docPdf = new jsPDF({ orientation: 'landscape' });
@@ -181,33 +139,20 @@ export default function ReturnsHistoryPage() {
     docPdf.text(`Periode: ${selectedMonth} | Cabang: ${storeFilter}`, 148, 16, { align: "center" });
 
     const tableData = returnedItems.map(i => [
-<<<<<<< HEAD
       format(i.date, "dd/MM/yyyy HH:mm"),
       i.trxId,
       i.storeName,
-=======
-      format(new Date(i.date), "dd/MM/yyyy HH:mm"),
-      i.trxId,
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
       i.customerName,
       i.itemName,
       i.itemSize,
       i.quantity,
       `Rp ${i.price.toLocaleString('id-ID')}`,
-<<<<<<< HEAD
       `Rp ${i.totalRefund.toLocaleString('id-ID')}`,
       i.isDP ? "Potong DP/Sisa" : "Refund"
     ]);
 
     (docPdf as any).autoTable({
       head: [['Waktu', 'ID TRX', 'Cabang', 'Konsumen', 'Nama Barang', 'Size', 'Qty', 'Harga Net', 'Total Refund', 'Tipe']],
-=======
-      `Rp ${i.totalRefund.toLocaleString('id-ID')}`
-    ]);
-
-    (docPdf as any).autoTable({
-      head: [['Waktu', 'ID TRX', 'Konsumen', 'Nama Barang', 'Size', 'Qty', 'Harga', 'Total']],
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
       body: tableData,
       startY: 25,
       theme: 'grid',
@@ -219,36 +164,23 @@ export default function ReturnsHistoryPage() {
 
   const exportExcel = () => {
     if (returnedItems.length === 0) return;
-<<<<<<< HEAD
     const headers = ["Waktu", "ID TRX", "Cabang", "Konsumen", "No WA", "Tipe Pelanggan", "Barang", "Merk", "Kategori", "Size", "Warna", "Qty", "Harga Satuan Net", "Total Refund", "Keterangan DP"];
     const data = returnedItems.map(i => [
       format(i.date, "dd/MM/yyyy HH:mm"),
-=======
-    const headers = ["Waktu", "ID TRX", "Cabang", "Konsumen", "No WA", "Barang", "Merk", "Kategori", "Size", "Warna", "Qty", "Total Refund"];
-    const data = returnedItems.map(i => [
-      format(new Date(i.date), "dd/MM/yyyy HH:mm"),
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
       i.trxId,
       i.storeName,
       i.customerName,
       i.customerPhone,
-<<<<<<< HEAD
       i.customerType,
-=======
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
       i.itemName,
       i.itemBrand,
       i.itemCategory,
       i.itemSize,
       i.itemColor,
       i.quantity,
-<<<<<<< HEAD
       i.price,
       i.totalRefund,
       i.isDP ? "Transaksi DP" : "Transaksi Tunai/Lunas"
-=======
-      i.totalRefund
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
     ]);
     const ws = XLSX.utils.aoa_to_sheet([headers, ...data]);
     const wb = XLSX.utils.book_new();
@@ -257,7 +189,6 @@ export default function ReturnsHistoryPage() {
   };
 
   return (
-<<<<<<< HEAD
     <div className="space-y-4 sm:space-y-5 pb-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
@@ -271,40 +202,17 @@ export default function ReturnsHistoryPage() {
           </Button>
           <Button variant="outline" onClick={exportPDF} className="flex-1 sm:flex-none h-8 sm:h-9 rounded-full px-3.5 sm:px-4 font-bold text-[11px] sm:text-xs border-neutral-200 bg-white hover:bg-neutral-50">
             <FileText className="h-3.5 w-3.5 mr-1.5 text-[#C82368]" /> PDF A4
-=======
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-black text-primary uppercase flex items-center gap-3">
-            <RotateCcw className="h-8 w-8 text-rose-600" /> Histori Retur Barang
-          </h1>
-          <p className="text-muted-foreground text-sm">Audit barang yang dikembalikan oleh konsumen per cabang.</p>
-        </div>
-        <div className="flex gap-2 w-full sm:w-auto">
-          <Button variant="outline" onClick={exportExcel} className="flex-1 sm:flex-none h-11 rounded-xl font-bold border-emerald-200 text-emerald-700 hover:bg-emerald-50">
-            <Download className="h-4 w-4 mr-2" /> EXCEL
-          </Button>
-          <Button variant="outline" onClick={exportPDF} className="flex-1 sm:flex-none h-11 rounded-xl font-bold border-rose-200 text-rose-700 hover:bg-rose-50">
-            <FileText className="h-4 w-4 mr-2" /> PDF A4
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
           </Button>
         </div>
       </div>
 
-<<<<<<< HEAD
       <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-3.5 bg-white p-3 sm:p-4 rounded-2xl sm:rounded-3xl shadow-sm border border-neutral-200/70">
         <div className="space-y-1">
           <Label className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-2">Pilih Bulan</Label>
-=======
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white p-5 rounded-3xl soft-shadow border">
-        <div className="space-y-2">
-          <Label className="text-[10px] font-black uppercase text-slate-400 ml-1">Pilih Bulan</Label>
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
           <Input 
             type="month" 
             value={selectedMonth} 
             onChange={e => setSelectedMonth(e.target.value)} 
-<<<<<<< HEAD
             className="h-9 rounded-full bg-[#F5F3F0] border border-neutral-200/70 font-bold text-[11px] sm:text-xs px-3.5" 
           />
         </div>
@@ -324,42 +232,16 @@ export default function ReturnsHistoryPage() {
           <Label className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-2">Cari Konsumen / Barang / ID</Label>
           <div className="relative">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-400" />
-=======
-            className="h-12 rounded-2xl bg-slate-50 border-none font-black text-sm" 
-          />
-        </div>
-        <div className="space-y-2">
-          <Label className="text-[10px] font-black uppercase text-slate-400 ml-1">Cabang Toko</Label>
-          <Select value={storeFilter} onValueChange={setStoreFilter}>
-            <SelectTrigger className="h-12 rounded-2xl bg-slate-50 border-none font-black text-sm">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="rounded-2xl">
-              <SelectItem value="ALL" className="font-bold">SEMUA TOKO</SelectItem>
-              {STORES.map(s => <SelectItem key={s.id} value={s.id} className="font-bold">{s.name}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-2">
-          <Label className="text-[10px] font-black uppercase text-slate-400 ml-1">Cari Konsumen / Barang</Label>
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
             <Input 
               placeholder="Ketik sesuatu..." 
               value={search}
               onChange={e => setSearch(e.target.value)}
-<<<<<<< HEAD
               className="h-9 pl-9 rounded-full bg-[#F5F3F0] border border-neutral-200/70 font-medium text-[11px] sm:text-xs" 
-=======
-              className="h-12 pl-11 rounded-2xl bg-slate-50 border-none font-bold text-sm" 
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
             />
           </div>
         </div>
       </div>
 
-<<<<<<< HEAD
       <div className="grid grid-cols-3 gap-2 sm:gap-4">
         <Card className="bg-rose-950 text-white rounded-2xl sm:rounded-3xl border-none shadow-sm">
           <CardHeader className="p-2.5 sm:p-5">
@@ -431,24 +313,10 @@ export default function ReturnsHistoryPage() {
                   <TableHead className="text-[10px] font-bold uppercase tracking-widest text-neutral-300">Barang &amp; Varian</TableHead>
                   <TableHead className="text-center text-[10px] font-bold uppercase tracking-widest text-neutral-300">Qty</TableHead>
                   <TableHead className="text-right text-[10px] font-bold uppercase tracking-widest pr-6 text-neutral-300">Total Refund</TableHead>
-=======
-      <Card className="border-none soft-shadow rounded-[2rem] overflow-hidden">
-        <CardContent className="p-0">
-          <div className="w-full overflow-x-auto">
-            <Table>
-              <TableHeader className="bg-rose-50/50">
-                <TableRow className="border-none">
-                  <TableHead className="pl-6 text-[10px] font-black uppercase py-4">Waktu Retur</TableHead>
-                  <TableHead className="text-[10px] font-black uppercase">Konsumen</TableHead>
-                  <TableHead className="text-[10px] font-black uppercase">Barang & Varian</TableHead>
-                  <TableHead className="text-center text-[10px] font-black uppercase">Qty</TableHead>
-                  <TableHead className="text-right text-[10px] font-black uppercase pr-6">Total Refund</TableHead>
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {returnedItems.length > 0 ? returnedItems.map((item, idx) => (
-<<<<<<< HEAD
                   <TableRow key={idx} className="hover:bg-[#F5F3F0]/60 transition-colors border-b border-neutral-100">
                     <TableCell className="pl-6 py-4">
                       <div className="flex flex-col">
@@ -462,30 +330,17 @@ export default function ReturnsHistoryPage() {
                             TRANSAKSI DP
                           </Badge>
                         )}
-=======
-                  <TableRow key={idx} className="hover:bg-slate-50 transition-colors border-b border-slate-100">
-                    <TableCell className="pl-6 py-4">
-                      <div className="flex flex-col">
-                        <span className="text-xs font-black">{format(new Date(item.date), "dd/MM/yyyy HH:mm")}</span>
-                        <span className="text-[9px] font-bold text-rose-600 uppercase">{item.storeName}</span>
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col">
-<<<<<<< HEAD
                         <span className="text-xs font-bold uppercase text-neutral-900">{item.customerName}</span>
                         <span className="text-[10px] font-medium text-neutral-400">{item.customerPhone}</span>
                         <span className="text-[9px] font-bold text-neutral-400 uppercase">{item.customerType}</span>
-=======
-                        <span className="text-xs font-black uppercase">{item.customerName}</span>
-                        <span className="text-[10px] font-medium text-slate-400">{item.customerPhone}</span>
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col">
-<<<<<<< HEAD
                         <span className="text-xs font-bold uppercase leading-tight text-neutral-900">{item.itemName}</span>
                         <span className="text-[9px] text-neutral-400 uppercase font-bold">{item.itemBrand} | {item.itemCategory} | {item.itemSize} - {item.itemColor}</span>
                         <span className="text-[9px] text-neutral-500 italic mt-0.5">Ket: {item.reason}</span>
@@ -499,26 +354,11 @@ export default function ReturnsHistoryPage() {
                         <span className="text-sm font-bold text-rose-600 whitespace-nowrap">Rp {item.totalRefund.toLocaleString('id-ID')}</span>
                         <span className="text-[9px] text-neutral-400 whitespace-nowrap">@Rp {item.price.toLocaleString('id-ID')}</span>
                       </div>
-=======
-                        <span className="text-xs font-bold uppercase leading-tight">{item.itemName}</span>
-                        <span className="text-[9px] text-slate-400 uppercase font-black">{item.itemBrand} | {item.itemCategory} | {item.itemSize} - {item.itemColor}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge className="bg-rose-100 text-rose-700 border-none font-black text-[10px]">{item.quantity} PCS</Badge>
-                    </TableCell>
-                    <TableCell className="text-right pr-6">
-                      <span className="text-sm font-black text-rose-600">Rp {item.totalRefund.toLocaleString('id-ID')}</span>
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                     </TableCell>
                   </TableRow>
                 )) : (
                   <TableRow>
-<<<<<<< HEAD
                     <TableCell colSpan={5} className="h-48 text-center text-neutral-400 italic text-sm">
-=======
-                    <TableCell colSpan={5} className="h-48 text-center text-slate-400 italic text-sm">
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                       Tidak ada histori retur pada periode ini.
                     </TableCell>
                   </TableRow>

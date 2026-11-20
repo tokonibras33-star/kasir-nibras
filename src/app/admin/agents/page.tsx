@@ -245,7 +245,6 @@ ctx.imageSmoothingQuality = "high";
 
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-<<<<<<< HEAD
           <h1 className="text-2xl md:text-3xl font-serif font-bold tracking-tight text-neutral-950">Agen Diskon</h1>
           <p className="text-neutral-500 text-sm">Kelola mitra agen Nibras House per cabang.</p>
         </div>
@@ -256,32 +255,15 @@ ctx.imageSmoothingQuality = "high";
               <Button variant="outline" className="h-10 rounded-full border-neutral-200 bg-white font-bold text-xs flex-1 sm:flex-none"><Upload className="h-4 w-4 mr-2" /> Import</Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="rounded-2xl w-48">
-=======
-          <h1 className="text-2xl md:text-3xl font-bold font-headline tracking-tight text-primary uppercase">Agen Diskon</h1>
-          <p className="text-muted-foreground text-sm">Kelola mitra agen Nibras House per cabang.</p>
-        </div>
-        
-        <div className="flex gap-2 w-full sm:w-auto">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="h-10 w-full sm:w-auto font-bold"><Upload className="h-4 w-4 mr-2" /> Import</Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="rounded-xl w-48">
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
               <DropdownMenuItem onClick={() => fileInputRef.current?.click()} className="cursor-pointer font-bold py-2">
                 <FileSpreadsheet className="h-4 w-4 mr-2 text-emerald-600" /> Unggah Excel
               </DropdownMenuItem>
               <DropdownMenuItem onClick={downloadFormat} className="cursor-pointer font-bold py-2">
-<<<<<<< HEAD
                 <FileDown className="h-4 w-4 mr-2 text-[#C82368]" /> Format Excel
-=======
-                <FileDown className="h-4 w-4 mr-2 text-primary" /> Format Excel
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
-<<<<<<< HEAD
           <Button variant="outline" onClick={exportToPDF} className="h-10 rounded-full border-neutral-200 bg-white font-bold text-xs flex-1 sm:flex-none"><Download className="h-4 w-4 mr-2" /> PDF</Button>
 
           <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
@@ -298,29 +280,10 @@ ctx.imageSmoothingQuality = "high";
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <Label className="text-[10px] font-bold uppercase text-neutral-500 ml-1">Tgl Pendaftaran</Label>
-=======
-          <Button variant="outline" onClick={exportToPDF} className="h-10 font-bold"><Download className="h-4 w-4 mr-2" /> PDF</Button>
-
-          <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-            <DialogTrigger asChild>
-              <Button className="h-10 w-full sm:w-auto font-black shadow-lg shadow-primary/20 uppercase tracking-widest">
-                <ShieldCheck className="h-4 w-4 mr-2" /> Tambah Agen
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="rounded-3xl max-w-md border-none shadow-2xl">
-              <DialogHeader>
-                <DialogTitle className="text-xl font-black uppercase text-primary">Daftarkan Agen Baru</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Tgl Pendaftaran</Label>
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                     <Input 
                       type="date"
                       value={newAgent.registrationDate}
                       onChange={e => setNewAgent({...newAgent, registrationDate: e.target.value})}
-<<<<<<< HEAD
                       className="h-11 rounded-xl bg-white border-neutral-200 font-bold text-xs"
                     />
                   </div>
@@ -328,15 +291,6 @@ ctx.imageSmoothingQuality = "high";
                     <Label className="text-[10px] font-bold uppercase text-neutral-500 ml-1">Cabang Agen</Label>
                     <Select value={newAgent.branch} onValueChange={v => setNewAgent({...newAgent, branch: v})}>
                       <SelectTrigger className="h-11 rounded-xl bg-white border-neutral-200 font-bold text-xs uppercase">
-=======
-                      className="h-11 rounded-xl bg-slate-50 border-none font-bold text-xs"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Cabang Agen</Label>
-                    <Select value={newAgent.branch} onValueChange={v => setNewAgent({...newAgent, branch: v})}>
-                      <SelectTrigger className="h-11 rounded-xl bg-slate-50 border-none font-black text-xs uppercase">
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="rounded-xl">
@@ -346,7 +300,6 @@ ctx.imageSmoothingQuality = "high";
                   </div>
                 </div>
                 <div className="space-y-1.5">
-<<<<<<< HEAD
                   <Label className="text-[10px] font-bold uppercase text-neutral-500 ml-1">Nama Lengkap Agen</Label>
                   <Input placeholder="Contoh: Ahmad Subarjo" value={newAgent.name} onChange={e => setNewAgent({...newAgent, name: e.target.value})} className="h-11 rounded-xl bg-white border-neutral-200 font-bold" />
                 </div>
@@ -361,29 +314,12 @@ ctx.imageSmoothingQuality = "high";
               </div>
               <DialogFooter className="p-5 bg-white border-t">
                 <Button className="w-full font-bold h-12 rounded-full bg-neutral-950 hover:bg-[#C82368] text-white shadow-lg transition-colors" onClick={handleAddAgent}>SIMPAN DATA AGEN</Button>
-=======
-                  <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Nama Lengkap Agen</Label>
-                  <Input placeholder="Contoh: Ahmad Subarjo" value={newAgent.name} onChange={e => setNewAgent({...newAgent, name: e.target.value})} className="h-12 rounded-xl bg-slate-50 border-none font-bold" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">No. WhatsApp</Label>
-                  <Input placeholder="0812..." value={newAgent.phone} onChange={e => setNewAgent({...newAgent, phone: e.target.value})} className="h-12 rounded-xl bg-slate-50 border-none font-bold" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Alamat Lengkap</Label>
-                  <Input placeholder="Masukkan alamat..." value={newAgent.address} onChange={e => setNewAgent({...newAgent, address: e.target.value})} className="h-12 rounded-xl bg-slate-50 border-none font-bold" />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button className="w-full font-black h-14 rounded-2xl shadow-xl shadow-primary/20 text-lg" onClick={handleAddAgent}>SIMPAN DATA AGEN</Button>
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
               </DialogFooter>
             </DialogContent>
           </Dialog>
         </div>
       </div>
 
-<<<<<<< HEAD
       <Card className="border border-neutral-200/70 shadow-sm bg-white rounded-2xl sm:rounded-3xl overflow-hidden">
         <CardHeader className="p-3.5 sm:p-5 border-b border-neutral-200/60 bg-[#F5F3F0]/50">
           <div className="relative w-full sm:max-w-sm">
@@ -430,32 +366,10 @@ ctx.imageSmoothingQuality = "high";
                   <TableHead className="text-white">No Telepon</TableHead>
                   <TableHead className="text-white">Alamat</TableHead>
                   <TableHead className="text-right pr-6 text-white">Aksi</TableHead>
-=======
-      <Card className="soft-shadow border-none rounded-3xl overflow-hidden">
-        <CardHeader className="pb-4 border-b bg-muted/20">
-          <div className="relative w-full sm:max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Cari Agen..." className="pl-10 h-11 bg-white border-none shadow-sm rounded-xl" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-          </div>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="w-full overflow-x-auto">
-            <Table>
-              <TableHeader className="bg-muted/50 border-none">
-                <TableRow className="text-[10px] font-black uppercase">
-                  <TableHead className="pl-6">Registrasi</TableHead>
-                  <TableHead>ID Agen</TableHead>
-                  <TableHead>Cabang</TableHead>
-                  <TableHead>Nama Agen</TableHead>
-                  <TableHead>No Telepon</TableHead>
-                  <TableHead>Alamat</TableHead>
-                  <TableHead className="text-right pr-6">Aksi</TableHead>
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filtered.length > 0 ? filtered.map((a) => (
-<<<<<<< HEAD
                   <TableRow key={a.id} className="hover:bg-[#F5F3F0]/60 transition-colors border-b border-neutral-100 text-[11px]">
                     <TableCell className="pl-6 font-bold text-neutral-400 uppercase">{a.registrationDate || "-"}</TableCell>
                     <TableCell className="font-mono font-bold text-[#C82368]">{a.id}</TableCell>
@@ -468,29 +382,11 @@ ctx.imageSmoothingQuality = "high";
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-neutral-700 hover:text-[#C82368] rounded-full" onClick={() => { setSelectedAgent(a); setIsCardPreviewOpen(true); }}><CreditCard className="h-4 w-4" /></Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-neutral-950 rounded-full" onClick={() => { setSelectedAgent(a); setIsEditOpen(true); }}><Edit2 className="h-4 w-4" /></Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-rose-600 rounded-full" onClick={() => handleDeleteAgent(a.id)}><Trash2 className="h-4 w-4" /></Button>
-=======
-                  <TableRow key={a.id} className="hover:bg-muted/20 transition-colors border-b border-muted/50 text-[11px]">
-                    <TableCell className="pl-6 font-bold text-slate-400 uppercase">{a.registrationDate || "-"}</TableCell>
-                    <TableCell className="font-mono font-black text-primary">{a.id}</TableCell>
-                    <TableCell><Badge variant="outline" className="text-[9px] font-black border-blue-200 text-blue-700 px-2">{a.branch || "-"}</Badge></TableCell>
-                    <TableCell className="font-bold uppercase text-sm">{a.name}</TableCell>
-                    <TableCell className="font-medium text-sm">{a.phone}</TableCell>
-                    <TableCell className="text-slate-500 max-w-[150px] truncate">{a.address || "-"}</TableCell>
-                    <TableCell className="text-right pr-6">
-                      <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 rounded-xl" onClick={() => { setSelectedAgent(a); setIsCardPreviewOpen(true); }}><CreditCard className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-primary rounded-xl" onClick={() => { setSelectedAgent(a); setIsEditOpen(true); }}><Edit2 className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive rounded-xl" onClick={() => handleDeleteAgent(a.id)}><Trash2 className="h-4 w-4" /></Button>
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                       </div>
                     </TableCell>
                   </TableRow>
                 )) : (
-<<<<<<< HEAD
                   <TableRow><TableCell colSpan={7} className="h-32 text-center text-neutral-400 italic">Tidak ditemukan agen.</TableCell></TableRow>
-=======
-                  <TableRow><TableCell colSpan={7} className="h-32 text-center text-muted-foreground italic">Tidak ditemukan agen.</TableCell></TableRow>
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                 )}
               </TableBody>
             </Table>
@@ -499,19 +395,11 @@ ctx.imageSmoothingQuality = "high";
       </Card>
 
       <Dialog open={isCardPreviewOpen} onOpenChange={setIsCardPreviewOpen}>
-<<<<<<< HEAD
         <DialogContent className="w-screen h-screen max-w-none md:max-w-4xl md:h-auto rounded-none md:rounded-3xl p-0 overflow-hidden border-none shadow-2xl flex flex-col">
           <DialogHeader className="p-5 md:p-7 bg-neutral-950 text-white shrink-0">
             <DialogTitle className="text-xl font-serif font-bold">Cetak Kartu Agen</DialogTitle>
           </DialogHeader>
           <div className="flex-1 p-4 md:p-12 bg-[#F5F3F0] flex items-center justify-center overflow-auto min-h-0">
-=======
-        <DialogContent className="w-screen h-screen max-w-none md:max-w-4xl md:h-auto rounded-none md:rounded-[2.5rem] p-0 overflow-hidden border-none shadow-2xl flex flex-col">
-          <DialogHeader className="p-4 md:p-8 bg-primary text-white shrink-0">
-            <DialogTitle className="text-xl font-black uppercase">CETAK KARTU AGEN</DialogTitle>
-          </DialogHeader>
-          <div className="flex-1 p-4 md:p-12 bg-slate-100 flex items-center justify-center overflow-auto min-h-0">
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
             <div className="w-full flex items-center justify-center overflow-visible px-2">
               <div className="scale-[0.22] sm:scale-[0.45] md:scale-[0.65]" style={{ width: "1011px", height: "569px", transformOrigin: "center center", flexShrink: 0, marginTop: "40px", marginBottom: "40px" }}>
                 <div style={{ position: "relative", width: "1011px", height: "569px", overflow: "hidden", borderRadius: "40px", backgroundColor: "#ffffff" }}>
@@ -524,13 +412,8 @@ ctx.imageSmoothingQuality = "high";
             </div>
           </div>
           <DialogFooter className="sticky bottom-0 p-4 md:p-6 bg-white border-t flex flex-col sm:flex-row gap-3 shrink-0">
-<<<<<<< HEAD
             <Button variant="outline" className="w-full flex-1 h-12 rounded-full font-bold" onClick={() => setIsCardPreviewOpen(false)}>BATAL</Button>
             <Button className="w-full flex-1 h-12 rounded-full font-bold bg-neutral-950 hover:bg-[#C82368] text-white shadow-lg transition-colors" onClick={handleDownloadCard} disabled={isPrinting}>
-=======
-            <Button variant="outline" className="w-full flex-1 h-12 rounded-xl font-bold" onClick={() => setIsCardPreviewOpen(false)}>BATAL</Button>
-            <Button className="w-full flex-1 h-12 rounded-xl font-black shadow-lg shadow-primary/20" onClick={handleDownloadCard} disabled={isPrinting}>
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
               {isPrinting ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <Download className="h-4 w-4 mr-2" />}
               DOWNLOAD PNG
             </Button>
@@ -539,7 +422,6 @@ ctx.imageSmoothingQuality = "high";
       </Dialog>
 
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-<<<<<<< HEAD
         <DialogContent className="rounded-3xl max-w-md w-[95vw] border-none shadow-2xl overflow-hidden p-0">
           <DialogHeader className="bg-neutral-950 p-6 text-white shrink-0"><DialogTitle className="text-xl font-serif font-bold">Edit Data Agen</DialogTitle></DialogHeader>
           <div className="p-6 space-y-4 bg-[#F5F3F0]">
@@ -552,26 +434,11 @@ ctx.imageSmoothingQuality = "high";
                 <Label className="text-[10px] font-bold uppercase ml-1">Cabang</Label>
                 <Select value={selectedAgent?.branch} onValueChange={v => setSelectedAgent(p => p ? {...p, branch: v} : null)}>
                   <SelectTrigger className="h-11 rounded-xl bg-white border-neutral-200 font-bold text-xs uppercase"><SelectValue /></SelectTrigger>
-=======
-        <DialogContent className="rounded-[2rem] max-w-md border-none shadow-2xl overflow-hidden">
-          <DialogHeader className="bg-primary p-6 text-white shrink-0"><DialogTitle className="text-xl font-black uppercase">Edit Data Agen</DialogTitle></DialogHeader>
-          <div className="p-8 space-y-4 bg-slate-50/50">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label className="text-[10px] font-black uppercase ml-1">Tgl Pendaftaran</Label>
-                <Input type="date" value={selectedAgent?.registrationDate || ""} onChange={e => setSelectedAgent(p => p ? {...p, registrationDate: e.target.value} : null)} className="h-11 rounded-xl bg-white border-none font-bold text-xs" />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-[10px] font-black uppercase ml-1">Cabang</Label>
-                <Select value={selectedAgent?.branch} onValueChange={v => setSelectedAgent(p => p ? {...p, branch: v} : null)}>
-                  <SelectTrigger className="h-11 rounded-xl bg-white border-none font-black text-xs uppercase"><SelectValue /></SelectTrigger>
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
                   <SelectContent className="rounded-xl">{AGENT_BRANCHES.map(b => <SelectItem key={b} value={b} className="font-bold text-xs">{b}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             </div>
             <div className="space-y-1.5">
-<<<<<<< HEAD
               <Label className="text-[10px] font-bold uppercase ml-1">Nama Agen</Label>
               <Input value={selectedAgent?.name || ""} onChange={e => setSelectedAgent(prev => prev ? {...prev, name: e.target.value} : null)} className="h-11 rounded-xl bg-white border-neutral-200 font-bold" />
             </div>
@@ -585,21 +452,6 @@ ctx.imageSmoothingQuality = "high";
             </div>
           </div>
           <DialogFooter className="p-5 bg-white border-t"><Button className="w-full font-bold h-12 rounded-full bg-neutral-950 hover:bg-[#C82368] text-white shadow-lg transition-colors" onClick={handleUpdateAgent}>SIMPAN PERUBAHAN</Button></DialogFooter>
-=======
-              <Label className="text-[10px] font-black uppercase ml-1">Nama Agen</Label>
-              <Input value={selectedAgent?.name || ""} onChange={e => setSelectedAgent(prev => prev ? {...prev, name: e.target.value} : null)} className="h-12 rounded-xl bg-white border-none font-bold" />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-[10px] font-black uppercase ml-1">No. WhatsApp</Label>
-              <Input value={selectedAgent?.phone || ""} onChange={e => setSelectedAgent(prev => prev ? {...prev, phone: e.target.value} : null)} className="h-12 rounded-xl bg-white border-none font-bold" />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-[10px] font-black uppercase ml-1">Alamat</Label>
-              <Input value={selectedAgent?.address || ""} onChange={e => setSelectedAgent(prev => prev ? {...prev, address: e.target.value} : null)} className="h-12 rounded-xl bg-white border-none font-bold" />
-            </div>
-          </div>
-          <DialogFooter className="p-6 bg-white border-t"><Button className="w-full font-black h-12 rounded-xl shadow-xl" onClick={handleUpdateAgent}>SIMPAN PERUBAHAN</Button></DialogFooter>
->>>>>>> 483ed98603e36449be3c1a3929af0c70d5587b68
         </DialogContent>
       </Dialog>
     </div>
