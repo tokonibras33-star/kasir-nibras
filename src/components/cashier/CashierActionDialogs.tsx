@@ -21,6 +21,13 @@ interface CashierActionDialogsProps {
   setShowSettings: (open: boolean) => void;
   cashierName: string;
   setCashierName: (name: string) => void;
+  storeId?: string;
+  customStoreName?: string;
+  setCustomStoreName?: (name: string) => void;
+  customStoreAddress?: string;
+  setCustomStoreAddress?: (addr: string) => void;
+  customStorePhone?: string;
+  setCustomStorePhone?: (phone: string) => void;
 
   isCashDialogOpen: boolean;
   setIsCashDialogOpen: (open: boolean) => void;
@@ -50,6 +57,13 @@ export function CashierActionDialogs({
   setShowSettings,
   cashierName,
   setCashierName,
+  storeId = "TOKO_A",
+  customStoreName = "",
+  setCustomStoreName,
+  customStoreAddress = "",
+  setCustomStoreAddress,
+  customStorePhone = "",
+  setCustomStorePhone,
   isCashDialogOpen,
   setIsCashDialogOpen,
   amountToProcess,
@@ -76,7 +90,7 @@ export function CashierActionDialogs({
           <DialogHeader className="p-6 bg-neutral-950 text-white">
             <DialogTitle className="font-serif text-xl font-bold tracking-wide">Pengaturan Kasir</DialogTitle>
           </DialogHeader>
-          <div className="p-6 space-y-5 bg-white">
+          <div className="p-6 space-y-4 bg-white">
             <div className="space-y-1.5">
               <Label className="text-[10px] font-black uppercase tracking-widest text-neutral-600 ml-1">
                 Nama Tampilan Kasir
@@ -85,17 +99,61 @@ export function CashierActionDialogs({
                 value={cashierName}
                 onChange={(e) => setCashierName(e.target.value)}
                 placeholder="Nama Kasir..."
-                className="h-12 rounded-2xl bg-[#F5F3F0] border-transparent focus-visible:ring-1 focus-visible:ring-neutral-900 font-bold"
+                className="h-11 rounded-2xl bg-[#F5F3F0] border-transparent focus-visible:ring-1 focus-visible:ring-neutral-900 font-bold"
               />
             </div>
+            {setCustomStoreName && (
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-neutral-600 ml-1">
+                  Nama Toko di Struk
+                </Label>
+                <Input
+                  value={customStoreName}
+                  onChange={(e) => setCustomStoreName(e.target.value)}
+                  placeholder={storeId === "TOKO_A" ? "NIBRAS HOUSE KWT" : storeId === "TOKO_B" ? "IND CO" : "NIBRAS HOUSE GDM"}
+                  className="h-11 rounded-2xl bg-[#F5F3F0] border-transparent focus-visible:ring-1 focus-visible:ring-neutral-900 font-bold"
+                />
+              </div>
+            )}
+            {setCustomStoreAddress && (
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-neutral-600 ml-1">
+                  Alamat Toko di Struk
+                </Label>
+                <Input
+                  value={customStoreAddress}
+                  onChange={(e) => setCustomStoreAddress(e.target.value)}
+                  placeholder="Alamat lengkap cabang..."
+                  className="h-11 rounded-2xl bg-[#F5F3F0] border-transparent focus-visible:ring-1 focus-visible:ring-neutral-900 font-bold"
+                />
+              </div>
+            )}
+            {setCustomStorePhone && (
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-neutral-600 ml-1">
+                  No. Telepon / WA Toko di Struk
+                </Label>
+                <Input
+                  value={customStorePhone}
+                  onChange={(e) => setCustomStorePhone(e.target.value)}
+                  placeholder="08xxxxxxxxxx"
+                  className="h-11 rounded-2xl bg-[#F5F3F0] border-transparent focus-visible:ring-1 focus-visible:ring-neutral-900 font-bold"
+                />
+              </div>
+            )}
           </div>
           <DialogFooter className="p-6 pt-0 bg-white">
             <Button
               className="w-full h-12 rounded-full bg-neutral-950 hover:bg-[#C82368] text-white font-black text-xs uppercase tracking-widest transition-all"
               onClick={() => {
                 localStorage.setItem("nibras_house_cashier_name", cashierName);
+                if (storeId) {
+                  localStorage.setItem(`nh_store_name_${storeId}`, customStoreName);
+                  localStorage.setItem(`nh_store_address_${storeId}`, customStoreAddress);
+                  localStorage.setItem(`nh_store_phone_${storeId}`, customStorePhone);
+                }
                 setShowSettings(false);
-                toast({ title: "Tersimpan" });
+                toast({ title: "Pengaturan Kasir & Struk Tersimpan" });
               }}
             >
               SIMPAN PENGATURAN

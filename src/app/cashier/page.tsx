@@ -1190,6 +1190,13 @@ export default function CashierPage() {
         setShowSettings={setShowSettings}
         cashierName={cashierName}
         setCashierName={setCashierName}
+        storeId={storeId}
+        customStoreName={customStoreName}
+        setCustomStoreName={setCustomStoreName}
+        customStoreAddress={customStoreAddress}
+        setCustomStoreAddress={setCustomStoreAddress}
+        customStorePhone={customStorePhone}
+        setCustomStorePhone={setCustomStorePhone}
         isCashDialogOpen={isCashDialogOpen}
         setIsCashDialogOpen={setIsCashDialogOpen}
         amountToProcess={amountToProcess}
