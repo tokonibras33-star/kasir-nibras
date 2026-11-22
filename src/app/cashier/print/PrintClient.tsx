@@ -30,8 +30,9 @@ export default function PrintClient() {
   const trxId = searchParams.get('id');
   const storeIdParam = searchParams.get('store') || 'TOKO_A';
   const [paperSize, setPaperSize] = useState<'58mm' | '80mm'>('58mm');
+  const [topMarginMm, setTopMarginMm] = useState<number>(2);
   const [bottomFeedMm, setBottomFeedMm] = useState<number>(2);
-  const [measuredHeightMm, setMeasuredHeightMm] = useState<number>(95);
+  const [measuredHeightMm, setMeasuredHeightMm] = useState<number>(85);
   const [isGenerating, setIsGenerating] = useState(false);
 
   const printAreaRef = useRef<HTMLDivElement | null>(null);
@@ -50,17 +51,21 @@ export default function PrintClient() {
       const phone = localStorage.getItem(`nh_store_phone_${storeIdParam}`);
       const cashier = localStorage.getItem('nibras_house_cashier_name');
       const savedPaper = localStorage.getItem('nh_print_paper_size');
+      const savedTop = localStorage.getItem('nh_print_top_margin_mm');
       const savedFeed = localStorage.getItem('nh_print_bottom_feed_mm');
 
       if (savedPaper === '58mm' || savedPaper === '80mm') {
         setPaperSize(savedPaper);
+      }
+      if (savedTop && !Number.isNaN(Number(savedTop))) {
+        setTopMarginMm(Number(savedTop));
       }
       if (savedFeed && !Number.isNaN(Number(savedFeed))) {
         setBottomFeedMm(Number(savedFeed));
       }
 
       setHeaderInfo({
-        name: (name && name.trim()) ? name.trim() : defaultName,
+        name: name && name.trim() ? name.trim() : defaultName,
         address: address || '',
         phone: phone || '',
         cashier: cashier || '',
@@ -85,6 +90,13 @@ export default function PrintClient() {
     }
   };
 
+  const handleTopMarginChange = (mm: number) => {
+    setTopMarginMm(mm);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('nh_print_top_margin_mm', String(mm));
+    }
+  };
+
   const handleBottomFeedChange = (mm: number) => {
     setBottomFeedMm(mm);
     if (typeof window !== 'undefined') {
@@ -101,21 +113,19 @@ export default function PrintClient() {
   const brandRef = useMemoFirebase(() => doc(db, 'settings', 'brand'), [db]);
   const { data: brandData } = useDoc<any>(brandRef);
 
-  // Printable width: 58mm roll has 48mm-52mm active thermal head; 80mm roll has 72mm-76mm active thermal head
+  // Printable width for POS-58 driver is 48mm; for POS-80 driver is 72mm
   const printableWidthMm = paperSize === '58mm' ? 48 : 72;
-  const pageWidthMm = paperSize === '58mm' ? 58 : 80;
 
-  // Measure exact receipt height in mm so @page stops right at the receipt end
   const measureReceiptHeight = useCallback(() => {
     const el = printAreaRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
     const rawPx = Math.max(el.scrollHeight, rect.height);
     if (rawPx > 0) {
-      const exactMm = Math.ceil(rawPx * PX_TO_MM) + bottomFeedMm;
+      const exactMm = Math.ceil(rawPx * PX_TO_MM);
       setMeasuredHeightMm(exactMm);
     }
-  }, [bottomFeedMm]);
+  }, []);
 
   useEffect(() => {
     const el = printAreaRef.current;
@@ -136,14 +146,18 @@ export default function PrintClient() {
       cancelAnimationFrame(raf);
       if (observer) observer.disconnect();
     };
-  }, [trx, paperSize, bottomFeedMm, headerInfo, brandData, measureReceiptHeight]);
+  }, [trx, paperSize, topMarginMm, bottomFeedMm, headerInfo, brandData, measureReceiptHeight]);
 
   /**
-   * Dedicated Isolated Iframe Thermal Printer Engine:
-   * - Renders ONLY the receipt at top-left (0, 0) with zero Next.js/Tailwind wrapper interference
-   * - Forces 100% pure black (#000) ink so 1-bit monochrome thermal drivers never print blank/faint
-   * - Sets exact @page { size: <width>mm <exactHeight>mm; margin: 0; } and height: fit-content
-   *   so the thermal printer stops/cuts immediately after the receipt stopper.
+   * POS-58 / POS-80 Direct Top-Zero Thermal Print Engine:
+   * - CRITICAL FOR POS-58 DRIVER: Uses `@page { size: auto; margin: 0mm !important; }`!
+   *   Why? Because passing a short custom `@page { size: 58mm 90mm }` causes Windows GDI / Chrome
+   *   to vertically center the 90mm page inside POS-58's default 58x210mm or 58x297mm roll,
+   *   which creates a huge ~100mm blank gap at the TOP before printing starts!
+   * - With `@page { size: auto; margin: 0mm; }` and `#thermal-receipt-root` anchored at
+   *   `position: absolute; top: 0mm; left: 0mm; padding-top: 2mm;`, printing starts IMMEDIATELY
+   *   at 2mm from the top edge of the paper, and the POS-58 driver automatically stops feeding
+   *   at the last black pixel (`#receipt-stopper`).
    */
   const handlePrint = () => {
     const el = printAreaRef.current;
@@ -151,11 +165,6 @@ export default function PrintClient() {
       window.print();
       return;
     }
-
-    const rect = el.getBoundingClientRect();
-    const rawPx = Math.max(el.scrollHeight, rect.height);
-    const exactHeightMm = Math.max(40, Math.ceil(rawPx * PX_TO_MM) + bottomFeedMm);
-    setMeasuredHeightMm(exactHeightMm);
 
     const existingIframe = document.getElementById('thermal-print-iframe') as HTMLIFrameElement | null;
     if (existingIframe) {
@@ -165,11 +174,13 @@ export default function PrintClient() {
     const iframe = document.createElement('iframe');
     iframe.id = 'thermal-print-iframe';
     iframe.style.position = 'fixed';
-    iframe.style.top = '-10000px';
-    iframe.style.left = '-10000px';
-    iframe.style.width = `${pageWidthMm}mm`;
-    iframe.style.height = `${exactHeightMm}mm`;
+    iframe.style.top = '0';
+    iframe.style.left = '0';
+    iframe.style.width = `${printableWidthMm}mm`;
+    iframe.style.height = '0';
     iframe.style.border = '0';
+    iframe.style.visibility = 'hidden';
+    iframe.style.pointerEvents = 'none';
     document.body.appendChild(iframe);
 
     const iframeDoc = iframe.contentWindow?.document;
@@ -186,13 +197,11 @@ export default function PrintClient() {
 <head>
   <meta charset="utf-8" />
   <title>Struk ${trx?.id || ''}</title>
-  <style id="dynamic-page-style">
+  <style>
     @page {
-      size: ${pageWidthMm}mm ${exactHeightMm}mm;
+      size: auto;
       margin: 0mm !important;
     }
-  </style>
-  <style>
     * {
       box-sizing: border-box !important;
       margin: 0;
@@ -202,28 +211,31 @@ export default function PrintClient() {
       print-color-adjust: exact !important;
     }
     html, body {
-      margin: 0 !important;
-      padding: 0 !important;
+      margin: 0mm !important;
+      padding: 0mm !important;
       width: ${printableWidthMm}mm !important;
       max-width: ${printableWidthMm}mm !important;
-      height: fit-content !important;
+      height: auto !important;
       min-height: 0 !important;
       background: #ffffff !important;
       color: #000000 !important;
       font-family: 'Courier New', Courier, monospace !important;
       font-size: 10px !important;
-      line-height: 1.25 !important;
+      line-height: 1.2 !important;
       font-weight: 700 !important;
-      overflow: hidden !important;
     }
     #thermal-receipt-root {
+      position: relative !important;
+      top: 0mm !important;
+      left: 0mm !important;
       width: ${printableWidthMm}mm !important;
       max-width: ${printableWidthMm}mm !important;
-      margin: 0 !important;
-      padding: 1.5mm 1mm ${bottomFeedMm}mm 1mm !important;
+      margin: 0mm !important;
+      padding: ${topMarginMm}mm 1mm ${bottomFeedMm}mm 1mm !important;
       background: #ffffff !important;
       color: #000000 !important;
-      height: fit-content !important;
+      height: auto !important;
+      min-height: 0 !important;
       page-break-inside: avoid !important;
       break-inside: avoid !important;
       page-break-after: avoid !important;
@@ -241,43 +253,40 @@ export default function PrintClient() {
     .flex-1 { flex: 1 1 0% !important; }
     .whitespace-nowrap { white-space: nowrap !important; }
     .gap-2 { gap: 4px !important; }
-    .mb-1 { margin-bottom: 1mm !important; }
-    .mb-2 { margin-bottom: 1.5mm !important; }
-    .mb-3 { margin-bottom: 2mm !important; }
-    .mt-1 { margin-top: 1mm !important; }
-    .mt-2 { margin-top: 1.5mm !important; }
-    .mt-2\\.5 { margin-top: 2mm !important; }
-    .my-2\\.5 { margin-top: 2mm !important; margin-bottom: 2mm !important; }
-    .py-2\\.5 { padding-top: 1.5mm !important; padding-bottom: 1.5mm !important; }
-    .pt-1 { padding-top: 1mm !important; }
-    .pt-2 { padding-top: 1.5mm !important; }
-    .pt-2\\.5 { padding-top: 2mm !important; }
-    .pb-2 { padding-bottom: 1.5mm !important; }
-    .space-y-1 > * + * { margin-top: 1mm !important; }
-    .space-y-1\\.5 > * + * { margin-top: 1.2mm !important; }
-    .space-y-2 > * + * { margin-top: 1.5mm !important; }
+    .mb-1 { margin-bottom: 0.8mm !important; }
+    .mb-2 { margin-bottom: 1.2mm !important; }
+    .mt-1 { margin-top: 0.8mm !important; }
+    .mt-1\\.5 { margin-top: 1mm !important; }
+    .mt-2 { margin-top: 1.2mm !important; }
+    .my-2 { margin-top: 1.2mm !important; margin-bottom: 1.2mm !important; }
+    .py-2 { padding-top: 1.2mm !important; padding-bottom: 1.2mm !important; }
+    .pt-1 { padding-top: 0.8mm !important; }
+    .pt-1\\.5 { padding-top: 1mm !important; }
+    .pt-2 { padding-top: 1.2mm !important; }
+    .pb-2 { padding-bottom: 1.2mm !important; }
+    .space-y-1 > * + * { margin-top: 0.8mm !important; }
+    .space-y-2 > * + * { margin-top: 1.2mm !important; }
     .border-y { border-top: 1px dashed #000000 !important; border-bottom: 1px dashed #000000 !important; }
     .border-t { border-top: 1px dashed #000000 !important; }
     .border-b { border-bottom: 1px dashed #000000 !important; }
     .last\\:border-none:last-child { border-bottom: none !important; }
-    .text-sm { font-size: 12px !important; line-height: 1.2 !important; }
-    .text-\\[11px\\] { font-size: 11px !important; }
-    .text-\\[10px\\] { font-size: 10px !important; }
+    .text-sm { font-size: 11.5px !important; line-height: 1.15 !important; }
+    .text-\\[11px\\] { font-size: 10.5px !important; }
+    .text-\\[10px\\] { font-size: 9.5px !important; }
     .text-\\[9px\\] { font-size: 9px !important; }
-    .text-\\[8px\\] { font-size: 8.5px !important; }
-    .text-\\[7px\\] { font-size: 8px !important; }
+    .text-\\[8px\\] { font-size: 8px !important; }
     img {
       display: block !important;
-      margin: 0 auto 1.5mm auto !important;
-      max-height: 12mm !important;
+      margin: 0 auto 1mm auto !important;
+      max-height: 10mm !important;
       width: auto !important;
-      max-width: 80% !important;
+      max-width: 75% !important;
       object-fit: contain !important;
       filter: grayscale(100%) contrast(180%) !important;
     }
     #receipt-stopper {
-      margin-top: 1.5mm !important;
-      padding-top: 1mm !important;
+      margin-top: 1mm !important;
+      padding-top: 0.8mm !important;
       border-top: 1px dashed #000000 !important;
       text-align: center !important;
       font-size: 8px !important;
@@ -293,15 +302,6 @@ export default function PrintClient() {
 
     const triggerIframePrint = () => {
       try {
-        const rootEl = iframeDoc.getElementById('thermal-receipt-root');
-        if (rootEl) {
-          const finalPx = Math.max(rootEl.scrollHeight, rootEl.offsetHeight);
-          const finalMm = Math.max(35, Math.ceil(finalPx * PX_TO_MM) + 1);
-          const pageStyle = iframeDoc.getElementById('dynamic-page-style');
-          if (pageStyle) {
-            pageStyle.innerHTML = `@page { size: ${pageWidthMm}mm ${finalMm}mm; margin: 0mm !important; }`;
-          }
-        }
         iframe.contentWindow?.focus();
         iframe.contentWindow?.print();
       } catch (e) {
@@ -312,19 +312,19 @@ export default function PrintClient() {
 
     const imgs = Array.from(iframeDoc.images);
     if (imgs.length === 0 || imgs.every((img) => img.complete)) {
-      setTimeout(triggerIframePrint, 80);
+      setTimeout(triggerIframePrint, 60);
     } else {
       let settled = false;
       const done = () => {
         if (settled) return;
         settled = true;
-        setTimeout(triggerIframePrint, 80);
+        setTimeout(triggerIframePrint, 60);
       };
       imgs.forEach((img) => {
         img.addEventListener('load', done, { once: true });
         img.addEventListener('error', done, { once: true });
       });
-      setTimeout(done, 800);
+      setTimeout(done, 700);
     }
   };
 
@@ -398,7 +398,12 @@ export default function PrintClient() {
     }, []) || [];
 
   const totalQty = consolidatedItems.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0) || 0;
-  const logoToUse = brandData?.receiptLogoUrl || DEFAULT_LOGO_URL;
+  // Use Cloudinary e_trim to strip any transparent dead space around the PNG logo so top margin is exact 2mm
+  const rawLogo = brandData?.receiptLogoUrl || DEFAULT_LOGO_URL;
+  const logoToUse = rawLogo.includes('/image/upload/v')
+    ? rawLogo.replace('/image/upload/v', '/image/upload/e_trim/v')
+    : rawLogo;
+
   const activeStoreName = headerInfo.name || DEFAULT_STORE_NAMES[storeIdParam] || 'NIBRAS HOUSE';
   const activeCashierName = (
     headerInfo.cashier ||
@@ -425,7 +430,7 @@ export default function PrintClient() {
               <ArrowLeft className="h-4 w-4 mr-2" /> Kembali
             </Button>
             <Badge className="bg-[#C82368] text-white border-none rounded-full px-3 py-1 font-bold text-[10px] tracking-widest">
-              PRINT CENTER
+              POS-58 / POS-80 READY
             </Badge>
           </div>
 
@@ -433,7 +438,7 @@ export default function PrintClient() {
             <div>
               <h2 className="font-serif text-2xl font-bold tracking-tight text-white">Cetak Struk Thermal</h2>
               <p className="text-xs text-neutral-400 mt-1">
-                Cetak terisolasi dengan kontras hitam pekat &amp; stoper panjang otomatis sesuai isi struk.
+                Mode Driver POS-58 Aktif: Mulai cetak langsung dari atas (margin atas 2mm) tanpa jeda kosong.
               </p>
             </div>
 
@@ -452,7 +457,7 @@ export default function PrintClient() {
                     htmlFor="p-58"
                     className="flex flex-col items-center justify-center h-12 rounded-2xl border border-neutral-800 bg-neutral-900 text-neutral-300 peer-data-[state=checked]:border-[#C82368] peer-data-[state=checked]:bg-[#C82368] peer-data-[state=checked]:text-white cursor-pointer font-bold text-xs transition-all"
                   >
-                    <span>58mm</span>
+                    <span>58mm (POS-58)</span>
                     <span className="text-[9px] font-normal opacity-80">Area Cetak 48mm</span>
                   </Label>
                 </div>
@@ -462,38 +467,64 @@ export default function PrintClient() {
                     htmlFor="p-80"
                     className="flex flex-col items-center justify-center h-12 rounded-2xl border border-neutral-800 bg-neutral-900 text-neutral-300 peer-data-[state=checked]:border-[#C82368] peer-data-[state=checked]:bg-[#C82368] peer-data-[state=checked]:text-white cursor-pointer font-bold text-xs transition-all"
                   >
-                    <span>80mm</span>
+                    <span>80mm (POS-80)</span>
                     <span className="text-[9px] font-normal opacity-80">Area Cetak 72mm</span>
                   </Label>
                 </div>
               </RadioGroup>
             </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 flex items-center gap-1.5">
-                  <Scissors className="h-3 w-3 text-[#C82368]" /> Jarak Stoper Bawah
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">
+                  Margin Mulai Atas
                 </Label>
-                <span className="text-[10px] font-mono text-emerald-400 font-bold">
-                  {paperSize} × {measuredHeightMm}mm
-                </span>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {[0, 2, 4].map((mm) => (
+                    <button
+                      key={mm}
+                      type="button"
+                      onClick={() => handleTopMarginChange(mm)}
+                      className={`h-8 rounded-xl text-xs font-bold border transition-all ${
+                        topMarginMm === mm
+                          ? 'border-[#C82368] bg-[#C82368] text-white'
+                          : 'border-neutral-800 bg-neutral-900 text-neutral-400 hover:text-white'
+                      }`}
+                    >
+                      {mm}mm
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="grid grid-cols-4 gap-2">
-                {[0, 2, 4, 6].map((mm) => (
-                  <button
-                    key={mm}
-                    type="button"
-                    onClick={() => handleBottomFeedChange(mm)}
-                    className={`h-8 rounded-full text-xs font-bold border transition-all ${
-                      bottomFeedMm === mm
-                        ? 'border-[#C82368] bg-[#C82368] text-white'
-                        : 'border-neutral-800 bg-neutral-900 text-neutral-400 hover:text-white'
-                    }`}
-                  >
-                    +{mm}mm
-                  </button>
-                ))}
+
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 flex items-center gap-1">
+                  <Scissors className="h-3 w-3 text-[#C82368]" /> Stoper Bawah
+                </Label>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {[0, 2, 4].map((mm) => (
+                    <button
+                      key={mm}
+                      type="button"
+                      onClick={() => handleBottomFeedChange(mm)}
+                      className={`h-8 rounded-xl text-xs font-bold border transition-all ${
+                        bottomFeedMm === mm
+                          ? 'border-[#C82368] bg-[#C82368] text-white'
+                          : 'border-neutral-800 bg-neutral-900 text-neutral-400 hover:text-white'
+                      }`}
+                    >
+                      {mm}mm
+                    </button>
+                  ))}
+                </div>
               </div>
+            </div>
+
+            <div className="px-3 py-2 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-between text-[10px]">
+              <span className="text-neutral-400">Estimasi Panjang Struk:</span>
+              <span className="font-mono font-bold text-emerald-400">
+                {paperSize} × {measuredHeightMm}mm (Atas: {topMarginMm}mm)
+              </span>
             </div>
 
             {/* Pengaturan Nama Toko & Kasir di Struk */}
@@ -570,23 +601,23 @@ export default function PrintClient() {
           style={{
             width: `${printableWidthMm}mm`,
             boxSizing: 'border-box',
-            padding: `2mm 1.5mm ${bottomFeedMm}mm 1.5mm`,
+            padding: `${topMarginMm}mm 1mm ${bottomFeedMm}mm 1mm`,
             fontFamily: "'Courier New', Courier, monospace",
             color: '#000000',
             fontSize: '10px',
-            lineHeight: '1.25',
+            lineHeight: '1.2',
             fontWeight: 700,
             height: 'fit-content',
             minHeight: 0,
             display: 'block',
           }}
         >
-          <div className="text-center mb-2 space-y-1">
+          <div className="text-center mb-1.5 space-y-1">
             <div className="flex justify-center mb-1">
               <img
                 src={logoToUse}
                 alt="Logo"
-                className="h-12 w-auto object-contain mx-auto"
+                className="h-10 w-auto object-contain mx-auto"
                 onLoad={measureReceiptHeight}
               />
             </div>
@@ -598,7 +629,7 @@ export default function PrintClient() {
             )}
           </div>
 
-          <div className="border-y border-dashed border-black py-2 my-2 space-y-1 text-[9px] text-black">
+          <div className="border-y border-dashed border-black py-1.5 my-1.5 space-y-1 text-[9px] text-black">
             <div className="flex justify-between">
               <span>NO STRUK:</span>
               <span className="font-black">{trx.id}</span>
@@ -619,7 +650,7 @@ export default function PrintClient() {
             </div>
           </div>
 
-          <div className="space-y-2 mb-2 text-black">
+          <div className="space-y-1.5 mb-1.5 text-black">
             {consolidatedItems.map((item: any, i: number) => {
               const labelPrice = item.labelPrice || item.price;
               const totalDisc = item.totalNominalDisc || 0;
@@ -627,7 +658,7 @@ export default function PrintClient() {
               const effectiveDiscPct = totalLabelPrice > 0 ? Math.round((totalDisc / totalLabelPrice) * 100) : 0;
 
               return (
-                <div key={i} className="space-y-1 border-b border-dashed border-black pb-2 last:border-none">
+                <div key={i} className="space-y-1 border-b border-dashed border-black pb-1.5 last:border-none">
                   <div className="flex justify-between items-start gap-2">
                     <p className="font-black uppercase leading-tight text-[10px] flex-1 text-black">{item.name}</p>
                     <p className="font-black text-[10px] whitespace-nowrap text-right text-black">
@@ -644,7 +675,7 @@ export default function PrintClient() {
             })}
           </div>
 
-          <div className="border-t border-dashed border-black pt-2 space-y-1 text-black">
+          <div className="border-t border-dashed border-black pt-1.5 space-y-1 text-black">
             <div className="flex justify-between text-[9px] font-bold">
               <span>JUMLAH QTY</span>
               <span>{totalQty} PCS</span>
@@ -706,7 +737,7 @@ export default function PrintClient() {
             )}
           </div>
 
-          <div className="text-center mt-2 space-y-1 text-[8px] font-bold text-black">
+          <div className="text-center mt-1.5 space-y-1 text-[8px] font-bold text-black">
             <p className="font-black text-[9px]">*** TERIMA KASIH ***</p>
             <p>BARANG YANG SUDAH DIBELI TIDAK DAPAT DITUKAR/DIKEMBALIKAN</p>
           </div>
@@ -714,7 +745,7 @@ export default function PrintClient() {
           {/* Precision Thermal Stopper Marker */}
           <div
             id="receipt-stopper"
-            className="mt-1.5 pt-1 border-t border-dashed border-black text-center text-[8px] font-black tracking-[0.25em] leading-none text-black select-none"
+            className="mt-1 pt-1 border-t border-dashed border-black text-center text-[8px] font-black tracking-[0.25em] leading-none text-black select-none"
           >
             -----
           </div>
@@ -726,17 +757,17 @@ export default function PrintClient() {
         dangerouslySetInnerHTML={{
           __html: `
             @page {
-              size: ${pageWidthMm}mm ${measuredHeightMm}mm;
+              size: auto;
               margin: 0mm !important;
             }
             @media print {
               html, body {
                 width: ${printableWidthMm}mm !important;
                 max-width: ${printableWidthMm}mm !important;
-                height: fit-content !important;
+                height: auto !important;
                 min-height: 0 !important;
-                margin: 0 !important;
-                padding: 0 !important;
+                margin: 0mm !important;
+                padding: 0mm !important;
                 background: #ffffff !important;
                 color: #000000 !important;
                 overflow: visible !important;
@@ -756,22 +787,24 @@ export default function PrintClient() {
                 display: block !important;
                 position: static !important;
                 width: ${printableWidthMm}mm !important;
-                height: fit-content !important;
+                height: auto !important;
                 min-height: 0 !important;
-                margin: 0 !important;
-                padding: 0 !important;
+                margin: 0mm !important;
+                padding: 0mm !important;
                 background: #ffffff !important;
               }
               #print-area {
-                position: static !important;
+                position: absolute !important;
+                top: 0mm !important;
+                left: 0mm !important;
                 width: ${printableWidthMm}mm !important;
                 max-width: ${printableWidthMm}mm !important;
-                margin: 0 !important;
-                padding: 1.5mm 1mm ${bottomFeedMm}mm 1mm !important;
+                margin: 0mm !important;
+                padding: ${topMarginMm}mm 1mm ${bottomFeedMm}mm 1mm !important;
                 box-sizing: border-box !important;
                 box-shadow: none !important;
                 border-radius: 0 !important;
-                height: fit-content !important;
+                height: auto !important;
                 min-height: 0 !important;
                 background: #ffffff !important;
                 color: #000000 !important;
