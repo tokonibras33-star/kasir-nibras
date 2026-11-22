@@ -60,8 +60,13 @@ export function TransactionDetailsDialog({ trx, onClose }: TransactionDetailsDia
                       RETUR SEBAGIAN
                     </Badge>
                   )}
-                  <Badge className={cn("text-[9px] font-black px-3 py-1 rounded-full border-none", summary.effectiveStatus === 'DP' ? "bg-orange-500 text-white" : "bg-[#C82368] text-white")}>
-                    {summary.effectiveStatus}
+                  {summary.isDpTransaction && (
+                    <Badge className="text-[9px] font-black px-2.5 py-1 rounded-full border-none bg-orange-500 text-white">
+                      DP
+                    </Badge>
+                  )}
+                  <Badge className={cn("text-[9px] font-black px-3 py-1 rounded-full border-none", summary.effectiveStatus === 'DP' ? "bg-orange-600 text-white" : "bg-[#C82368] text-white")}>
+                    {summary.effectiveStatus === 'DP' ? 'BELUM LUNAS' : summary.isDpTransaction ? 'LUNAS (DP)' : summary.effectiveStatus}
                   </Badge>
                 </>
               )}
@@ -137,32 +142,65 @@ export function TransactionDetailsDialog({ trx, onClose }: TransactionDetailsDia
           </div>
 
           {summary.hasReturn && (
-            <div className="space-y-2.5">
-              <div className="flex items-center gap-2 px-2">
-                <RotateCcw className="h-4 w-4 text-rose-600" />
-                <h3 className="text-[10px] font-black uppercase tracking-widest text-rose-600">Barang Diretur</h3>
-              </div>
-              <Card className="rounded-3xl border border-rose-200/80 shadow-sm overflow-hidden bg-rose-50/40 p-4 space-y-2">
-                {(trx.returnLog?.items || []).map((item: any, idx: number) => {
-                  const unitNet = getItemUnitNetPrice(item);
-                  return (
-                    <div key={idx} className="flex justify-between items-center text-xs border-b border-rose-100 last:border-none pb-2 last:pb-0">
-                      <div>
-                        <p className="font-black uppercase text-neutral-900">{item.name}</p>
-                        <p className="text-[9px] font-bold text-neutral-500 uppercase">
-                          {item.color || "-"} | {item.size || "-"} • {item.quantity}x @Rp {unitNet.toLocaleString("id-ID")}
-                        </p>
+            <div className="space-y-3">
+              <div className="space-y-2.5">
+                <div className="flex items-center gap-2 px-2">
+                  <RotateCcw className="h-4 w-4 text-rose-600" />
+                  <h3 className="text-[10px] font-black uppercase tracking-widest text-rose-600">Barang Diretur</h3>
+                </div>
+                <Card className="rounded-3xl border border-rose-200/80 shadow-sm overflow-hidden bg-rose-50/40 p-4 space-y-2">
+                  {(trx.returnLog?.items || []).map((item: any, idx: number) => {
+                    const unitNet = getItemUnitNetPrice(item);
+                    return (
+                      <div key={idx} className="flex justify-between items-center text-xs border-b border-rose-100 last:border-none pb-2 last:pb-0">
+                        <div>
+                          <p className="font-black uppercase text-neutral-900">{item.name}</p>
+                          <p className="text-[9px] font-bold text-neutral-500 uppercase">
+                            {item.color || "-"} | {item.size || "-"} • {item.quantity}x @Rp {unitNet.toLocaleString("id-ID")}
+                          </p>
+                        </div>
+                        <span className="font-black text-rose-600">-Rp {(unitNet * (item.quantity || 1)).toLocaleString("id-ID")}</span>
                       </div>
-                      <span className="font-black text-rose-600">-Rp {(unitNet * (item.quantity || 1)).toLocaleString("id-ID")}</span>
-                    </div>
-                  );
-                })}
-                {trx.returnLog?.returnedAt && (
-                  <p className="text-[9px] font-bold text-rose-500 pt-1">
-                    Diretur pada {new Date(trx.returnLog.returnedAt).toLocaleString("id-ID")} oleh {trx.returnLog.returnedBy || "Kasir"}
-                  </p>
-                )}
-              </Card>
+                    );
+                  })}
+                  {trx.returnLog?.returnedAt && (
+                    <p className="text-[9px] font-bold text-rose-500 pt-1">
+                      Diretur pada {new Date(trx.returnLog.returnedAt).toLocaleString("id-ID")} oleh {trx.returnLog.returnedBy || "Kasir"}
+                    </p>
+                  )}
+                </Card>
+              </div>
+
+              {summary.hasExchange && (
+                <div className="space-y-2.5">
+                  <div className="flex items-center gap-2 px-2">
+                    <Package className="h-4 w-4 text-emerald-600" />
+                    <h3 className="text-[10px] font-black uppercase tracking-widest text-emerald-700">
+                      Barang Pengganti (Tukar dari Retur)
+                    </h3>
+                  </div>
+                  <Card className="rounded-3xl border border-emerald-200/80 shadow-sm overflow-hidden bg-emerald-50/40 p-4 space-y-2">
+                    {summary.exchangeItems.map((item: any, idx: number) => {
+                      const unitNet = getItemUnitNetPrice(item);
+                      const labelPrice = Number(item.labelPrice || item.price || unitNet);
+                      const qty = Number(item.quantity || 1);
+                      const itemDisc = Math.max(0, labelPrice - unitNet) * qty;
+                      return (
+                        <div key={idx} className="flex justify-between items-center text-xs border-b border-emerald-100 last:border-none pb-2 last:pb-0">
+                          <div>
+                            <p className="font-black uppercase text-neutral-900">{item.name}</p>
+                            <p className="text-[9px] font-bold text-neutral-500 uppercase">
+                              {item.color || "-"} | {item.size || "-"} • {qty}x @Rp {labelPrice.toLocaleString("id-ID")}
+                              {itemDisc > 0 ? ` (Disc Rp ${itemDisc.toLocaleString("id-ID")})` : ""}
+                            </p>
+                          </div>
+                          <span className="font-black text-emerald-700">+Rp {(unitNet * qty).toLocaleString("id-ID")}</span>
+                        </div>
+                      );
+                    })}
+                  </Card>
+                </div>
+              )}
             </div>
           )}
 
@@ -170,12 +208,36 @@ export function TransactionDetailsDialog({ trx, onClose }: TransactionDetailsDia
             {summary.hasReturn && (
               <div className="space-y-2 border-b border-dashed border-neutral-200 pb-3">
                 <div className="flex justify-between items-center text-[11px] font-bold text-neutral-500 uppercase">
-                  <span>Tagihan Awal</span>
+                  <span>Tagihan Transaksi Awal</span>
                   <span>Rp {summary.originalTotal.toLocaleString("id-ID")}</span>
                 </div>
                 <div className="flex justify-between items-center text-[11px] font-black text-rose-600 uppercase">
-                  <span>Total Retur Barang</span>
+                  <span>Nilai Barang Diretur (-)</span>
                   <span>-Rp {summary.totalRefund.toLocaleString("id-ID")}</span>
+                </div>
+                {summary.hasExchange && (
+                  <div className="flex justify-between items-center text-[11px] font-black text-emerald-700 uppercase">
+                    <span>Nilai Barang Pengganti (+)</span>
+                    <span>+Rp {summary.exchangeTotal.toLocaleString("id-ID")}</span>
+                  </div>
+                )}
+                <div className="pt-1.5 border-t border-neutral-100 flex justify-between items-center text-[11px] font-black uppercase">
+                  {summary.netExchangeDiff > 0 ? (
+                    <>
+                      <span className="text-orange-700">Selisih Retur (Tambah Bayar)</span>
+                      <span className="text-orange-700">+Rp {summary.netExchangeDiff.toLocaleString("id-ID")}</span>
+                    </>
+                  ) : summary.netExchangeDiff < 0 ? (
+                    <>
+                      <span className="text-emerald-700">Selisih Retur (Sisa Dikembalikan)</span>
+                      <span className="text-emerald-700">Rp {Math.abs(summary.netExchangeDiff).toLocaleString("id-ID")}</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-neutral-700">Selisih Tukar Barang</span>
+                      <span className="text-neutral-900">Rp 0 (PAS)</span>
+                    </>
+                  )}
                 </div>
               </div>
             )}
@@ -191,14 +253,26 @@ export function TransactionDetailsDialog({ trx, onClose }: TransactionDetailsDia
               </div>
               
               <div className="space-y-2 border-l-2 border-[#C82368]/25 pl-4 ml-1.5">
-                {trx.paymentHistory?.length > 0 ? trx.paymentHistory.map((pay: any, idx: number) => (
-                  <div key={idx} className="flex justify-between items-center text-[10px]">
-                    <span className="font-bold text-neutral-500 uppercase">
-                      Pembayaran ke {pay.index} | {pay.date} | {pay.time}
-                    </span>
-                    <span className="font-black text-neutral-900">Rp {pay.amount.toLocaleString('id-ID')}</span>
-                  </div>
-                )) : (
+                {summary.isDpTransaction && summary.dpStages.length > 0 ? (
+                  summary.dpStages.map((st) => (
+                    <div key={st.index} className="flex justify-between items-center text-[10px]">
+                      <span className="font-bold text-neutral-600 uppercase">
+                        <strong className={st.isSettlement ? "text-emerald-700" : "text-orange-700"}>{st.label}</strong> • Tgl {st.dateStr}
+                        {st.timeStr ? ` (${st.timeStr})` : ""}
+                      </span>
+                      <span className="font-black text-neutral-900">Rp {st.amount.toLocaleString('id-ID')}</span>
+                    </div>
+                  ))
+                ) : trx.paymentHistory?.length > 0 ? (
+                  trx.paymentHistory.map((pay: any, idx: number) => (
+                    <div key={idx} className="flex justify-between items-center text-[10px]">
+                      <span className="font-bold text-neutral-500 uppercase">
+                        Pembayaran ke {pay.index} | {pay.date} | {pay.time}
+                      </span>
+                      <span className="font-black text-neutral-900">Rp {pay.amount.toLocaleString('id-ID')}</span>
+                    </div>
+                  ))
+                ) : (
                   <div className="flex justify-between items-center text-[10px]">
                     <span className="font-bold text-neutral-500 uppercase">Sudah Dibayar</span>
                     <span className="font-black text-neutral-900">Rp {summary.netPaid.toLocaleString('id-ID')}</span>
@@ -213,7 +287,7 @@ export function TransactionDetailsDialog({ trx, onClose }: TransactionDetailsDia
               
               {summary.effectiveStatus === 'DP' && (
                 <div className="flex justify-between items-center text-xs font-black text-orange-600">
-                  <span className="uppercase text-[9px] tracking-widest">Sisa Pelunasan</span>
+                  <span className="uppercase text-[9px] tracking-widest">Kekurangan Bayar (Sisa Pelunasan)</span>
                   <span className="font-serif text-lg font-bold">Rp {summary.netRemaining.toLocaleString('id-ID')}</span>
                 </div>
               )}

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { jsPDF } from "jspdf";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -169,11 +168,12 @@ export function CustomerModals({
     });
   };
 
-  const exportCardFile = (canvas: HTMLCanvasElement, customer: any, type: string, fileFormat: "PNG" | "PDF") => {
+  const exportCardFile = async (canvas: HTMLCanvasElement, customer: any, type: string, fileFormat: "PNG" | "PDF") => {
     const fileNameBase = `kartu-${type.toLowerCase()}-${customer.id}`;
     const pngUrl = canvas.toDataURL("image/png");
 
     if (fileFormat === "PDF") {
+      const { jsPDF } = await import("jspdf");
       const pdf = new jsPDF({
         orientation: "landscape",
         unit: "px",
@@ -198,7 +198,7 @@ export function CustomerModals({
     setIsPrintingCard(true);
     try {
       const canvas = await renderCustomerCardCanvas(customer);
-      exportCardFile(canvas, customer, type, fileFormat);
+      await exportCardFile(canvas, customer, type, fileFormat);
       toast({ title: `Kartu ${fileFormat} Diunduh` });
     } catch (error: any) {
       toast({
@@ -243,7 +243,7 @@ export function CustomerModals({
     setIsPrintingCard(true);
     try {
       const canvas = await renderCustomerCardCanvas(customer);
-      exportCardFile(canvas, customer, type, fileFormat);
+      await exportCardFile(canvas, customer, type, fileFormat);
 
       if (fileFormat === "PNG" && typeof ClipboardItem !== "undefined" && navigator.clipboard?.write) {
         try {

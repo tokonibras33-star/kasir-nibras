@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Printer, ArrowLeft, Download, Loader2, Info, Scissors, Store, Image as ImageIcon } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { getTrxReturnSummary } from '@/components/cashier/types';
+import { getItemUnitNetPrice, getTrxReturnSummary } from '@/components/cashier/types';
 
 const DEFAULT_LOGO_URL = 'https://res.cloudinary.com/dqujkgwah/image/upload/v1775115570/nibras_house-removebg-preview_gwdzut.png';
 const PX_TO_MM = 25.4 / 96; // Standard CSS 96 DPI -> mm
@@ -32,8 +32,7 @@ export default function PrintClient() {
   const [paperSize, setPaperSize] = useState<'58mm' | '80mm'>('58mm');
   const [topMarginMm, setTopMarginMm] = useState<number>(2);
   const [bottomFeedMm, setBottomFeedMm] = useState<number>(2);
-  // Default OFF on POS-58 so printing starts immediately with text at 2mm from the top without any blank logo gap
-  const [showLogo, setShowLogo] = useState<boolean>(false);
+  const [showLogo, setShowLogo] = useState<boolean>(true);
   const [measuredHeightMm, setMeasuredHeightMm] = useState<number>(75);
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -66,8 +65,8 @@ export default function PrintClient() {
       if (savedFeed && !Number.isNaN(Number(savedFeed))) {
         setBottomFeedMm(Number(savedFeed));
       }
-      if (savedShowLogo === 'true') {
-        setShowLogo(true);
+      if (savedShowLogo !== null) {
+        setShowLogo(savedShowLogo === 'true');
       }
 
       setHeaderInfo({
@@ -161,13 +160,6 @@ export default function PrintClient() {
     };
   }, [trx, paperSize, topMarginMm, bottomFeedMm, showLogo, headerInfo, brandData, measureReceiptHeight]);
 
-  /**
-   * Direct Top-Zero Print for POS-58 / POS-80:
-   * - `#print-area` is the VERY FIRST element in the DOM (`offsetTop = 0`, `offsetLeft = 0`).
-   * - No hidden iframe, no flex wrapper, no custom `@page { size: W H }` that triggers Chromium's
-   *   vertical centering (`(driver_height - css_height) / 2`) on POS-58's 210mm/297mm roll.
-   * - Resets scroll position to (0, 0) and calls `window.print()` directly.
-   */
   const handlePrint = () => {
     if (typeof window !== 'undefined') {
       window.scrollTo(0, 0);
@@ -266,7 +258,7 @@ export default function PrintClient() {
       className="min-h-screen bg-[#F5F3F0] flex flex-col md:flex-row-reverse print:min-h-0 print:h-auto print:block print:bg-white print:p-0 print:m-0"
     >
       {/* =====================================================================
-          1. RECEIPT AREA (MUST BE FIRST CHILD IN DOM SO TOP OFFSET IS ALWAYS 0mm)
+          1. RECEIPT AREA (FIRST CHILD IN DOM SO TOP OFFSET IS ALWAYS 0mm)
           ===================================================================== */}
       <main
         id="print-main"
@@ -282,30 +274,32 @@ export default function PrintClient() {
             boxSizing: 'border-box',
             margin: 0,
             paddingTop: `${topMarginMm}mm`,
-            paddingRight: '1mm',
+            paddingRight: '1.5mm',
             paddingBottom: `${bottomFeedMm}mm`,
-            paddingLeft: '1mm',
-            fontFamily: "'Courier New', Courier, monospace",
+            paddingLeft: '1.5mm',
+            fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif",
+            fontVariantNumeric: 'tabular-nums',
             color: '#000000',
             backgroundColor: '#ffffff',
-            fontSize: '10px',
-            lineHeight: '1.18',
-            fontWeight: 700,
+            fontSize: '9px',
+            lineHeight: '1.35',
+            fontWeight: 500,
+            letterSpacing: '0.01em',
             height: 'auto',
             minHeight: 0,
             display: 'block',
           }}
         >
-          {/* HEADER TOKO (Langsung mulai di 2mm dari ujung atas kertas) */}
-          <div style={{ textAlign: 'center', marginBottom: '1.5mm', marginTop: 0, paddingTop: 0 }}>
+          {/* HEADER TOKO */}
+          <div style={{ textAlign: 'center', marginBottom: '2mm', marginTop: 0, paddingTop: 0 }}>
             {showLogo && (
-              <div style={{ textAlign: 'center', marginBottom: '1mm', marginTop: 0 }}>
+              <div style={{ textAlign: 'center', marginBottom: '1.2mm', marginTop: 0 }}>
                 <img
                   src={logoToUse}
                   alt="Logo"
                   style={{
-                    height: '8mm',
-                    maxHeight: '8mm',
+                    height: '8.5mm',
+                    maxHeight: '8.5mm',
                     width: 'auto',
                     maxWidth: '34mm',
                     objectFit: 'contain',
@@ -318,10 +312,11 @@ export default function PrintClient() {
             )}
             <div
               style={{
-                fontSize: '12px',
-                fontWeight: 900,
+                fontSize: '10.5px',
+                fontWeight: 800,
                 textTransform: 'uppercase',
-                lineHeight: '1.15',
+                letterSpacing: '0.04em',
+                lineHeight: '1.2',
                 color: '#000000',
                 margin: 0,
                 padding: 0,
@@ -332,14 +327,14 @@ export default function PrintClient() {
             {(headerInfo.address || headerInfo.phone) && (
               <div
                 style={{
-                  fontSize: '9px',
-                  fontWeight: 700,
-                  textTransform: 'uppercase',
+                  fontSize: '8px',
+                  fontWeight: 500,
                   color: '#000000',
-                  marginTop: '0.5mm',
+                  marginTop: '0.6mm',
+                  lineHeight: '1.25',
                 }}
               >
-                {headerInfo.address} {headerInfo.phone && `(Tlp. ${headerInfo.phone})`}
+                {headerInfo.address} {headerInfo.phone && `• ${headerInfo.phone}`}
               </div>
             )}
           </div>
@@ -349,47 +344,77 @@ export default function PrintClient() {
             style={{
               borderTop: '1px dashed #000000',
               borderBottom: '1px dashed #000000',
-              paddingTop: '1.2mm',
-              paddingBottom: '1.2mm',
-              marginTop: '1.2mm',
-              marginBottom: '1.2mm',
-              fontSize: '9px',
+              paddingTop: '1.5mm',
+              paddingBottom: '1.5mm',
+              marginTop: '1.5mm',
+              marginBottom: '1.8mm',
+              fontSize: '8.5px',
+              lineHeight: '1.4',
               color: '#000000',
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>NO STRUK:</span>
-              <span style={{ fontWeight: 900 }}>{trx.id}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+              <span style={{ fontWeight: 500 }}>No. Struk</span>
+              <span style={{ fontWeight: 700 }}>{trx.id}</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.6mm' }}>
-              <span>TANGGAL:</span>
-              <span>{trx.date?.toDate?.()?.toLocaleString('id-ID') || 'Baru'}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: '0.4mm' }}>
+              <span style={{ fontWeight: 500 }}>Tanggal</span>
+              <span style={{ fontWeight: 500 }}>{trx.date?.toDate?.()?.toLocaleString('id-ID') || 'Baru'}</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.6mm' }}>
-              <span>KASIR:</span>
-              <span style={{ fontWeight: 900 }}>{activeCashierName}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: '0.4mm' }}>
+              <span style={{ fontWeight: 500 }}>Kasir</span>
+              <span style={{ fontWeight: 600 }}>{activeCashierName}</span>
             </div>
             <div
               style={{
-                borderTop: '1px dashed #000000',
-                paddingTop: '0.8mm',
-                marginTop: '0.8mm',
                 display: 'flex',
                 justifyContent: 'space-between',
-                fontWeight: 900,
+                alignItems: 'baseline',
+                marginTop: '0.4mm',
               }}
             >
-              <span>CUSTOMER:</span>
-              <span style={{ textTransform: 'uppercase' }}>{trx.customerName || 'UMUM'}</span>
+              <span style={{ fontWeight: 500 }}>Pelanggan</span>
+              <span style={{ fontWeight: 700, textTransform: 'uppercase' }}>{trx.customerName || 'UMUM'}</span>
             </div>
+            {returnSummary.isDpTransaction && (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'baseline',
+                  marginTop: '0.4mm',
+                }}
+              >
+                <span style={{ fontWeight: 500 }}>Jenis Transaksi</span>
+                <span style={{ fontWeight: 800 }}>
+                  {returnSummary.effectiveStatus === 'DP' ? 'DP (BELUM LUNAS)' : 'DP • LUNAS'}
+                </span>
+              </div>
+            )}
           </div>
 
-          {/* DAFTAR ITEM */}
-          <div style={{ marginBottom: '1.2mm', color: '#000000' }}>
+          {/* DAFTAR ITEM & DETAIL RETUR / TUKAR BARANG */}
+          <div style={{ marginBottom: '1.8mm', color: '#000000' }}>
+            {returnSummary.hasReturn && (
+              <div
+                style={{
+                  fontSize: '8px',
+                  fontWeight: 800,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.03em',
+                  marginBottom: '1.2mm',
+                  paddingBottom: '0.5mm',
+                  borderBottom: '1px dotted #000000',
+                }}
+              >
+                1. BARANG TRANSAKSI AWAL
+              </div>
+            )}
             {consolidatedItems.map((item: any, i: number) => {
               const labelPrice = item.labelPrice || item.price;
               const totalDisc = item.totalNominalDisc || 0;
               const totalLabelPrice = labelPrice * item.quantity;
+              const lineNetTotal = Math.max(0, totalLabelPrice - totalDisc);
               const effectiveDiscPct = totalLabelPrice > 0 ? Math.round((totalDisc / totalLabelPrice) * 100) : 0;
               const isLast = i === consolidatedItems.length - 1;
 
@@ -397,18 +422,24 @@ export default function PrintClient() {
                 <div
                   key={i}
                   style={{
-                    paddingBottom: isLast ? '0.5mm' : '1.2mm',
-                    marginBottom: isLast ? 0 : '1.2mm',
-                    borderBottom: isLast ? 'none' : '1px dashed #000000',
+                    marginBottom: isLast ? 0 : '1.6mm',
+                    paddingBottom: 0,
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '4px' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'flex-start',
+                      gap: '6px',
+                    }}
+                  >
                     <span
                       style={{
-                        fontWeight: 900,
+                        fontWeight: 700,
                         textTransform: 'uppercase',
-                        lineHeight: '1.15',
-                        fontSize: '9.5px',
+                        lineHeight: '1.25',
+                        fontSize: '9px',
                         flex: 1,
                         color: '#000000',
                       }}
@@ -417,79 +448,281 @@ export default function PrintClient() {
                     </span>
                     <span
                       style={{
-                        fontWeight: 900,
-                        fontSize: '9.5px',
+                        fontWeight: 700,
+                        fontSize: '9px',
                         whiteSpace: 'nowrap',
                         textAlign: 'right',
                         color: '#000000',
                       }}
                     >
-                      Rp{labelPrice.toLocaleString('id-ID')}
+                      Rp{(returnSummary.hasReturn ? lineNetTotal : totalLabelPrice).toLocaleString('id-ID')}
                     </span>
                   </div>
                   <div
                     style={{
-                      fontSize: '8.5px',
-                      fontStyle: 'italic',
-                      fontWeight: 700,
+                      fontSize: '8px',
+                      fontWeight: 500,
                       color: '#000000',
-                      marginTop: '0.4mm',
+                      marginTop: '0.3mm',
+                      lineHeight: '1.3',
                     }}
                   >
-                    {item.series || item.category} | {item.size} | {item.quantity}x @Rp
-                    {labelPrice.toLocaleString('id-ID')}
-                    {totalDisc > 0 && ` (disc ${effectiveDiscPct}% | Rp${totalDisc.toLocaleString('id-ID')})`}
+                    {item.quantity} x Rp{labelPrice.toLocaleString('id-ID')}
+                    {item.color ? ` • ${item.color}` : ''}
+                    {item.size ? ` (${item.size})` : ''}
+                    {totalDisc > 0 && ` • Disc ${effectiveDiscPct}% (-Rp${totalDisc.toLocaleString('id-ID')})`}
                   </div>
                 </div>
               );
             })}
+
+            {/* BAGIAN 2: BARANG YANG DIRETUR */}
+            {returnSummary.hasReturn && (
+              <div
+                style={{
+                  marginTop: '2mm',
+                  paddingTop: '1.4mm',
+                  borderTop: '1px dashed #000000',
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: '8px',
+                    fontWeight: 800,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.03em',
+                    marginBottom: '1.2mm',
+                    paddingBottom: '0.5mm',
+                    borderBottom: '1px dotted #000000',
+                  }}
+                >
+                  2. BARANG YANG DIRETUR (-)
+                </div>
+                {(trx.returnLog?.items || []).map((item: any, idx: number) => {
+                  const unitNet = getItemUnitNetPrice(item);
+                  const qty = Number(item.quantity || 1);
+                  const lineRefund = unitNet * qty;
+                  const isLast = idx === (trx.returnLog?.items?.length || 1) - 1;
+                  return (
+                    <div key={idx} style={{ marginBottom: isLast ? 0 : '1.4mm' }}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'flex-start',
+                          gap: '6px',
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontWeight: 700,
+                            textTransform: 'uppercase',
+                            lineHeight: '1.25',
+                            fontSize: '8.5px',
+                            flex: 1,
+                          }}
+                        >
+                          {item.name}
+                        </span>
+                        <span
+                          style={{
+                            fontWeight: 700,
+                            fontSize: '8.5px',
+                            whiteSpace: 'nowrap',
+                            textAlign: 'right',
+                          }}
+                        >
+                          -Rp{lineRefund.toLocaleString('id-ID')}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '7.5px', fontWeight: 500, marginTop: '0.2mm' }}>
+                        {qty} x Rp{unitNet.toLocaleString('id-ID')}
+                        {item.color ? ` • ${item.color}` : ''}
+                        {item.size ? ` (${item.size})` : ''}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* BAGIAN 3: BARANG TUKAR / PENGGANTI DARI RETUR */}
+            {returnSummary.hasExchange && (
+              <div
+                style={{
+                  marginTop: '2mm',
+                  paddingTop: '1.4mm',
+                  borderTop: '1px dashed #000000',
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: '8px',
+                    fontWeight: 800,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.03em',
+                    marginBottom: '1.2mm',
+                    paddingBottom: '0.5mm',
+                    borderBottom: '1px dotted #000000',
+                  }}
+                >
+                  3. BARANG PENGGANTI / TUKAR (+)
+                </div>
+                {returnSummary.exchangeItems.map((item: any, idx: number) => {
+                  const unitNet = getItemUnitNetPrice(item);
+                  const labelPrice = Number(item.labelPrice || item.price || unitNet);
+                  const qty = Number(item.quantity || 1);
+                  const lineNet = unitNet * qty;
+                  const totalDisc = Math.max(0, labelPrice - unitNet) * qty;
+                  const isLast = idx === returnSummary.exchangeItems.length - 1;
+                  return (
+                    <div key={idx} style={{ marginBottom: isLast ? 0 : '1.4mm' }}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'flex-start',
+                          gap: '6px',
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontWeight: 700,
+                            textTransform: 'uppercase',
+                            lineHeight: '1.25',
+                            fontSize: '8.5px',
+                            flex: 1,
+                          }}
+                        >
+                          {item.name}
+                        </span>
+                        <span
+                          style={{
+                            fontWeight: 700,
+                            fontSize: '8.5px',
+                            whiteSpace: 'nowrap',
+                            textAlign: 'right',
+                          }}
+                        >
+                          +Rp{lineNet.toLocaleString('id-ID')}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '7.5px', fontWeight: 500, marginTop: '0.2mm' }}>
+                        {qty} x Rp{labelPrice.toLocaleString('id-ID')}
+                        {item.color ? ` • ${item.color}` : ''}
+                        {item.size ? ` (${item.size})` : ''}
+                        {totalDisc > 0 ? ` • Disc -Rp${totalDisc.toLocaleString('id-ID')}` : ''}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
-          {/* RINGKASAN PEMBAYARAN */}
+          {/* RINGKASAN PEMBAYARAN & PERHITUNGAN SELISIH RETUR */}
           <div
             style={{
               borderTop: '1px dashed #000000',
-              paddingTop: '1.2mm',
+              paddingTop: '1.5mm',
               color: '#000000',
-              fontSize: '9px',
+              fontSize: '8.5px',
+              lineHeight: '1.45',
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700 }}>
-              <span>JUMLAH QTY</span>
-              <span>{totalQty} PCS</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, marginTop: '0.6mm' }}>
-              <span>SUBTOTAL (HARGA LABEL)</span>
-              <span>Rp{trx.subtotalLabel?.toLocaleString('id-ID')}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, marginTop: '0.6mm' }}>
-              <span>TOTAL POTONGAN</span>
-              <span>-Rp{trx.totalDiscount?.toLocaleString('id-ID')}</span>
-            </div>
+            {!returnSummary.hasReturn && (
+              <>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 500 }}>
+                  <span>Jumlah Item</span>
+                  <span style={{ fontWeight: 600 }}>{totalQty} Pcs</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 500, marginTop: '0.3mm' }}>
+                  <span>Subtotal</span>
+                  <span style={{ fontWeight: 600 }}>Rp{trx.subtotalLabel?.toLocaleString('id-ID')}</span>
+                </div>
+                {(trx.totalDiscount || 0) > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 500, marginTop: '0.3mm' }}>
+                    <span>Total Diskon</span>
+                    <span style={{ fontWeight: 600 }}>-Rp{trx.totalDiscount?.toLocaleString('id-ID')}</span>
+                  </div>
+                )}
+              </>
+            )}
 
             {returnSummary.hasReturn ? (
               <>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, marginTop: '0.6mm' }}>
-                  <span>TAGIHAN AWAL</span>
-                  <span>Rp{returnSummary.originalTotal.toLocaleString('id-ID')}</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 500 }}>
+                  <span>Total Transaksi Awal</span>
+                  <span style={{ fontWeight: 600 }}>Rp{returnSummary.originalTotal.toLocaleString('id-ID')}</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, marginTop: '0.6mm' }}>
-                  <span>TOTAL RETUR</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, marginTop: '0.3mm' }}>
+                  <span>Nilai Barang Diretur (-)</span>
                   <span>-Rp{returnSummary.totalRefund.toLocaleString('id-ID')}</span>
                 </div>
+                {returnSummary.hasExchange && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, marginTop: '0.3mm' }}>
+                    <span>Nilai Barang Pengganti (+)</span>
+                    <span>+Rp{returnSummary.exchangeTotal.toLocaleString('id-ID')}</span>
+                  </div>
+                )}
+
+                {/* SELISIH TUKAR BARANG (TAMBAH BAYAR ATAU SISA KEMBALI) */}
+                <div
+                  style={{
+                    borderTop: '1px dotted #000000',
+                    paddingTop: '0.9mm',
+                    marginTop: '0.9mm',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'baseline',
+                    fontSize: '9px',
+                    fontWeight: 800,
+                  }}
+                >
+                  {returnSummary.netExchangeDiff > 0 ? (
+                    <>
+                      <span>TAMBAH BAYAR (KURANG)</span>
+                      <span>+Rp{returnSummary.netExchangeDiff.toLocaleString('id-ID')}</span>
+                    </>
+                  ) : returnSummary.netExchangeDiff < 0 ? (
+                    <>
+                      <span>UANG SISA DIKEMBALIKAN</span>
+                      <span>Rp{Math.abs(returnSummary.netExchangeDiff).toLocaleString('id-ID')}</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>SELISIH TUKAR BARANG</span>
+                      <span>Rp 0 (PAS)</span>
+                    </>
+                  )}
+                </div>
+
+                {returnSummary.netExchangeDiff > 0 && Number(trx.returnLog?.exchangeCashReceived || 0) > 0 && (
+                  <div style={{ fontSize: '8px', marginTop: '0.4mm' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 500 }}>
+                      <span>Tunai Tambahan</span>
+                      <span>Rp{Number(trx.returnLog.exchangeCashReceived).toLocaleString('id-ID')}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600 }}>
+                      <span>Kembalian Tambahan</span>
+                      <span>Rp{Number(trx.returnLog.exchangeCashChange || 0).toLocaleString('id-ID')}</span>
+                    </div>
+                  </div>
+                )}
+
                 <div
                   style={{
                     borderTop: '1px dashed #000000',
-                    paddingTop: '0.8mm',
-                    marginTop: '0.8mm',
+                    paddingTop: '1.2mm',
+                    marginTop: '1.2mm',
                     display: 'flex',
                     justifyContent: 'space-between',
-                    fontSize: '10.5px',
-                    fontWeight: 900,
-                    textTransform: 'uppercase',
+                    alignItems: 'baseline',
+                    fontSize: '10px',
+                    fontWeight: 800,
                   }}
                 >
-                  <span>TOTAL BERSIH</span>
+                  <span>TOTAL AKHIR TRANSAKSI</span>
                   <span>Rp{returnSummary.netTotal.toLocaleString('id-ID')}</span>
                 </div>
               </>
@@ -497,13 +730,13 @@ export default function PrintClient() {
               <div
                 style={{
                   borderTop: '1px dashed #000000',
-                  paddingTop: '0.8mm',
-                  marginTop: '0.8mm',
+                  paddingTop: '1.2mm',
+                  marginTop: '1.2mm',
                   display: 'flex',
                   justifyContent: 'space-between',
-                  fontSize: '10.5px',
-                  fontWeight: 900,
-                  textTransform: 'uppercase',
+                  alignItems: 'baseline',
+                  fontSize: '10px',
+                  fontWeight: 800,
                 }}
               >
                 <span>TOTAL TAGIHAN</span>
@@ -511,41 +744,170 @@ export default function PrintClient() {
               </div>
             )}
 
-            {trx.paymentMethod?.includes('CASH') && trx.cashReceived > 0 && (
+            {!returnSummary.isDpTransaction && trx.paymentMethod?.includes('CASH') && trx.cashReceived > 0 && (
               <div
                 style={{
-                  paddingTop: '1mm',
-                  marginTop: '1mm',
+                  paddingTop: '1.2mm',
+                  marginTop: '1.2mm',
                   borderTop: '1px dashed #000000',
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700 }}>
-                  <span>DIBAYAR CASH</span>
-                  <span>Rp{trx.cashReceived.toLocaleString('id-ID')}</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 500 }}>
+                  <span>Tunai</span>
+                  <span style={{ fontWeight: 600 }}>Rp{trx.cashReceived.toLocaleString('id-ID')}</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 900, marginTop: '0.5mm' }}>
-                  <span>KEMBALIAN</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, marginTop: '0.4mm' }}>
+                  <span>Kembalian</span>
                   <span>Rp{trx.cashChange.toLocaleString('id-ID')}</span>
                 </div>
               </div>
             )}
 
-            {returnSummary.effectiveStatus === 'DP' && (
+            {/* RINCIAN KHUSUS TRANSAKSI DP (SEBELUM LUNAS MAUPUN SAAT PELUNASAN) */}
+            {returnSummary.isDpTransaction && (
               <div
                 style={{
-                  paddingTop: '1mm',
-                  marginTop: '1mm',
+                  paddingTop: '1.4mm',
+                  marginTop: '1.4mm',
                   borderTop: '1px dashed #000000',
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700 }}>
-                  <span>TOTAL SUDAH DIBAYAR</span>
-                  <span>Rp{returnSummary.netPaid.toLocaleString('id-ID')}</span>
+                <div
+                  style={{
+                    fontSize: '8px',
+                    fontWeight: 800,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.03em',
+                    marginBottom: '1mm',
+                    paddingBottom: '0.4mm',
+                    borderBottom: '1px dotted #000000',
+                  }}
+                >
+                  {returnSummary.effectiveStatus === 'DP'
+                    ? 'RINCIAN PEMBAYARAN DP'
+                    : 'RIWAYAT DP & PELUNASAN'}
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 900, marginTop: '0.5mm' }}>
-                  <span>SISA PELUNASAN</span>
-                  <span>Rp{returnSummary.netRemaining.toLocaleString('id-ID')}</span>
-                </div>
+
+                {/* Daftar Pembayaran DP Sebelumnya Lengkap dengan Tanggal */}
+                {returnSummary.previousDpStages.map((st) => (
+                  <div
+                    key={st.index}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'baseline',
+                      fontWeight: 500,
+                      marginTop: '0.3mm',
+                    }}
+                  >
+                    <span>
+                      {st.label} ({st.dateStr})
+                    </span>
+                    <span style={{ fontWeight: 600 }}>Rp{st.amount.toLocaleString('id-ID')}</span>
+                  </div>
+                ))}
+
+                {returnSummary.previousDpStages.length > 1 && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'baseline',
+                      fontWeight: 600,
+                      marginTop: '0.5mm',
+                      paddingTop: '0.5mm',
+                      borderTop: '1px dotted #000000',
+                    }}
+                  >
+                    <span>
+                      {returnSummary.effectiveStatus === 'DP' ? 'Total DP Masuk' : 'Total DP Sebelumnya'}
+                    </span>
+                    <span>Rp{returnSummary.previousDpTotal.toLocaleString('id-ID')}</span>
+                  </div>
+                )}
+
+                {/* Jika Sudah Lunas: Tampilkan Pelunasan Kekurangan Bayar + Tanggal */}
+                {returnSummary.settlementStage && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'baseline',
+                      fontWeight: 800,
+                      fontSize: '9px',
+                      marginTop: '0.7mm',
+                      paddingTop: '0.7mm',
+                      borderTop: '1px dotted #000000',
+                    }}
+                  >
+                    <span>Pelunasan ({returnSummary.settlementStage.dateStr})</span>
+                    <span>Rp{returnSummary.settlementStage.amount.toLocaleString('id-ID')}</span>
+                  </div>
+                )}
+
+                {/* Status Akhir DP: Kekurangan Bayar (Sebelum Lunas) atau Lunas (Setelah Pelunasan) */}
+                {returnSummary.effectiveStatus === 'DP' ? (
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'baseline',
+                      fontWeight: 800,
+                      fontSize: '9.5px',
+                      marginTop: '0.9mm',
+                      paddingTop: '0.9mm',
+                      borderTop: '1px dashed #000000',
+                    }}
+                  >
+                    <span>KEKURANGAN BAYAR</span>
+                    <span>Rp{returnSummary.netRemaining.toLocaleString('id-ID')}</span>
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      marginTop: '0.9mm',
+                      paddingTop: '0.9mm',
+                      borderTop: '1px dashed #000000',
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'baseline',
+                        fontWeight: 700,
+                      }}
+                    >
+                      <span>Total Dibayar</span>
+                      <span>Rp{returnSummary.netPaid.toLocaleString('id-ID')}</span>
+                    </div>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'baseline',
+                        fontWeight: 800,
+                        fontSize: '9px',
+                        marginTop: '0.3mm',
+                      }}
+                    >
+                      <span>KEKURANGAN BAYAR</span>
+                      <span>Rp0 (LUNAS)</span>
+                    </div>
+                    {trx.paymentMethod?.includes('CASH') && trx.cashReceived > 0 && (
+                      <div style={{ fontSize: '8px', marginTop: '0.5mm' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 500 }}>
+                          <span>Tunai Pelunasan</span>
+                          <span>Rp{trx.cashReceived.toLocaleString('id-ID')}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600 }}>
+                          <span>Kembalian</span>
+                          <span>Rp{trx.cashChange.toLocaleString('id-ID')}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -554,32 +916,42 @@ export default function PrintClient() {
           <div
             style={{
               textAlign: 'center',
-              marginTop: '1.5mm',
-              fontSize: '8px',
-              fontWeight: 700,
+              marginTop: '2.2mm',
+              paddingTop: '1.5mm',
+              borderTop: '1px dashed #000000',
               color: '#000000',
             }}
           >
-            <div style={{ fontWeight: 900, fontSize: '9px' }}>*** TERIMA KASIH ***</div>
-            <div style={{ marginTop: '0.5mm' }}>BARANG YANG SUDAH DIBELI TIDAK DAPAT DITUKAR/DIKEMBALIKAN</div>
+            <div style={{ fontWeight: 700, fontSize: '8.5px', letterSpacing: '0.03em' }}>
+              Terima Kasih atas Kunjungan Anda
+            </div>
+            <div
+              style={{
+                marginTop: '0.6mm',
+                fontSize: '7.5px',
+                fontWeight: 500,
+                lineHeight: '1.3',
+              }}
+            >
+              Barang yang sudah dibeli tidak dapat ditukar atau dikembalikan
+            </div>
           </div>
 
           {/* STOPER AKHIR STRUK */}
           <div
             id="receipt-stopper"
             style={{
-              marginTop: '1mm',
-              paddingTop: '0.8mm',
-              borderTop: '1px dashed #000000',
+              marginTop: '1.2mm',
+              paddingTop: '0.5mm',
               textAlign: 'center',
               fontSize: '8px',
-              fontWeight: 900,
-              letterSpacing: '2px',
+              fontWeight: 600,
+              letterSpacing: '3px',
               lineHeight: 1,
               color: '#000000',
             }}
           >
-            -----
+            • • •
           </div>
         </div>
       </main>
@@ -610,7 +982,7 @@ export default function PrintClient() {
             <div>
               <h2 className="font-serif text-2xl font-bold tracking-tight text-white">Cetak Struk Thermal</h2>
               <p className="text-xs text-neutral-400 mt-1">
-                Struk berada di urutan #1 DOM (koordinat 0,0) — langsung mencetak mulai 2mm dari ujung atas kertas.
+                Tipografi modern bersih &amp; lega — mudah dibaca dan langsung mencetak mulai 2mm dari ujung atas kertas.
               </p>
             </div>
 
@@ -705,7 +1077,7 @@ export default function PrintClient() {
                   showLogo ? 'bg-[#C82368] text-white' : 'bg-neutral-800 text-neutral-400'
                 }`}
               >
-                {showLogo ? 'AKTIF' : 'NONAKTIF (MULAI TEKS 2MM)'}
+                {showLogo ? 'AKTIF' : 'NONAKTIF'}
               </button>
             </div>
 
@@ -836,7 +1208,7 @@ export default function PrintClient() {
                 width: ${printableWidthMm}mm !important;
                 max-width: ${printableWidthMm}mm !important;
                 margin: 0mm !important;
-                padding: ${topMarginMm}mm 1mm ${bottomFeedMm}mm 1mm !important;
+                padding: ${topMarginMm}mm 1.5mm ${bottomFeedMm}mm 1.5mm !important;
                 box-sizing: border-box !important;
                 box-shadow: none !important;
                 border: none !important;

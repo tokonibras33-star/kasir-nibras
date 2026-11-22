@@ -26,9 +26,9 @@ export function initializeFirebase() {
 export function getSdks(firebaseApp: FirebaseApp) {
   if (!firestoreInstance) {
     try {
-      // Mengaktifkan long polling untuk stabilitas maksimal di lingkungan cloud/proxy
+      // Mengaktifkan auto-detect long polling agar streaming cepat di jaringan normal & tetap stabil di jaringan proxy
       firestoreInstance = initializeFirestore(firebaseApp, {
-        experimentalForceLongPolling: true,
+        experimentalAutoDetectLongPolling: true,
       });
     } catch (e) {
       // Fallback jika instance sudah ada atau terjadi kegagalan inisialisasi eksplisit

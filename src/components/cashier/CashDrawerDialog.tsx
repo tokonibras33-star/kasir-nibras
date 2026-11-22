@@ -104,7 +104,12 @@ export function CashDrawerDialog({
   const handlePrintAudit = async () => {
     try {
       const { jsPDF } = await import("jspdf");
-      await import("jspdf-autotable");
+      const { applyPlugin } = await import("jspdf-autotable");
+      try {
+        applyPlugin(jsPDF);
+      } catch {
+        // Ignore if already registered
+      }
       const docPdf = new jsPDF();
       docPdf.text(`AUDIT KAS KASIR - ${displayStoreName}`, 105, 14, { align: "center" });
       docPdf.setFontSize(10);

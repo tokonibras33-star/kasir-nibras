@@ -10,10 +10,10 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['Inter', 'sans-serif'],
-        headline: ['Inter', 'sans-serif'],
-        serif: ['Playfair Display', 'Cormorant Garamond', 'Georgia', 'serif'],
-        editorial: ['Cormorant Garamond', 'Playfair Display', 'Georgia', 'serif'],
+        body: ['var(--font-inter)', 'Inter', 'sans-serif'],
+        headline: ['var(--font-inter)', 'Inter', 'sans-serif'],
+        serif: ['var(--font-playfair)', 'Playfair Display', 'Georgia', 'serif'],
+        editorial: ['var(--font-playfair)', 'Playfair Display', 'Georgia', 'serif'],
         code: ['monospace'],
       },
       colors: {

@@ -220,11 +220,11 @@ export function CashierActionDialogs({
           <DialogHeader className="p-6 sm:p-7 bg-neutral-950 text-white shrink-0 flex flex-row items-center justify-between gap-3">
             <div>
               <DialogTitle className="font-serif text-xl sm:text-2xl font-bold flex items-center gap-3">
-                <RotateCcw className="h-5 w-5 text-[#F48FB1]" /> Retur Barang
+                <RotateCcw className="h-5 w-5 text-[#F48FB1]" /> Retur &amp; Tukar Barang
               </DialogTitle>
               {trxForReturn && (
                 <p className="text-[10px] font-bold text-white/60 mt-1 uppercase tracking-widest">
-                  {trxForReturn.id} • {trxForReturn.customerName || "UMUM"}
+                  {trxForReturn.id} • {trxForReturn.customerName || "UMUM"} • Wajib Pilih Barang Pengganti
                 </p>
               )}
             </div>
@@ -331,20 +331,25 @@ export function CashierActionDialogs({
                   )}
                 </div>
                 <DialogFooter className="p-5 sm:p-6 bg-white border-t border-neutral-200/70 flex flex-col sm:flex-col gap-3">
-                  <div className="w-full flex items-center justify-between px-4 py-3 rounded-2xl bg-rose-50 border border-rose-100">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-rose-700">
-                      Estimasi Pengembalian Dana ({totalSelectedQty} pcs)
-                    </span>
-                    <span className="font-serif text-lg font-bold text-rose-700">
-                      Rp {estimatedRefund.toLocaleString("id-ID")}
-                    </span>
+                  <div className="w-full flex flex-col gap-1 px-4 py-3 rounded-2xl bg-rose-50 border border-rose-100">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-rose-700">
+                        Nilai Kredit Barang Diretur ({totalSelectedQty} pcs)
+                      </span>
+                      <span className="font-serif text-lg font-bold text-rose-700">
+                        Rp {estimatedRefund.toLocaleString("id-ID")}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-rose-600/80 font-medium">
+                      Setelah klik tombol di bawah, pilih barang pengganti di katalog kasir. Jika harga melebihi nilai retur maka tambah bayar, jika sisa maka uang dikembalikan.
+                    </p>
                   </div>
                   <Button
                     className="w-full h-12 rounded-full font-black bg-[#C82368] hover:bg-neutral-950 uppercase tracking-widest text-white shadow-lg transition-all"
                     disabled={isProcessing || totalSelectedQty === 0}
                     onClick={onConfirmReturn}
                   >
-                    {isProcessing ? <Loader2 className="animate-spin h-5 w-5" /> : "KONFIRMASI RETUR"}
+                    {isProcessing ? <Loader2 className="animate-spin h-5 w-5" /> : "LANJUT PILIH BARANG PENGGANTI →"}
                   </Button>
                 </DialogFooter>
               </>

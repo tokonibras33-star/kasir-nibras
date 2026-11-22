@@ -20,6 +20,13 @@ export interface CartItem {
   stock: number;
 }
 
+export interface ExchangeReturnSession {
+  trx: any;
+  returnedItems: any[];
+  returnedQtyMap: Record<string, number>;
+  returnCreditAmount: number;
+}
+
 export interface Member {
   id: string;
   name: string;
@@ -120,10 +127,30 @@ export const getItemUnitNetPrice = (item: any): number => {
   return Math.max(0, Number(item.price ?? labelPrice));
 };
 
+export interface DpStageItem {
+  index: number;
+  label: string;
+  isSettlement: boolean;
+  dateStr: string;
+  timeStr: string;
+  amount: number;
+  method?: string;
+}
+
 export interface TrxReturnSummary {
   hasReturn: boolean;
+  hasExchange: boolean;
   isDeducted: boolean;
+  isDpTransaction: boolean;
+  dpStages: DpStageItem[];
+  previousDpStages: DpStageItem[];
+  previousDpTotal: number;
+  settlementStage: DpStageItem | null;
   totalRefund: number;
+  exchangeItems: any[];
+  exchangeTotal: number;
+  additionalPaid: number;
+  netExchangeDiff: number;
   originalTotal: number;
   netTotal: number;
   originalPaid: number;
@@ -139,12 +166,34 @@ export interface TrxReturnSummary {
   returnableItems: any[];
 }
 
+export const formatDpDate = (rawDate?: string, fallbackTimestamp?: any): string => {
+  if (rawDate && /^\d{4}-\d{2}-\d{2}$/.test(rawDate.trim())) {
+    const [y, m, d] = rawDate.trim().split("-");
+    return `${d}/${m}/${y}`;
+  }
+  if (rawDate && rawDate.trim()) return rawDate.trim();
+  if (fallbackTimestamp?.toDate) {
+    return fallbackTimestamp.toDate().toLocaleDateString("id-ID");
+  }
+  return "-";
+};
+
 export const getTrxReturnSummary = (trx: any): TrxReturnSummary => {
   if (!trx) {
     return {
       hasReturn: false,
+      hasExchange: false,
       isDeducted: false,
+      isDpTransaction: false,
+      dpStages: [],
+      previousDpStages: [],
+      previousDpTotal: 0,
+      settlementStage: null,
       totalRefund: 0,
+      exchangeItems: [],
+      exchangeTotal: 0,
+      additionalPaid: 0,
+      netExchangeDiff: 0,
       originalTotal: 0,
       netTotal: 0,
       originalPaid: 0,
@@ -162,7 +211,9 @@ export const getTrxReturnSummary = (trx: any): TrxReturnSummary => {
   }
 
   const returnItems: any[] = Array.isArray(trx.returnLog?.items) ? trx.returnLog.items : [];
+  const exchangeItems: any[] = Array.isArray(trx.returnLog?.exchangeItems) ? trx.returnLog.exchangeItems : [];
   const hasReturn = returnItems.length > 0;
+  const hasExchange = exchangeItems.length > 0;
   const isDeducted = Boolean(trx.returnLog?.isDeductedFromTotal);
 
   const returnedQtyMap: Record<string, number> = {};
@@ -174,7 +225,17 @@ export const getTrxReturnSummary = (trx: any): TrxReturnSummary => {
     computedRefund += getItemUnitNetPrice(item) * qty;
   });
 
+  let computedExchangeTotal = 0;
+  exchangeItems.forEach((item: any) => {
+    const qty = Number(item.quantity || 1);
+    computedExchangeTotal += getItemUnitNetPrice(item) * qty;
+  });
+
   const totalRefund = hasReturn ? Number(trx.returnLog?.totalRefund ?? computedRefund) : 0;
+  const exchangeTotal = hasExchange ? Number(trx.returnLog?.exchangeTotal ?? computedExchangeTotal) : 0;
+  const netExchangeDiff = hasReturn ? exchangeTotal - totalRefund : 0;
+  const additionalPaid = hasReturn ? Number(trx.returnLog?.additionalPaid ?? Math.max(0, netExchangeDiff)) : 0;
+
   const rawTotal = Number(trx.total || 0);
   const rawPaid = Number(trx.paidAmount ?? rawTotal);
 
@@ -182,22 +243,27 @@ export const getTrxReturnSummary = (trx: any): TrxReturnSummary => {
     trx.originalTotal !== undefined
       ? Number(trx.originalTotal)
       : isDeducted
-      ? rawTotal + totalRefund
+      ? Math.max(0, rawTotal + totalRefund - exchangeTotal)
       : rawTotal;
 
-  const netTotal = isDeducted ? Math.max(0, rawTotal) : Math.max(0, originalTotal - totalRefund);
+  const netTotal = isDeducted
+    ? Math.max(0, rawTotal)
+    : Math.max(0, originalTotal - totalRefund + exchangeTotal);
 
   const originalPaid =
     trx.originalPaidAmount !== undefined
       ? Number(trx.originalPaidAmount)
       : isDeducted
-      ? rawPaid + Number(trx.returnLog?.refundFromPaid ?? 0)
+      ? Math.max(0, rawPaid + Number(trx.returnLog?.refundFromPaid ?? 0) - additionalPaid)
       : rawPaid;
 
-  const netPaid = isDeducted ? Math.max(0, Math.min(rawPaid, netTotal)) : Math.max(0, Math.min(originalPaid, netTotal));
+  const netPaid = isDeducted
+    ? Math.max(0, Math.min(rawPaid, netTotal))
+    : Math.max(0, Math.min(originalPaid + additionalPaid, netTotal));
+
   const refundFromPaid = isDeducted
-    ? Number(trx.returnLog?.refundFromPaid ?? Math.max(0, originalPaid - netPaid))
-    : Math.max(0, originalPaid - netPaid);
+    ? Number(trx.returnLog?.refundFromPaid ?? Math.max(0, originalPaid + additionalPaid - netPaid))
+    : Math.max(0, originalPaid + additionalPaid - netPaid);
 
   let cashRefunded = 0;
   let transferRefunded = 0;
@@ -231,24 +297,38 @@ export const getTrxReturnSummary = (trx: any): TrxReturnSummary => {
     ? trx.items
     : [];
 
-  const returnableItems = sourceItems
-    .map((item: any) => {
-      const key = `${item.productId}-${item.variantId}`;
-      const alreadyReturned = returnedQtyMap[key] || 0;
-      const origQty = Number(item.quantity || 0);
-      const remainingQty = isDeducted && !trx.originalItems ? origQty : Math.max(0, origQty - alreadyReturned);
-      if (remainingQty <= 0) return null;
-      return {
-        ...item,
-        originalQuantity: origQty,
-        alreadyReturnedQuantity: alreadyReturned,
-        quantity: remainingQty,
-      };
-    })
-    .filter(Boolean);
+  const returnableItems =
+    isDeducted && Array.isArray(trx.items)
+      ? trx.items
+          .filter((item: any) => Number(item?.quantity || 0) > 0)
+          .map((item: any) => {
+            const key = `${item.productId}-${item.variantId}`;
+            return {
+              ...item,
+              originalQuantity: Number(item.originalQuantity || item.quantity || 0),
+              alreadyReturnedQuantity: returnedQtyMap[key] || 0,
+              quantity: Number(item.quantity || 0),
+            };
+          })
+      : sourceItems
+          .map((item: any) => {
+            const key = `${item.productId}-${item.variantId}`;
+            const alreadyReturned = returnedQtyMap[key] || 0;
+            const origQty = Number(item.quantity || 0);
+            const remainingQty = Math.max(0, origQty - alreadyReturned);
+            if (remainingQty <= 0) return null;
+            return {
+              ...item,
+              originalQuantity: origQty,
+              alreadyReturnedQuantity: alreadyReturned,
+              quantity: remainingQty,
+            };
+          })
+          .filter(Boolean);
 
   const allReturned =
-    trx.status === "RETURNED" || (hasReturn && (netTotal === 0 || returnableItems.length === 0));
+    !hasExchange &&
+    (trx.status === "RETURNED" || (hasReturn && (netTotal === 0 || returnableItems.length === 0)));
 
   const effectiveStatus: "RETURNED" | "DP" | "COMPLETED" = allReturned
     ? "RETURNED"
@@ -256,10 +336,72 @@ export const getTrxReturnSummary = (trx: any): TrxReturnSummary => {
     ? "DP"
     : "COMPLETED";
 
+  const rawPaymentHistory: any[] = Array.isArray(trx.paymentHistory) ? trx.paymentHistory : [];
+  const dpPaymentEntries = rawPaymentHistory.filter((p) => p?.note !== "TAMBAH BAYAR TUKAR RETUR");
+
+  const isDpTransaction = Boolean(
+    trx.isDpTransaction ||
+      trx.status === "DP" ||
+      effectiveStatus === "DP" ||
+      trx.settledAt != null ||
+      dpPaymentEntries.length > 1 ||
+      (dpPaymentEntries.length === 1 && String(dpPaymentEntries[0]?.type || "").toUpperCase().startsWith("DP"))
+  );
+
+  let dpStages: DpStageItem[] = [];
+  if (isDpTransaction) {
+    if (dpPaymentEntries.length > 0) {
+      const isFullySettled = effectiveStatus === "COMPLETED" && netRemaining === 0;
+      dpStages = dpPaymentEntries.map((entry: any, idx: number) => {
+        const isLast = idx === dpPaymentEntries.length - 1;
+        const isSettlement =
+          isFullySettled &&
+          isLast &&
+          (dpPaymentEntries.length > 1 || String(entry?.type || "").toUpperCase() === "PELUNASAN");
+        const label = isSettlement ? "PELUNASAN" : `DP ${idx + 1}`;
+        return {
+          index: idx + 1,
+          label,
+          isSettlement,
+          dateStr: formatDpDate(entry?.date, trx.date),
+          timeStr: entry?.time ? String(entry.time).slice(0, 5) : "",
+          amount: Number(entry?.amount || 0),
+          method: entry?.method || trx.paymentMethod || "CASH",
+        };
+      });
+    } else {
+      dpStages = [
+        {
+          index: 1,
+          label: "DP 1",
+          isSettlement: false,
+          dateStr: formatDpDate(undefined, trx.date),
+          timeStr: "",
+          amount: netPaid,
+          method: trx.paymentMethod || "CASH",
+        },
+      ];
+    }
+  }
+
+  const previousDpStages = dpStages.filter((s) => !s.isSettlement);
+  const previousDpTotal = previousDpStages.reduce((sum, s) => sum + s.amount, 0);
+  const settlementStage = dpStages.find((s) => s.isSettlement) || null;
+
   return {
     hasReturn,
+    hasExchange,
     isDeducted,
+    isDpTransaction,
+    dpStages,
+    previousDpStages,
+    previousDpTotal,
+    settlementStage,
     totalRefund,
+    exchangeItems,
+    exchangeTotal,
+    additionalPaid,
+    netExchangeDiff,
     originalTotal,
     netTotal,
     originalPaid,
@@ -313,22 +455,78 @@ export const buildReceiptWhatsAppMessage = (
   const returnLines = summary.hasReturn
     ? [
         `--------------------------------`,
-        `*BARANG DIRETUR:*`,
-        ...(trx.returnLog?.items || []).map(
-          (item: any, idx: number) =>
-            `${idx + 1}. ${(item.name || "Produk").toUpperCase()} (${item.quantity}x) = -Rp${(
-              getItemUnitNetPrice(item) * (item.quantity || 1)
-            ).toLocaleString("id-ID")}`
-        ),
-        `*Total Retur:* -Rp${summary.totalRefund.toLocaleString("id-ID")}`,
+        `*2. BARANG YANG DIRETUR:*`,
+        ...(trx.returnLog?.items || []).map((item: any, idx: number) => {
+          const variantInfo = [item.color, item.size].filter(Boolean).join("/");
+          const unitNet = getItemUnitNetPrice(item);
+          return `${idx + 1}. ${(item.name || "Produk").toUpperCase()}${variantInfo ? ` (${variantInfo})` : ""}\n   ${item.quantity}x @Rp${unitNet.toLocaleString("id-ID")} = *-Rp${(unitNet * (item.quantity || 1)).toLocaleString("id-ID")}*`;
+        }),
+        `*Total Nilai Diretur:* -Rp${summary.totalRefund.toLocaleString("id-ID")}`,
       ]
     : [];
 
-  const statusText = summary.allReturned
+  const exchangeLines = summary.hasExchange
+    ? [
+        `--------------------------------`,
+        `*3. BARANG PENGGANTI (TUKAR RETUR):*`,
+        ...summary.exchangeItems.map((item: any, idx: number) => {
+          const labelPrice = item.labelPrice || item.price || 0;
+          const qty = item.quantity || 1;
+          const unitNet = getItemUnitNetPrice(item);
+          const itemDisc = Math.max(0, labelPrice - unitNet) * qty;
+          const variantInfo = [item.color, item.size].filter(Boolean).join("/");
+          const discText = itemDisc > 0 ? ` (Disc Rp${itemDisc.toLocaleString("id-ID")})` : "";
+          return `${idx + 1}. *${(item.name || "Produk").toUpperCase()}*${variantInfo ? ` (${variantInfo})` : ""}\n   ${qty}x @Rp${labelPrice.toLocaleString("id-ID")}${discText} = *+Rp${(unitNet * qty).toLocaleString("id-ID")}*`;
+        }),
+        `*Total Barang Pengganti:* Rp${summary.exchangeTotal.toLocaleString("id-ID")}`,
+      ]
+    : [];
+
+  const diffLines = summary.hasReturn
+    ? [
+        `--------------------------------`,
+        `*RINCIAN PERHITUNGAN RETUR:*`,
+        `Total Transaksi Awal: Rp${summary.originalTotal.toLocaleString("id-ID")}`,
+        `Nilai Barang Diretur: -Rp${summary.totalRefund.toLocaleString("id-ID")}`,
+        summary.hasExchange ? `Nilai Barang Pengganti: +Rp${summary.exchangeTotal.toLocaleString("id-ID")}` : "",
+        summary.netExchangeDiff > 0
+          ? `*TAMBAH BAYAR (KURANG): +Rp${summary.netExchangeDiff.toLocaleString("id-ID")}*`
+          : summary.netExchangeDiff < 0
+          ? `*SISA DIKEMBALIKAN KE PELANGGAN: Rp${Math.abs(summary.netExchangeDiff).toLocaleString("id-ID")}*`
+          : `*SELISIH TUKAR BARANG: Rp 0 (PAS)*`,
+      ]
+    : [];
+
+  const statusText = summary.hasExchange
+    ? `${summary.effectiveStatus} (RETUR & TUKAR BARANG)`
+    : summary.allReturned
     ? "DIRETUR"
+    : summary.isDpTransaction
+    ? summary.effectiveStatus === "DP"
+      ? "DP (BELUM LUNAS)"
+      : "DP • LUNAS (PELUNASAN DP)"
     : summary.hasReturn
     ? `${summary.effectiveStatus} (RETUR SEBAGIAN)`
     : summary.effectiveStatus;
+
+  const dpLines = summary.isDpTransaction
+    ? [
+        `--------------------------------`,
+        summary.effectiveStatus === "DP" ? `*RINCIAN PEMBAYARAN DP:*` : `*RIWAYAT DP & PELUNASAN:*`,
+        ...summary.previousDpStages.map(
+          (st) => `• ${st.label} (${st.dateStr}${st.timeStr ? ` ${st.timeStr}` : ""}): Rp${st.amount.toLocaleString("id-ID")}`
+        ),
+        summary.previousDpStages.length > 1
+          ? `Total DP Masuk: Rp${summary.previousDpTotal.toLocaleString("id-ID")}`
+          : "",
+        summary.settlementStage
+          ? `• *PELUNASAN (${summary.settlementStage.dateStr}${summary.settlementStage.timeStr ? ` ${summary.settlementStage.timeStr}` : ""}): Rp${summary.settlementStage.amount.toLocaleString("id-ID")}*`
+          : "",
+        summary.effectiveStatus === "DP"
+          ? `*KEKURANGAN BAYAR (SISA): Rp${summary.netRemaining.toLocaleString("id-ID")}*`
+          : `*TOTAL DIBAYAR: Rp${summary.netPaid.toLocaleString("id-ID")} (LUNAS)*`,
+      ]
+    : [];
 
   const lines = [
     `*${storeTitle}*`,
@@ -340,25 +538,26 @@ export const buildReceiptWhatsAppMessage = (
     `*Pelanggan:* ${(trx.customerName || "UMUM").toUpperCase()}`,
     `*Status:* ${statusText}`,
     `--------------------------------`,
+    summary.hasReturn ? `*1. BARANG TRANSAKSI AWAL:*` : "",
     ...itemLines,
     ...returnLines,
+    ...exchangeLines,
+    ...diffLines,
     `--------------------------------`,
-    `Jumlah Qty: ${totalQty} pcs`,
-    `Subtotal Label: Rp${(trx.subtotalLabel || 0).toLocaleString("id-ID")}`,
-    (trx.totalDiscount || 0) > 0 ? `Total Potongan: -Rp${trx.totalDiscount.toLocaleString("id-ID")}` : "",
-    summary.hasReturn ? `Total Awal: Rp${summary.originalTotal.toLocaleString("id-ID")}` : "",
-    `*TOTAL TAGIHAN BERSIH: Rp${summary.netTotal.toLocaleString("id-ID")}*`,
+    !summary.hasReturn ? `Jumlah Qty: ${totalQty} pcs` : "",
+    !summary.hasReturn ? `Subtotal Label: Rp${(trx.subtotalLabel || 0).toLocaleString("id-ID")}` : "",
+    !summary.hasReturn && (trx.totalDiscount || 0) > 0
+      ? `Total Potongan: -Rp${trx.totalDiscount.toLocaleString("id-ID")}`
+      : "",
+    `*TOTAL TAGIHAN: Rp${summary.netTotal.toLocaleString("id-ID")}*`,
     `Metode Bayar: ${trx.paymentMethod || "-"}`,
-    trx.paymentMethod?.includes("CASH") && (trx.cashReceived || 0) > 0
+    !summary.isDpTransaction && trx.paymentMethod?.includes("CASH") && (trx.cashReceived || 0) > 0
       ? `Dibayar Tunai: Rp${trx.cashReceived.toLocaleString("id-ID")}\nKembalian: Rp${(trx.cashChange || 0).toLocaleString("id-ID")}`
       : "",
-    summary.effectiveStatus === "DP"
-      ? `Sudah Dibayar: Rp${summary.netPaid.toLocaleString("id-ID")}\n*Sisa Pelunasan: Rp${summary.netRemaining.toLocaleString("id-ID")}*`
-      : "",
+    ...dpLines,
     `--------------------------------`,
     `Terima kasih telah berbelanja di Nibras House.`,
   ];
 
   return lines.filter(Boolean).join("\n");
 };
-

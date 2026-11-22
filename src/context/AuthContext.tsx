@@ -10,14 +10,6 @@ import {
   signOut
 } from "firebase/auth";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
-import { jsPDF } from "jspdf";
-import { applyPlugin } from "jspdf-autotable";
-
-try {
-  applyPlugin(jsPDF);
-} catch {
-  // Ignore if already registered
-}
 
 export type UserRole = "ADMIN" | "OWNER" | "KASIR_TOKO_A" | "KASIR_TOKO_B" | "KASIR_TOKO_C";
 

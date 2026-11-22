@@ -68,7 +68,10 @@ export function TransactionHistorySheet({
 
   const displayedHistory = useMemo(() => {
     let list = showOnlyDP
-      ? history.filter((t) => getTrxReturnSummary(t).effectiveStatus === "DP")
+      ? history.filter((t) => {
+          const s = getTrxReturnSummary(t);
+          return s.isDpTransaction || s.effectiveStatus === "DP";
+        })
       : history;
     const q = searchTrx.trim().toLowerCase();
     if (q) {
@@ -206,13 +209,24 @@ export function TransactionHistorySheet({
                     </div>
                     <div className="flex items-center gap-1 shrink-0 flex-wrap justify-end">
                       {summary.hasReturn && !summary.allReturned && (
-                        <Badge className="bg-rose-100 text-rose-700 text-[8px] font-black border-none px-2 py-0.5 rounded-full">RETUR SEBAGIAN</Badge>
+                        <Badge className="bg-rose-100 text-rose-700 text-[8px] font-black border-none px-2 py-0.5 rounded-full">
+                          {summary.hasExchange ? "RETUR & TUKAR" : "RETUR SEBAGIAN"}
+                        </Badge>
+                      )}
+                      {summary.isDpTransaction && (
+                        <Badge className="bg-orange-100 text-orange-700 text-[8px] font-black border-none rounded-full px-2 py-0.5">
+                          DP
+                        </Badge>
                       )}
                       {summary.allReturned ? (
                         <Badge className="bg-rose-600 text-white text-[8px] font-black border-none rounded-full px-2 py-0.5">DIRETUR</Badge>
+                      ) : summary.effectiveStatus === "DP" ? (
+                        <Badge className="bg-orange-500 text-white text-[8px] font-black border-none rounded-full px-2 py-0.5">
+                          BELUM LUNAS
+                        </Badge>
                       ) : (
-                        <Badge className={cn("text-[8px] font-black border-none rounded-full px-2 py-0.5", summary.effectiveStatus === 'DP' ? "bg-orange-100 text-orange-700" : "bg-neutral-950 text-white")}>
-                          {summary.effectiveStatus}
+                        <Badge className="bg-neutral-950 text-white text-[8px] font-black border-none rounded-full px-2 py-0.5">
+                          {summary.isDpTransaction ? "LUNAS" : "COMPLETED"}
                         </Badge>
                       )}
                     </div>
@@ -228,11 +242,59 @@ export function TransactionHistorySheet({
                       )}
                       {summary.effectiveStatus === 'DP' && summary.netRemaining > 0 && (
                         <span className="text-[9px] font-black text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full">
-                          Sisa: Rp{summary.netRemaining.toLocaleString('id-ID')}
+                          Kekurangan: Rp{summary.netRemaining.toLocaleString('id-ID')}
                         </span>
                       )}
                     </div>
                   </div>
+
+                  {/* Rincian Riwayat Tahapan Pembayaran DP Lengkap dengan Tanggal */}
+                  {summary.isDpTransaction && summary.dpStages.length > 0 && (
+                    <div className="mt-2 p-2 rounded-xl bg-orange-50/70 border border-orange-100 space-y-1">
+                      <div className="flex items-center justify-between text-[8px] font-black uppercase tracking-wider text-orange-700">
+                        <span>Riwayat Tahapan DP</span>
+                        <span>
+                          {summary.effectiveStatus === "DP"
+                            ? `Sudah Masuk: Rp${summary.netPaid.toLocaleString("id-ID")}`
+                            : "STATUS: LUNAS"}
+                        </span>
+                      </div>
+                      <div className="space-y-0.5">
+                        {summary.dpStages.map((st) => (
+                          <div
+                            key={st.index}
+                            className="flex items-center justify-between text-[9px] font-bold text-neutral-700"
+                          >
+                            <span className="flex items-center gap-1">
+                              <span
+                                className={cn(
+                                  "px-1.5 py-0.2 rounded text-[8px] font-black uppercase",
+                                  st.isSettlement
+                                    ? "bg-emerald-600 text-white"
+                                    : "bg-orange-200/80 text-orange-900"
+                                )}
+                              >
+                                {st.label}
+                              </span>
+                              <span className="text-neutral-500">
+                                {st.dateStr}
+                                {st.timeStr ? ` • ${st.timeStr}` : ""}
+                              </span>
+                            </span>
+                            <span className={cn("font-black", st.isSettlement ? "text-emerald-700" : "text-neutral-900")}>
+                              Rp{st.amount.toLocaleString("id-ID")}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                      {summary.effectiveStatus === "DP" && summary.netRemaining > 0 && (
+                        <div className="pt-1 border-t border-dashed border-orange-200 flex items-center justify-between text-[9px] font-black text-rose-600">
+                          <span>KEKURANGAN BAYAR</span>
+                          <span>Rp{summary.netRemaining.toLocaleString("id-ID")}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   <div className="mt-2.5 pt-2 border-t border-dashed border-neutral-100 flex items-center justify-between gap-1.5 flex-wrap">
                     <div className="flex flex-col">
@@ -261,8 +323,23 @@ export function TransactionHistorySheet({
                       </Button>
                       {summary.effectiveStatus === 'DP' && (
                         <>
-                          <Button size="sm" variant="outline" className="h-6 sm:h-7 px-2.5 border-orange-200 text-orange-600 hover:bg-orange-50 text-[8px] sm:text-[9px] font-black rounded-full ml-0.5" onClick={() => onSettle(trx, true)}>+DP</Button>
-                          <Button size="sm" className="h-6 sm:h-7 px-2.5 bg-orange-600 hover:bg-orange-700 text-white text-[8px] sm:text-[9px] font-black rounded-full" onClick={() => onSettle(trx, false)}>LUNASI</Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-6 sm:h-7 px-2.5 border-orange-300 text-orange-700 hover:bg-orange-50 text-[8px] sm:text-[9px] font-black rounded-full ml-0.5"
+                            onClick={() => onSettle(trx, true)}
+                            title="Tambah Pembayaran DP Berikutnya"
+                          >
+                            +DP {(summary.dpStages?.length || 1) + 1}
+                          </Button>
+                          <Button
+                            size="sm"
+                            className="h-6 sm:h-7 px-2.5 bg-orange-600 hover:bg-orange-700 text-white text-[8px] sm:text-[9px] font-black rounded-full"
+                            onClick={() => onSettle(trx, false)}
+                            title="Lunasi Seluruh Kekurangan Bayar"
+                          >
+                            LUNASI
+                          </Button>
                         </>
                       )}
                     </div>

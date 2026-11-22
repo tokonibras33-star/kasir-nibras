@@ -40,6 +40,7 @@ import {
   CartItem,
   CustomerType,
   DEFAULT_CARD_BG,
+  ExchangeReturnSession,
   Member,
   Reseller,
   Voucher,
@@ -111,6 +112,7 @@ export default function CashierPage() {
   const [isReturnDialogOpen, setIsReturnDialogOpen] = useState(false);
   const [returnQtys, setReturnQtys] = useState<Record<string, number>>({});
   const [trxForReturn, setTrxForReturn] = useState<any>(null);
+  const [exchangeReturnSession, setExchangeReturnSession] = useState<ExchangeReturnSession | null>(null);
 
   const [isRegisterMemberOpen, setIsRegisterMemberOpen] = useState(false);
   const [isRegisterAgentOpen, setIsRegisterAgentOpen] = useState(false);
@@ -154,16 +156,27 @@ export default function CashierPage() {
   );
   const { data: products } = useCollection<any>(productsQuery);
 
-  const stockAQuery = useMemoFirebase(() => (user ? collection(db, "stores", "TOKO_A", "stock") : null), [db, user]);
+  // Only subscribe to cross-store stock collections when the Stock Management dialog (`showStockList`) is actually open!
+  // For the cashier's own active store, reuse `products` directly to avoid duplicate Firestore listeners.
+  const stockAQuery = useMemoFirebase(
+    () => (user && showStockList && storeId !== "TOKO_A" ? collection(db, "stores", "TOKO_A", "stock") : null),
+    [db, user, showStockList, storeId]
+  );
   const { data: dataA, isLoading: isALoading } = useCollection<any>(stockAQuery);
-  const stockBQuery = useMemoFirebase(() => (user ? collection(db, "stores", "TOKO_B", "stock") : null), [db, user]);
+  const stockBQuery = useMemoFirebase(
+    () => (user && showStockList && storeId !== "TOKO_B" ? collection(db, "stores", "TOKO_B", "stock") : null),
+    [db, user, showStockList, storeId]
+  );
   const { data: dataB, isLoading: isBLoading } = useCollection<any>(stockBQuery);
-  const stockCQuery = useMemoFirebase(() => (user ? collection(db, "stores", "TOKO_C", "stock") : null), [db, user]);
+  const stockCQuery = useMemoFirebase(
+    () => (user && showStockList && storeId !== "TOKO_C" ? collection(db, "stores", "TOKO_C", "stock") : null),
+    [db, user, showStockList, storeId]
+  );
   const { data: dataC, isLoading: isCLoading } = useCollection<any>(stockCQuery);
 
-  const stockA = dataA || [];
-  const stockB = dataB || [];
-  const stockC = dataC || [];
+  const stockA = storeId === "TOKO_A" ? products || [] : dataA || [];
+  const stockB = storeId === "TOKO_B" ? products || [] : dataB || [];
+  const stockC = storeId === "TOKO_C" ? products || [] : dataC || [];
   const isStockLoading = isALoading || isBLoading || isCLoading;
 
   const membersQuery = useMemoFirebase(() => (user ? collection(db, "members") : null), [db, user]);
@@ -188,6 +201,10 @@ export default function CashierPage() {
   const historyQuery = useMemoFirebase(() => {
     if (!user || !historyDate) return null;
     const q = collection(db, "stores", storeId, "transactions");
+    // When "FILTER DP" (`showOnlyDP`) is active, fetch recent transactions across dates so multi-day DP transactions are always visible!
+    if (showOnlyDP) {
+      return query(q, orderBy("date", "desc"), limit(200));
+    }
     if (historyFilterMode === "daily") {
       const start = new Date(historyDate);
       start.setHours(0, 0, 0, 0);
@@ -209,7 +226,7 @@ export default function CashierPage() {
       where("date", "<=", Timestamp.fromDate(end)),
       orderBy("date", "desc")
     );
-  }, [db, storeId, user, historyDate, historyFilterMode]);
+  }, [db, storeId, user, historyDate, historyFilterMode, showOnlyDP]);
   const { data: historyData } = useCollection<any>(historyQuery);
 
   const liveTrxRef = useMemoFirebase(
@@ -325,6 +342,12 @@ export default function CashierPage() {
 
     const result = todayTrxData.reduce((acc, trx) => {
       const summary = getTrxReturnSummary(trx);
+      const exchMethod = String(trx.returnLog?.exchangePaymentMethod || trx.paymentMethod || "CASH").toUpperCase();
+      if (summary.additionalPaid > 0) {
+        if (exchMethod.includes("CASH")) acc.grossCash += summary.additionalPaid;
+        else if (exchMethod === "TRANSFER") acc.transfer += summary.additionalPaid;
+        else if (exchMethod === "QRIS") acc.qris += summary.additionalPaid;
+      }
       if (trx.paymentBreakdown) {
         const origCash = Number(trx.originalPaymentBreakdown?.cash ?? trx.paymentBreakdown.cash ?? 0);
         const origOther = Number(trx.originalPaymentBreakdown?.other ?? trx.paymentBreakdown.other ?? 0);
@@ -404,12 +427,15 @@ export default function CashierPage() {
   const totalTagihan = Math.max(0, subtotalLabel - totalPotongan);
 
   const amountToProcess = useMemo(() => {
+    if (exchangeReturnSession) {
+      return Math.max(0, totalTagihan - exchangeReturnSession.returnCreditAmount);
+    }
     if (settlementTrx) {
       const rem = getTrxReturnSummary(settlementTrx).netRemaining;
       return isAdditionalDP ? parseFloat(additionalDPInput) || 0 : rem;
     }
     return totalTagihan;
-  }, [settlementTrx, isAdditionalDP, additionalDPInput, totalTagihan]);
+  }, [exchangeReturnSession, settlementTrx, isAdditionalDP, additionalDPInput, totalTagihan]);
 
   const updateQuantity = (cartId: string, delta: number) => {
     setCart((prev) =>
@@ -651,16 +677,70 @@ export default function CashierPage() {
 
   const handleStartProcess = () => {
     if (cart.length === 0 && !settlementTrx) return;
+    if (exchangeReturnSession) {
+      if (cart.length === 0) {
+        toast({
+          title: "Pilih Barang Pengganti",
+          description: "Retur wajib ganti barang. Pilih produk pengganti dari katalog terlebih dahulu.",
+          variant: "destructive",
+        });
+        return;
+      }
+      const diff = totalTagihan - exchangeReturnSession.returnCreditAmount;
+      if (diff > 0 && paymentMethod === "CASH") {
+        setReceivedCash(diff.toString());
+        setIsCashDialogOpen(true);
+      } else {
+        handleExecuteExchangeReturn();
+      }
+      return;
+    }
     if (!settlementTrx) {
+      if (isDPMode) {
+        const dpVal = parseFloat(manualDPInput) || 0;
+        if (dpVal <= 0) {
+          toast({
+            title: "Nominal DP Kosong",
+            description: "Masukkan nominal pembayaran DP 1 terlebih dahulu.",
+            variant: "destructive",
+          });
+          return;
+        }
+        if (dpVal >= totalTagihan) {
+          toast({
+            title: "Nominal DP Melebihi/Sama dengan Tagihan",
+            description: "Untuk pembayaran penuh (lunas), matikan tombol mode DP.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
       if (isMultiMode || paymentMethod !== "CASH" || isDPMode) handleProcessTransaction();
       else {
         setReceivedCash(totalTagihan.toString());
         setIsCashDialogOpen(true);
       }
     } else {
+      const settleSummary = getTrxReturnSummary(settlementTrx);
       const amount = isAdditionalDP
         ? parseFloat(additionalDPInput) || 0
-        : getTrxReturnSummary(settlementTrx).netRemaining;
+        : settleSummary.netRemaining;
+      if (amount <= 0) {
+        toast({
+          title: "Nominal Pembayaran Kosong",
+          description: "Masukkan nominal pembayaran DP terlebih dahulu.",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (isAdditionalDP && amount > settleSummary.netRemaining) {
+        toast({
+          title: "Melebihi Kekurangan Bayar",
+          description: `Nominal tidak boleh melebihi sisa kekurangan bayar (Rp${settleSummary.netRemaining.toLocaleString("id-ID")}).`,
+          variant: "destructive",
+        });
+        return;
+      }
       if (paymentMethod === "CASH") {
         setReceivedCash(amount.toString());
         setIsCashDialogOpen(true);
@@ -716,10 +796,18 @@ export default function CashierPage() {
       cashier: cashierName,
       store: storeId,
       status: isDPMode ? "DP" : "COMPLETED",
+      isDpTransaction: isDPMode,
       cashReceived: cashPayload?.received || 0,
       cashChange: cashPayload?.change || 0,
       paymentHistory: [
-        { index: 1, date: format(now, "yyyy-MM-dd"), time: format(now, "HH:mm:ss"), amount: paidAmount },
+        {
+          index: 1,
+          type: isDPMode ? "DP 1" : "LUNAS",
+          date: format(now, "yyyy-MM-dd"),
+          time: format(now, "HH:mm:ss"),
+          amount: paidAmount,
+          method: isMultiMode ? `CASH & ${paymentMethod}` : paymentMethod,
+        },
       ],
     };
     try {
@@ -766,23 +854,49 @@ export default function CashierPage() {
     setIsProcessing(true);
     const now = new Date();
     const summary = getTrxReturnSummary(settlementTrx);
-    const added = isAdditionalDP ? parseFloat(additionalDPInput) || 0 : summary.netRemaining;
+    const rawAdded = isAdditionalDP ? parseFloat(additionalDPInput) || 0 : summary.netRemaining;
+    const added = Math.min(summary.netRemaining, Math.max(0, rawAdded));
     const newPaid = summary.netPaid + added;
     const newRem = Math.max(0, summary.netTotal - newPaid);
+    const prevStagesCount = summary.dpStages?.length || settlementTrx.paymentHistory?.length || 1;
+    const nextIdx = prevStagesCount + 1;
+    const isNowFullyPaid = newRem <= 0;
+    const stageType = isNowFullyPaid ? "PELUNASAN" : `DP ${nextIdx}`;
+
+    const existingHistory =
+      Array.isArray(settlementTrx.paymentHistory) && settlementTrx.paymentHistory.length > 0
+        ? settlementTrx.paymentHistory
+        : [
+            {
+              index: 1,
+              type: "DP 1",
+              date: settlementTrx.date?.toDate
+                ? format(settlementTrx.date.toDate(), "yyyy-MM-dd")
+                : format(now, "yyyy-MM-dd"),
+              time: settlementTrx.date?.toDate ? format(settlementTrx.date.toDate(), "HH:mm:ss") : "00:00:00",
+              amount: summary.netPaid,
+              method: settlementTrx.paymentMethod || "CASH",
+            },
+          ];
+
     const newHistory = [
-      ...(settlementTrx.paymentHistory || []),
+      ...existingHistory,
       {
-        index: (settlementTrx.paymentHistory?.length || 1) + 1,
+        index: existingHistory.length + 1,
+        type: stageType,
         date: format(now, "yyyy-MM-dd"),
         time: format(now, "HH:mm:ss"),
         amount: added,
+        method: paymentMethod,
       },
     ];
     const updated: any = {
       status: newRem > 0 ? "DP" : "COMPLETED",
+      isDpTransaction: true,
       paidAmount: newPaid,
       remainingAmount: newRem,
       settledAt: newRem === 0 ? serverTimestamp() : null,
+      lastDpPaidAt: serverTimestamp(),
       cashReceived: cashPayload?.received || 0,
       cashChange: cashPayload?.change || 0,
       paymentHistory: newHistory,
@@ -796,8 +910,15 @@ export default function CashierPage() {
     setLastTrxId(settlementTrx.id);
     setSettlementTrx(null);
     setIsCashDialogOpen(false);
+    toast({
+      title: isNowFullyPaid ? "Pelunasan DP Berhasil" : `Pembayaran ${stageType} Berhasil`,
+      description: isNowFullyPaid
+        ? `Transaksi ${settlementTrx.id} kini telah LUNAS.`
+        : `DP masuk Rp${added.toLocaleString("id-ID")} • Kekurangan bayar: Rp${newRem.toLocaleString("id-ID")}`,
+    });
   };
 
+  // Step 1 of Return: Confirm items to return -> automatically switch to Cashier to pick replacement items
   const handleConfirmReturn = () => {
     if (!trxForReturn) return;
     const summary = getTrxReturnSummary(trxForReturn);
@@ -813,23 +934,93 @@ export default function CashierPage() {
 
     if (returnedItems.length === 0) return;
 
+    const returnedQtyThisTime: Record<string, number> = {};
+    returnedItems.forEach((item: any) => {
+      const key = `${item.productId}-${item.variantId}`;
+      returnedQtyThisTime[key] = (returnedQtyThisTime[key] || 0) + item.quantity;
+    });
+
+    const remainingItems = returnableList
+      .map((item: any) => {
+        const key = `${item.productId}-${item.variantId}`;
+        const retQty = returnedQtyThisTime[key] || 0;
+        const remQty = Math.max(0, Number(item.quantity || 0) - retQty);
+        if (remQty <= 0) return null;
+        return { ...item, quantity: remQty };
+      })
+      .filter(Boolean);
+
+    const isFullReturn = remainingItems.length === 0;
+    const computedRefundNow = returnedItems.reduce(
+      (sum: number, item: any) => sum + getItemUnitNetPrice(item) * Number(item.quantity || 0),
+      0
+    );
+    const returnCreditAmount = isFullReturn ? summary.netTotal : Math.min(summary.netTotal, computedRefundNow);
+
+    // Enter Exchange Return Session in Cashier
+    setCart([]);
+    setSettlementTrx(null);
+    setIsAdditionalDP(false);
+    setIsDPMode(false);
+    setIsMultiMode(false);
+    setAppliedVoucher(null);
+    setManualAdditionalDiscount("");
+    setIsSuccess(false);
+    setPaymentMethod("CASH");
+
+    setExchangeReturnSession({
+      trx: trxForReturn,
+      returnedItems,
+      returnedQtyMap: returnedQtyThisTime,
+      returnCreditAmount,
+    });
+
+    setIsReturnDialogOpen(false);
+    setShowHistory(false);
+    setTrxForReturn(null);
+    setReturnQtys({});
+
+    toast({
+      title: "Mode Tukar Barang Retur Aktif",
+      description: `Silakan pilih barang pengganti dari katalog. Nilai kredit retur: Rp${returnCreditAmount.toLocaleString("id-ID")}`,
+    });
+  };
+
+  // Step 2 of Return: Execute Return & Exchange with replacement items in `cart`
+  const handleExecuteExchangeReturn = (cashPayload?: { received: number; change: number }) => {
+    if (!exchangeReturnSession || cart.length === 0) return;
+    const targetTrx = exchangeReturnSession.trx;
+    const returnedItems = exchangeReturnSession.returnedItems;
+    const returnedQtyThisTime = exchangeReturnSession.returnedQtyMap;
+    const refundNow = exchangeReturnSession.returnCreditAmount;
+
+    const summary = getTrxReturnSummary(targetTrx);
+    const returnableList = summary.returnableItems;
+
     setIsProcessing(true);
     try {
-      const returnQtyByProduct: Record<string, Record<string, number>> = {};
-      const returnedQtyThisTime: Record<string, number> = {};
+      // 1. Combine stock deltas: +qty for returned items, -qty for replacement items in cart
+      const stockDeltaByProduct: Record<string, Record<string, number>> = {};
+
       returnedItems.forEach((item: any) => {
-        const key = `${item.productId}-${item.variantId}`;
-        returnedQtyThisTime[key] = (returnedQtyThisTime[key] || 0) + item.quantity;
-        if (!returnQtyByProduct[item.productId]) returnQtyByProduct[item.productId] = {};
-        returnQtyByProduct[item.productId][item.variantId] =
-          (returnQtyByProduct[item.productId][item.variantId] || 0) + item.quantity;
+        if (!stockDeltaByProduct[item.productId]) stockDeltaByProduct[item.productId] = {};
+        stockDeltaByProduct[item.productId][item.variantId] =
+          (stockDeltaByProduct[item.productId][item.variantId] || 0) + Number(item.quantity || 0);
       });
 
-      Object.entries(returnQtyByProduct).forEach(([productId, variantQtyMap]) => {
+      cart.forEach((item) => {
+        if (!stockDeltaByProduct[item.productId]) stockDeltaByProduct[item.productId] = {};
+        stockDeltaByProduct[item.productId][item.variantId] =
+          (stockDeltaByProduct[item.productId][item.variantId] || 0) - Number(item.quantity || 0);
+      });
+
+      Object.entries(stockDeltaByProduct).forEach(([productId, variantDeltaMap]) => {
         const p = products?.find((prod) => prod.id === productId);
         if (p) {
           const updated = p.variants.map((v: any) =>
-            variantQtyMap[v.id] ? { ...v, stock: (v.stock || 0) + variantQtyMap[v.id] } : v
+            variantDeltaMap[v.id]
+              ? { ...v, stock: Math.max(0, (v.stock || 0) + variantDeltaMap[v.id]) }
+              : v
           );
           updateDocumentNonBlocking(doc(db, "stores", storeId, "stock", p.id), {
             variants: updated,
@@ -838,7 +1029,8 @@ export default function CashierPage() {
         }
       });
 
-      const remainingItems = returnableList
+      // 2. Build remaining unreturned items + new replacement items
+      const remainingKeptItems = returnableList
         .map((item: any) => {
           const key = `${item.productId}-${item.variantId}`;
           const retQty = returnedQtyThisTime[key] || 0;
@@ -848,28 +1040,44 @@ export default function CashierPage() {
         })
         .filter(Boolean);
 
-      const isFullReturn = remainingItems.length === 0;
-      const computedRefundNow = returnedItems.reduce(
-        (sum: number, item: any) => sum + getItemUnitNetPrice(item) * Number(item.quantity || 0),
-        0
-      );
-      const refundNow = isFullReturn ? summary.netTotal : Math.min(summary.netTotal, computedRefundNow);
-      const newTotal = isFullReturn ? 0 : Math.max(0, summary.netTotal - refundNow);
+      // Attach effective net unit price on replacement items if global discount was applied
+      const globalExtraDisc = voucherDiscount + (parseFloat(manualAdditionalDiscount) || 0);
+      const exchangeItemsToSave = cart.map((item) => {
+        const itemSubtotal = item.price * item.quantity;
+        const shareOfExtra =
+          globalExtraDisc > 0 && subtotalSetelahToko > 0
+            ? (itemSubtotal / subtotalSetelahToko) * globalExtraDisc
+            : 0;
+        const effectiveUnitNet = Math.max(0, item.price - shareOfExtra / Math.max(1, item.quantity));
+        return {
+          ...item,
+          price: Math.round(effectiveUnitNet),
+          storeDiscountNominal: Math.round(
+            (item.labelPrice || item.price) - effectiveUnitNet
+          ),
+          storeDiscountPercent: item.storeDiscountPercent || 0,
+        };
+      });
+
+      const activeCombinedItems = [...remainingKeptItems, ...exchangeItemsToSave];
+
+      // 3. Calculate exchange difference (tambah bayar vs sisa kembali)
+      const exchangeNetNow = totalTagihan;
+      const diffNow = exchangeNetNow - refundNow; // > 0: customer pays more, < 0: customer gets refund
+      const additionalPaidNow = Math.max(0, diffNow);
+      const refundFromPaidNow = Math.max(0, -diffNow);
+
+      const newTotal = Math.max(0, summary.netTotal - refundNow + exchangeNetNow);
       const prevPaid = summary.netPaid;
-      const newPaid = Math.min(prevPaid, newTotal);
-      const refundFromPaidNow = Math.max(0, prevPaid - newPaid);
+      const newPaid = Math.min(newTotal, Math.max(0, prevPaid + additionalPaidNow - refundFromPaidNow));
       const newRemaining = Math.max(0, newTotal - newPaid);
-      const newStatus: "RETURNED" | "DP" | "COMPLETED" = isFullReturn
-        ? "RETURNED"
-        : newRemaining > 0
-        ? "DP"
-        : "COMPLETED";
+      const newStatus: "RETURNED" | "DP" | "COMPLETED" = newRemaining > 0 ? "DP" : "COMPLETED";
 
       let cashRefundNow = 0;
       let transferRefundNow = 0;
       let qrisRefundNow = 0;
-      let updatedPaymentBreakdown = trxForReturn.paymentBreakdown
-        ? { ...trxForReturn.paymentBreakdown }
+      let updatedPaymentBreakdown = targetTrx.paymentBreakdown
+        ? { ...targetTrx.paymentBreakdown }
         : undefined;
 
       if (refundFromPaidNow > 0) {
@@ -883,14 +1091,21 @@ export default function CashierPage() {
           if (otherMethod === "TRANSFER") transferRefundNow = remOther;
           else if (otherMethod === "QRIS") qrisRefundNow = remOther;
         } else {
-          const method = String(trxForReturn.paymentMethod || "CASH").toUpperCase();
+          const method = String(targetTrx.paymentMethod || "CASH").toUpperCase();
           if (method.includes("CASH")) cashRefundNow = refundFromPaidNow;
           else if (method === "TRANSFER") transferRefundNow = refundFromPaidNow;
           else if (method === "QRIS") qrisRefundNow = refundFromPaidNow;
         }
+      } else if (additionalPaidNow > 0 && updatedPaymentBreakdown) {
+        if (paymentMethod === "CASH") {
+          updatedPaymentBreakdown.cash = Number(updatedPaymentBreakdown.cash || 0) + additionalPaidNow;
+        } else {
+          updatedPaymentBreakdown.other = Number(updatedPaymentBreakdown.other || 0) + additionalPaidNow;
+        }
       }
 
-      const prevReturnedItems = Array.isArray(trxForReturn.returnLog?.items) ? trxForReturn.returnLog.items : [];
+      // 4. Merge returned items & exchange items into returnLog
+      const prevReturnedItems = Array.isArray(targetTrx.returnLog?.items) ? targetTrx.returnLog.items : [];
       const mergedReturnedMap = new Map<string, any>();
       [...prevReturnedItems, ...returnedItems].forEach((item: any) => {
         const key = `${item.productId}-${item.variantId}`;
@@ -906,51 +1121,95 @@ export default function CashierPage() {
       });
       const mergedReturnedItems = Array.from(mergedReturnedMap.values());
 
+      const prevExchangeItems = Array.isArray(targetTrx.returnLog?.exchangeItems)
+        ? targetTrx.returnLog.exchangeItems
+        : [];
+      const mergedExchangeMap = new Map<string, any>();
+      [...prevExchangeItems, ...exchangeItemsToSave].forEach((item: any) => {
+        const key = `${item.productId}-${item.variantId}`;
+        const existing = mergedExchangeMap.get(key);
+        if (existing) {
+          mergedExchangeMap.set(key, {
+            ...existing,
+            quantity: Number(existing.quantity || 0) + Number(item.quantity || 0),
+          });
+        } else {
+          mergedExchangeMap.set(key, { ...item });
+        }
+      });
+      const mergedExchangeItems = Array.from(mergedExchangeMap.values());
+
       const totalRefundAccumulated = summary.totalRefund + refundNow;
+      const totalExchangeAccumulated = summary.exchangeTotal + exchangeNetNow;
+      const totalAdditionalPaidAccumulated = summary.additionalPaid + additionalPaidNow;
       const totalRefundFromPaidAccumulated = summary.refundFromPaid + refundFromPaidNow;
       const totalCashRefundedAccumulated = summary.cashRefunded + cashRefundNow;
       const totalTransferRefundedAccumulated = summary.transferRefunded + transferRefundNow;
       const totalQrisRefundedAccumulated = summary.qrisRefunded + qrisRefundNow;
 
+      const now = new Date();
+      const updatedPaymentHistory =
+        additionalPaidNow > 0
+          ? [
+              ...(targetTrx.paymentHistory || []),
+              {
+                index: (targetTrx.paymentHistory?.length || 1) + 1,
+                date: format(now, "yyyy-MM-dd"),
+                time: format(now, "HH:mm:ss"),
+                amount: additionalPaidNow,
+                note: "TAMBAH BAYAR TUKAR RETUR",
+              },
+            ]
+          : targetTrx.paymentHistory;
+
       const updatePayload: any = {
         originalTotal: summary.originalTotal,
         originalPaidAmount: summary.originalPaid,
-        originalItems: trxForReturn.originalItems ?? trxForReturn.items ?? [],
-        items: remainingItems,
+        originalItems: targetTrx.originalItems ?? targetTrx.items ?? [],
+        items: activeCombinedItems,
         total: newTotal,
         paidAmount: newPaid,
         remainingAmount: newRemaining,
         status: newStatus,
+        ...(updatedPaymentHistory ? { paymentHistory: updatedPaymentHistory } : {}),
         returnLog: {
-          returnedAt: new Date().toISOString(),
+          returnedAt: now.toISOString(),
           returnedBy: cashierName || "Kasir",
           isDeductedFromTotal: true,
           totalRefund: totalRefundAccumulated,
+          exchangeTotal: totalExchangeAccumulated,
+          additionalPaid: totalAdditionalPaidAccumulated,
+          netExchangeDiff: totalExchangeAccumulated - totalRefundAccumulated,
+          exchangePaymentMethod: paymentMethod,
+          exchangeCashReceived:
+            cashPayload?.received || (additionalPaidNow > 0 && paymentMethod === "CASH" ? additionalPaidNow : 0),
+          exchangeCashChange: cashPayload?.change || 0,
           refundFromPaid: totalRefundFromPaidAccumulated,
           cashRefunded: totalCashRefundedAccumulated,
           transferRefunded: totalTransferRefundedAccumulated,
           qrisRefunded: totalQrisRefundedAccumulated,
           items: mergedReturnedItems,
+          exchangeItems: mergedExchangeItems,
         },
       };
 
       if (updatedPaymentBreakdown) {
         updatePayload.originalPaymentBreakdown =
-          trxForReturn.originalPaymentBreakdown ?? trxForReturn.paymentBreakdown;
+          targetTrx.originalPaymentBreakdown ?? targetTrx.paymentBreakdown;
         updatePayload.paymentBreakdown = updatedPaymentBreakdown;
       }
 
-      updateDocumentNonBlocking(doc(db, "stores", storeId, "transactions", trxForReturn.id), updatePayload);
+      updateDocumentNonBlocking(doc(db, "stores", storeId, "transactions", targetTrx.id), updatePayload);
 
-      const trxDateId = trxForReturn.date?.toDate ? format(trxForReturn.date.toDate(), "yyyy-MM-dd") : todayId;
+      const trxDateId = targetTrx.date?.toDate ? format(targetTrx.date.toDate(), "yyyy-MM-dd") : todayId;
       if (trxDateId !== todayId && cashRefundNow > 0) {
         const newReturTunai = [
           ...(cashLog?.retur_tunai || []),
           {
-            trxId: trxForReturn.id,
-            customerName: trxForReturn.customerName || "UMUM",
+            trxId: targetTrx.id,
+            customerName: targetTrx.customerName || "UMUM",
             amount: cashRefundNow,
-            timestamp: new Date().toISOString(),
+            timestamp: now.toISOString(),
             cashier: cashierName || "Kasir",
           },
         ];
@@ -964,15 +1223,22 @@ export default function CashierPage() {
         );
       }
 
-      setIsReturnDialogOpen(false);
-      setTrxForReturn(null);
-      setReturnQtys({});
+      setIsCashDialogOpen(false);
+      setExchangeReturnSession(null);
+      setIsSuccess(true);
+      setLastTrxId(targetTrx.id);
+
       toast({
-        title: "Retur Barang Berhasil",
-        description: `Stok dikembalikan & nominal ${trxForReturn.id} berkurang Rp${refundNow.toLocaleString("id-ID")}`,
+        title: "Retur & Tukar Barang Berhasil",
+        description:
+          diffNow > 0
+            ? `Transaksi ${targetTrx.id} diperbarui • Tambah bayar +Rp${diffNow.toLocaleString("id-ID")}`
+            : diffNow < 0
+            ? `Transaksi ${targetTrx.id} diperbarui • Sisa kembali Rp${Math.abs(diffNow).toLocaleString("id-ID")}`
+            : `Transaksi ${targetTrx.id} diperbarui • Tukar barang pas (Rp 0)`,
       });
     } catch {
-      toast({ title: "Gagal Memproses Retur", variant: "destructive" });
+      toast({ title: "Gagal Memproses Tukar Retur", variant: "destructive" });
     } finally {
       setIsProcessing(false);
     }
@@ -989,6 +1255,7 @@ export default function CashierPage() {
     setManualDPInput("");
     setIsSuccess(false);
     setSettlementTrx(null);
+    setExchangeReturnSession(null);
     setAppliedVoucher(null);
     setManualAdditionalDiscount("");
     setIsMultiMode(false);
@@ -1036,7 +1303,13 @@ export default function CashierPage() {
             setSettlementTrx(null);
             setIsAdditionalDP(false);
           }}
+          exchangeReturnSession={exchangeReturnSession}
+          onCancelExchangeReturn={() => {
+            setExchangeReturnSession(null);
+            setCart([]);
+          }}
           isAdditionalDP={isAdditionalDP}
+          setIsAdditionalDP={setIsAdditionalDP}
           additionalDPInput={additionalDPInput}
           setAdditionalDPInput={setAdditionalDPInput}
           receivedCash={receivedCash}
@@ -1204,7 +1477,8 @@ export default function CashierPage() {
         setReceivedCash={setReceivedCash}
         settlementTrx={settlementTrx}
         onConfirmCashPayment={(payload) => {
-          if (settlementTrx) handleSettlement(payload);
+          if (exchangeReturnSession) handleExecuteExchangeReturn(payload);
+          else if (settlementTrx) handleSettlement(payload);
           else handleProcessTransaction(payload);
         }}
         isReturnDialogOpen={isReturnDialogOpen}

@@ -9,6 +9,14 @@ import { Menu, X, Shirt } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import Image from "next/image";
+import { jsPDF } from "jspdf";
+import { applyPlugin } from "jspdf-autotable";
+
+try {
+  applyPlugin(jsPDF);
+} catch {
+  // Ignore if already registered
+}
 
 const LOGO_URL = "/hero/nibras-logo.jpg";
 

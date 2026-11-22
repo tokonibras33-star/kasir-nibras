@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth, UserRole } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -184,12 +184,46 @@ export default function LoginPage() {
   // Hero stage state: null plays `/Generated video 1.mp4` full-stage, or a CollectionItem for lookbook preview
   const [activeCollection, setActiveCollection] = useState<CollectionItem | null>(null);
   const [isVideoPlaying, setIsVideoPlaying] = useState(true);
+  const [shouldLoadVideo, setShouldLoadVideo] = useState(false);
+  const [isVideoReady, setIsVideoReady] = useState(false);
   const [showCatalogStrip, setShowCatalogStrip] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const { login } = useAuth();
   const router = useRouter();
+
+  // Defer video network request until after initial paint & skip automatic download on 2G / Save-Data connections
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const nav = navigator as any;
+    const conn = nav?.connection || nav?.mozConnection || nav?.webkitConnection;
+    const isVerySlowConnection =
+      conn?.saveData === true ||
+      conn?.effectiveType === "slow-2g" ||
+      conn?.effectiveType === "2g";
+
+    if (isVerySlowConnection) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setShouldLoadVideo(true);
+    }, 150);
+
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  // Pause background video when login modal is open so 100% of CPU & bandwidth goes to authentication
+  useEffect(() => {
+    const vid = videoRef.current;
+    if (!vid) return;
+    if (selectedRole || isLoggingIn) {
+      vid.pause();
+    } else if (shouldLoadVideo && isVideoPlaying) {
+      vid.play().catch(() => {});
+    }
+  }, [selectedRole, isLoggingIn, shouldLoadVideo, isVideoPlaying]);
 
   const toggleVideoPlayback = () => {
     if (!videoRef.current) return;
@@ -266,29 +300,42 @@ export default function LoginPage() {
           FULL-VIEWPORT MOTION HERO STAGE (100% Full-Bleed Background, No Card Border)
       ====================================================================== */}
       <section className="relative h-screen w-screen overflow-hidden bg-[#ECEAE6] flex flex-col justify-between">
-        {/* 1. PRIMARY FULL-BLEED BACKGROUND MOTION HERO VIDEO (`/Generated video 1.mp4`)
-            Scaled slightly (1.04) so the baked-in frame at the final second of the video is also cropped out */}
-        <video
-          ref={videoRef}
-          src="/Generated%20video%201.mp4"
-          autoPlay
-          loop
-          muted
-          playsInline
-          onTimeUpdate={(e) => {
-            // Skip the last 1.5s of the MP4 where a card frame is baked into the video file
-            if (e.currentTarget.currentTime >= 13.35) {
-              e.currentTarget.currentTime = 0;
-              e.currentTarget.play().catch(() => {});
-            }
-          }}
+        {/* 1. INSTANT FALLBACK POSTER IMAGE (33KB - renders in <50ms even on slow connections so screen is NEVER blank) */}
+        <Image
+          src="/hero/video-poster.jpg"
+          alt="Nibras House Hero"
+          fill
+          priority
+          sizes="100vw"
           className={cn(
-            "absolute inset-0 w-full h-full object-cover object-[center_18%] transition-all duration-700",
-            activeCollection
-              ? "opacity-20 scale-105 blur-[2px]"
-              : "opacity-100 scale-100"
+            "object-cover object-[center_18%] transition-all duration-700 pointer-events-none",
+            activeCollection ? "opacity-20 scale-105 blur-[2px]" : "opacity-100 scale-100"
           )}
         />
+
+        {/* 2. PROGRESSIVE LIGHTWEIGHT BACKGROUND VIDEO (893KB faststart MP4, loaded after first paint) */}
+        {shouldLoadVideo && (
+          <video
+            ref={videoRef}
+            src="/Generated%20video%201.mp4"
+            poster="/hero/video-poster.jpg"
+            preload="metadata"
+            autoPlay
+            loop
+            muted
+            playsInline
+            onCanPlay={() => setIsVideoReady(true)}
+            onLoadedData={() => setIsVideoReady(true)}
+            className={cn(
+              "absolute inset-0 w-full h-full object-cover object-[center_18%] transition-opacity duration-700 pointer-events-none",
+              !isVideoReady
+                ? "opacity-0"
+                : activeCollection
+                ? "opacity-20 scale-105 blur-[2px]"
+                : "opacity-100 scale-100"
+            )}
+          />
+        )}
 
         {/* 2. TOP MINIMALIST EDITORIAL BAR
             Top-Right: Management Role Access Buttons (OWNER & ADMIN) */}

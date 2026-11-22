@@ -23,15 +23,18 @@ import {
   CheckCircle2,
   Printer,
   Loader2,
+  RotateCcw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   CartItem,
   CustomerType,
+  ExchangeReturnSession,
   Member,
   Agent,
   Reseller,
   formatCurrencyInput,
+  getTrxReturnSummary,
   parseCurrencyInput,
 } from "./types";
 
@@ -144,7 +147,10 @@ interface CartAndPaymentSectionProps {
   isProcessing: boolean;
   settlementTrx: any;
   onCancelSettlement: () => void;
+  exchangeReturnSession?: ExchangeReturnSession | null;
+  onCancelExchangeReturn?: () => void;
   isAdditionalDP: boolean;
+  setIsAdditionalDP?: (val: boolean) => void;
   additionalDPInput: string;
   setAdditionalDPInput: (val: string) => void;
   receivedCash: string;
@@ -192,7 +198,10 @@ export function CartAndPaymentSection({
   isProcessing,
   settlementTrx,
   onCancelSettlement,
+  exchangeReturnSession,
+  onCancelExchangeReturn,
   isAdditionalDP,
+  setIsAdditionalDP,
   additionalDPInput,
   setAdditionalDPInput,
   receivedCash,
@@ -244,7 +253,27 @@ export function CartAndPaymentSection({
                 {cart.length}
               </Badge>
             </div>
-            {settlementTrx ? (
+            {exchangeReturnSession ? (
+              <div className="bg-rose-500/20 p-2 md:p-3 rounded-2xl border border-rose-400/30 flex justify-between items-center animate-in slide-in-from-top duration-300">
+                <div className="min-w-0 flex-1">
+                  <p className="text-[7px] md:text-[8px] font-black text-rose-300 uppercase tracking-widest mb-0.5 truncate flex items-center gap-1">
+                    <RotateCcw className="h-2.5 w-2.5" /> MODE TUKAR BARANG RETUR
+                  </p>
+                  <p className="text-[9px] md:text-[11px] font-black text-white uppercase truncate">
+                    {exchangeReturnSession.trx.id} • Kredit Retur Rp{exchangeReturnSession.returnCreditAmount.toLocaleString("id-ID")}
+                  </p>
+                </div>
+                {onCancelExchangeReturn && (
+                  <button
+                    onClick={onCancelExchangeReturn}
+                    className="text-white/60 hover:text-white p-1 bg-white/10 rounded-full transition-all ml-2"
+                    title="Batalkan Mode Retur"
+                  >
+                    <X className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                  </button>
+                )}
+              </div>
+            ) : settlementTrx ? (
               <div className="bg-white/10 p-2 md:p-3 rounded-2xl border border-white/15 flex justify-between items-center animate-in slide-in-from-top duration-300">
                 <div className="min-w-0 flex-1">
                   <p className="text-[7px] md:text-[8px] font-black text-[#F48FB1] uppercase tracking-widest mb-0.5 truncate">
@@ -282,6 +311,17 @@ export function CartAndPaymentSection({
           </div>
 
           <ScrollArea className="flex-1 px-2 md:px-4 py-2">
+            {exchangeReturnSession && cart.length === 0 && (
+              <div className="p-3 md:p-4 my-2 rounded-2xl border border-dashed border-rose-400/40 bg-rose-500/10 text-center space-y-1">
+                <RotateCcw className="h-5 w-5 text-rose-300 mx-auto animate-spin" style={{ animationDuration: '6s' }} />
+                <p className="text-[9px] md:text-[10px] font-black uppercase text-rose-200">
+                  Pilih Barang Pengganti
+                </p>
+                <p className="text-[8px] md:text-[9px] text-white/70 leading-relaxed">
+                  Klik produk di katalog kiri untuk dimasukkan sebagai barang tukar/pengganti retur ({exchangeReturnSession.returnedItems.reduce((s, i) => s + (i.quantity || 1), 0)} pcs diretur).
+                </p>
+              </div>
+            )}
             {cart.map((item) => (
               <CartItemRow
                 key={item.cartId}
@@ -381,33 +421,160 @@ export function CartAndPaymentSection({
         <div className="flex-1 overflow-y-auto p-2.5 md:p-6 space-y-3 md:space-y-6 scrollbar-hide">
           {!isSuccess ? (
             <div className="space-y-3 md:space-y-6 animate-in fade-in slide-in-from-right duration-500">
-              {settlementTrx ? (
-                <div className="p-2.5 md:p-5 rounded-2xl md:rounded-3xl border border-orange-200 bg-orange-50/80 space-y-1 md:space-y-2">
-                  <p className="text-[7px] md:text-[10px] font-black uppercase text-orange-700/70 leading-none">
-                    {isAdditionalDP ? "MODE DP+" : "TOTAL PELUNASAN"}
-                  </p>
-                  <h3 className="font-serif text-sm md:text-2xl font-bold tracking-tight text-orange-700">
-                    Rp{settlementTrx.remainingAmount.toLocaleString()}
-                  </h3>
-                  {(isAdditionalDP || settlementTrx) && (
-                    <div className="space-y-1 mt-2">
-                      <Label className="text-[7px] md:text-[10px] font-black uppercase text-orange-600">
-                        NOMINAL BAYAR
-                      </Label>
-                      <input
-                        type="text"
-                        value={isAdditionalDP ? formatCurrencyInput(additionalDPInput) : formatCurrencyInput(receivedCash)}
-                        onChange={(e) =>
-                          isAdditionalDP
-                            ? setAdditionalDPInput(parseCurrencyInput(e.target.value))
-                            : setReceivedCash(parseCurrencyInput(e.target.value))
-                        }
-                        className="h-9 md:h-12 w-full text-[10px] md:text-xl font-black bg-white border border-orange-200 text-orange-700 text-center rounded-2xl shadow-sm focus:outline-none focus:ring-1 focus:ring-orange-500"
-                        placeholder="Rp 0"
-                      />
+              {exchangeReturnSession ? (
+                (() => {
+                  const credit = exchangeReturnSession.returnCreditAmount;
+                  const replacementTotal = totalTagihan;
+                  const diff = replacementTotal - credit;
+                  const returnedCount = exchangeReturnSession.returnedItems.reduce(
+                    (s, it) => s + Number(it.quantity || 1),
+                    0
+                  );
+
+                  return (
+                    <div className="p-2.5 md:p-4 rounded-2xl md:rounded-3xl border border-rose-200 bg-rose-50/70 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[7px] md:text-[9px] font-black uppercase tracking-wider text-rose-700">
+                          Kalkulasi Tukar Retur ({exchangeReturnSession.trx.id})
+                        </span>
+                        <Badge className="bg-rose-600 text-white border-none text-[7px] md:text-[8px] px-2 py-0.5 rounded-full font-black">
+                          {returnedCount} PCS DIRETUR
+                        </Badge>
+                      </div>
+
+                      <div className="space-y-1 text-[8px] md:text-[11px] bg-white p-2.5 rounded-xl border border-rose-100">
+                        <div className="flex justify-between items-center text-neutral-600 font-bold">
+                          <span>Nilai Barang Diretur</span>
+                          <span className="text-rose-600 font-black">Rp{credit.toLocaleString("id-ID")}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-neutral-600 font-bold">
+                          <span>Harga Barang Pengganti ({cart.reduce((s, i) => s + i.quantity, 0)} pcs)</span>
+                          <span className="text-neutral-900 font-black">Rp{replacementTotal.toLocaleString("id-ID")}</span>
+                        </div>
+                        <div className="pt-1.5 mt-1 border-t border-dashed border-neutral-200 flex justify-between items-center">
+                          {diff > 0 ? (
+                            <>
+                              <span className="font-black uppercase text-orange-700 text-[8px] md:text-[10px]">
+                                Tambah Bayar (Kurang)
+                              </span>
+                              <span className="font-serif font-bold text-xs md:text-lg text-orange-700">
+                                +Rp{diff.toLocaleString("id-ID")}
+                              </span>
+                            </>
+                          ) : diff < 0 ? (
+                            <>
+                              <span className="font-black uppercase text-emerald-700 text-[8px] md:text-[10px]">
+                                Sisa Dikembalikan
+                              </span>
+                              <span className="font-serif font-bold text-xs md:text-lg text-emerald-700">
+                                Rp{Math.abs(diff).toLocaleString("id-ID")}
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <span className="font-black uppercase text-neutral-700 text-[8px] md:text-[10px]">
+                                Selisih Tukar
+                              </span>
+                              <span className="font-serif font-bold text-xs md:text-lg text-neutral-900">
+                                Rp 0 (PAS)
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  )}
-                </div>
+                  );
+                })()
+              ) : settlementTrx ? (
+                (() => {
+                  const settleSummary = getTrxReturnSummary(settlementTrx);
+                  const nextDpIdx = (settleSummary.dpStages?.length || 1) + 1;
+                  return (
+                    <div className="p-2.5 md:p-5 rounded-2xl md:rounded-3xl border border-orange-200 bg-orange-50/80 space-y-2.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-[7px] md:text-[10px] font-black uppercase text-orange-700 leading-none">
+                          {isAdditionalDP ? `TAMBAH DP KE-${nextDpIdx}` : "PELUNASAN KEKURANGAN DP"}
+                        </p>
+                        <Badge className="bg-orange-600 text-white border-none text-[7px] md:text-[8px] px-2 py-0.5 rounded-full font-black">
+                          {settlementTrx.id}
+                        </Badge>
+                      </div>
+
+                      {setIsAdditionalDP && (
+                        <div className="grid grid-cols-2 gap-1.5 bg-white p-1 rounded-full border border-orange-200">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsAdditionalDP(true);
+                              setAdditionalDPInput("");
+                            }}
+                            className={cn(
+                              "py-1.5 rounded-full text-[8px] md:text-[9px] font-black uppercase transition-all",
+                              isAdditionalDP ? "bg-orange-600 text-white shadow-sm" : "text-orange-700 hover:bg-orange-50"
+                            )}
+                          >
+                            + Bayar DP {nextDpIdx}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsAdditionalDP(false);
+                              setReceivedCash(settleSummary.netRemaining.toString());
+                            }}
+                            className={cn(
+                              "py-1.5 rounded-full text-[8px] md:text-[9px] font-black uppercase transition-all",
+                              !isAdditionalDP ? "bg-orange-600 text-white shadow-sm" : "text-orange-700 hover:bg-orange-50"
+                            )}
+                          >
+                            Pelunasan
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Riwayat DP Sebelumnya Lengkap dengan Tanggal */}
+                      <div className="bg-white p-2.5 rounded-xl border border-orange-100 space-y-1 text-[8px] md:text-[10px]">
+                        <div className="flex justify-between font-bold text-neutral-500">
+                          <span>Total Tagihan</span>
+                          <span className="text-neutral-900 font-black">Rp{settleSummary.netTotal.toLocaleString("id-ID")}</span>
+                        </div>
+                        {settleSummary.dpStages.map((st) => (
+                          <div key={st.index} className="flex justify-between font-bold text-orange-700">
+                            <span>
+                              {st.label} ({st.dateStr})
+                            </span>
+                            <span className="font-black">Rp{st.amount.toLocaleString("id-ID")}</span>
+                          </div>
+                        ))}
+                        <div className="pt-1 border-t border-dashed border-orange-200 flex justify-between font-black text-rose-600">
+                          <span>Kekurangan Bayar</span>
+                          <span>Rp{settleSummary.netRemaining.toLocaleString("id-ID")}</span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <Label className="text-[7px] md:text-[10px] font-black uppercase text-orange-700">
+                          {isAdditionalDP ? `NOMINAL DP KE-${nextDpIdx} (RP)` : "NOMINAL PELUNASAN (RP)"}
+                        </Label>
+                        <input
+                          type="text"
+                          value={
+                            isAdditionalDP
+                              ? formatCurrencyInput(additionalDPInput)
+                              : formatCurrencyInput(settleSummary.netRemaining)
+                          }
+                          readOnly={!isAdditionalDP}
+                          onChange={(e) => {
+                            if (isAdditionalDP) {
+                              setAdditionalDPInput(parseCurrencyInput(e.target.value));
+                            }
+                          }}
+                          className="h-9 md:h-12 w-full text-[10px] md:text-xl font-black bg-white border border-orange-200 text-orange-700 text-center rounded-2xl shadow-sm focus:outline-none focus:ring-1 focus:ring-orange-500"
+                          placeholder="Rp 0"
+                        />
+                      </div>
+                    </div>
+                  );
+                })()
               ) : (
                 <>
                   {isDPMode && (
@@ -553,13 +720,31 @@ export function CartAndPaymentSection({
           {!isSuccess && (
             <Button
               className={cn(
-                "w-full h-11 md:h-16 rounded-full font-black text-[11px] md:text-base tracking-[0.15em] uppercase shadow-xl transition-all duration-300 text-white btn-press",
-                settlementTrx ? "bg-orange-600 hover:bg-orange-700" : "bg-neutral-950 hover:bg-[#C82368]"
+                "w-full h-11 md:h-16 rounded-full font-black text-[10px] md:text-sm tracking-[0.12em] uppercase shadow-xl transition-all duration-300 text-white btn-press",
+                exchangeReturnSession
+                  ? "bg-[#C82368] hover:bg-neutral-950"
+                  : settlementTrx
+                  ? "bg-orange-600 hover:bg-orange-700"
+                  : "bg-neutral-950 hover:bg-[#C82368]"
               )}
               disabled={isProcessing || (cart.length === 0 && !settlementTrx)}
               onClick={onStartProcess}
             >
-              {isProcessing ? <Loader2 className="animate-spin h-4 w-4 md:h-7 md:w-7" /> : "BAYAR"}
+              {isProcessing ? (
+                <Loader2 className="animate-spin h-4 w-4 md:h-7 md:w-7" />
+              ) : exchangeReturnSession ? (
+                cart.length === 0 ? (
+                  "PILIH BARANG PENGGANTI"
+                ) : totalTagihan - exchangeReturnSession.returnCreditAmount > 0 ? (
+                  `BAYAR SELISIH (+Rp${(totalTagihan - exchangeReturnSession.returnCreditAmount).toLocaleString("id-ID")})`
+                ) : totalTagihan - exchangeReturnSession.returnCreditAmount < 0 ? (
+                  `TUKAR & KEMBALIKAN SISA (Rp${Math.abs(totalTagihan - exchangeReturnSession.returnCreditAmount).toLocaleString("id-ID")})`
+                ) : (
+                  "SELESAIKAN TUKAR (PAS)"
+                )
+              ) : (
+                "BAYAR"
+              )}
             </Button>
           )}
         </div>
